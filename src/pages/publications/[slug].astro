@@ -6,6 +6,7 @@ import JsonLd from '../../components/seo/JsonLd.astro';
 import DetailFigure from '../../components/ui/DetailFigure.astro';
 import { publicationTypeLabels, site } from '../../data/site';
 import { toBibtex } from '../../lib/bibtex';
+import { toGbt7714, formatVenue } from '../../lib/citation';
 
 export async function getStaticPaths() {
   const publications = await getCollection('publications', ({ data }) => !data.draft);
@@ -22,6 +23,29 @@ const data = item.data;
 const typeLabel = publicationTypeLabels[data.type] ?? data.type;
 const doiHref = data.doi ? (data.doi.startsWith('http') ? data.doi : `https://doi.org/${data.doi}`) : undefined;
 const bibtex = toBibtex(data);
+
+/** 载体名按语言分流：中文用《》，拉丁用斜体（见 lib/citation.ts） */
+const venueText = formatVenue(data.venue);
+
+/**
+ * 摘要正文。`item.body` 在 Astro 5+ 是构建期已读入的字符串，
+ * 同时喂给 citation_abstract 元数据与页面上的摘要块，避免两处不一致。
+ */
+const abstractText = item.body?.trim() ?? '';
+
+/** GB/T 7714 国标引用条目（中文期刊投稿与学位论文的强制格式） */
+const gbt = toGbt7714({
+  title: data.title,
+  authors: data.authors,
+  venue: data.venue,
+  year: data.year,
+  type: data.type,
+  volume: data.volume,
+  issue: data.issue,
+  pages: data.pages,
+  doi: data.doi,
+  pdf: data.pdf,
+});
 
 /** 作者 → 成员主页：按姓名匹配 people，机构外作者保持纯文本 */
 const allPeople = await getCollection('people', ({ data }) => !data.draft);
@@ -47,7 +71,19 @@ const related = allPubs
   title={data.title}
   description={`${data.authors.join('、')}。${data.venue}，${data.year}。${typeLabel}。`}
   type="article"
-  publishedAt={new Date(data.year, 0, 1)}
+  citation={{
+    title: data.title,
+    authors: data.authors,
+    venue: data.venue,
+    year: data.year,
+    type: data.type,
+    volume: data.volume,
+    issue: data.issue,
+    pages: data.pages,
+    doi: data.doi,
+    pdf: data.pdf,
+    abstract: abstractText || undefined,
+  }}
 >
   <JsonLd
     data={{
@@ -97,12 +133,17 @@ const related = allPubs
               })}
             </p>
             <p class="mt-2 text-ui text-ink-secondary">
-              <span class="italic">{data.venue}</span>
+              <cite class:list={[venueText.italic ? 'italic' : 'not-italic']}>{venueText.text}</cite>
               <span class="numeric">, {data.year}</span>
+              {(data.volume || data.issue || data.pages) && (
+                <span class="numeric">
+                  , {[
+                    data.volume && data.issue ? `${data.volume}(${data.issue})` : (data.volume ?? (data.issue ? `(${data.issue})` : '')),
+                    data.pages,
+                  ].filter(Boolean).join(': ')}
+                </span>
+              )}
               <span class="tag tag-quiet ml-3">{typeLabel}</span>
-              {data.tags.map((tag) => (
-                <span class="tag ml-2">{tag}</span>
-              ))}
               {data.featured && <span class="tag ml-2">精选</span>}
             </p>
           </header>
@@ -116,14 +157,32 @@ const related = allPubs
             class="mb-6"
           />
 
-          {item.body ? <Content /> : (
+          {/*
+            摘要与关键词按学术体例标注：摘要是一个有标识的块，关键词独立成行用分号分隔。
+            此前它们是裸正文 + header 里的散落 chips，读者看不出这是摘要。
+          */}
+          {abstractText ? (
+            <section class="abstract-block" aria-labelledby="abstract-heading">
+              <h2 id="abstract-heading" class="abstract-heading">摘要</h2>
+              <div class="abstract-body">
+                <Content />
+              </div>
+            </section>
+          ) : (
             <p class="text-ink-tertiary">（暂无摘要）</p>
+          )}
+
+          {data.tags.length > 0 && (
+            <p class="keywords-line">
+              <span class="keywords-label">关键词：</span>
+              {data.tags.join('；')}
+            </p>
           )}
         </article>
 
         <aside class="space-y-8 lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start">
           {/* 引用出口 */}
-          <div class="rounded-md border border-line bg-surface p-5">
+          <div class="rounded-md border border-line bg-surface p-5" data-cite-card>
             <p class="eyebrow mb-3">引用此成果</p>
             <div class="flex flex-wrap gap-2">
               {doiHref && (
@@ -133,19 +192,41 @@ const related = allPubs
                 <a href={data.pdf} class="btn btn-secondary numeric">PDF</a>
               )}
             </div>
-            <details class="mt-4">
-              <summary class="cursor-pointer text-meta text-ink-secondary select-none hover:text-accent">BibTeX 引用条目</summary>
-              <pre
-                class="bibtex mt-3 overflow-x-auto rounded-sm border border-line bg-surface-subtle p-3 text-[0.75rem] leading-relaxed text-ink-secondary"
-                data-bibtex>{bibtex}</pre>
+
+            {/*
+              两种引用格式：GB/T 7714 是中文期刊投稿与学位论文的强制格式，
+              BibTeX 服务 LaTeX 用户。只给 BibTeX 等于只覆盖了一半的使用场景。
+            */}
+            <details class="mt-4" open>
+              <summary class="cursor-pointer text-meta text-ink-secondary select-none hover:text-accent">
+                GB/T 7714 引用条目
+              </summary>
+              <p
+                class="citation-text mt-3 rounded-sm border border-line bg-surface-subtle p-3"
+                data-cite-text
+              >{gbt}</p>
               <button
                 type="button"
                 class="btn btn-secondary mt-3 numeric"
-                data-copy-bibtex
-                aria-label="复制 BibTeX 到剪贴板"
-              >复制 BibTeX</button>
-              <p class="mt-2 text-meta text-ink-tertiary" data-copy-status aria-live="polite"></p>
+                data-copy-cite
+                aria-label="复制 GB/T 7714 引用条目到剪贴板"
+              >复制引用</button>
             </details>
+
+            <details class="mt-3">
+              <summary class="cursor-pointer text-meta text-ink-secondary select-none hover:text-accent">BibTeX 引用条目</summary>
+              <pre
+                class="bibtex mt-3 overflow-x-auto rounded-sm border border-line bg-surface-subtle p-3 text-[0.75rem] leading-relaxed text-ink-secondary"
+                data-cite-text>{bibtex}</pre>
+              <button
+                type="button"
+                class="btn btn-secondary mt-3 numeric"
+                data-copy-cite
+                aria-label="复制 BibTeX 引用条目到剪贴板"
+              >复制 BibTeX</button>
+            </details>
+
+            <p class="mt-2 text-meta text-ink-tertiary" data-copy-status aria-live="polite"></p>
           </div>
 
           {/* 相关成果 */}
@@ -173,17 +254,18 @@ const related = allPubs
 </BaseLayout>
 
 <script>
-  // 复制 BibTeX：复制成功后给出状态反馈，5 秒后清空。
-  function initBibtexCopy(root: Document | ShadowRoot = document) {
-    root.querySelectorAll('[data-copy-bibtex]').forEach((btn) => {
-      if ((btn as HTMLElement).dataset.bound === '1') return;
-      (btn as HTMLElement).dataset.bound = '1';
+  // 复制引用条目（GB/T 7714 与 BibTeX 共用同一套逻辑）：
+  // 按钮从最近的 details 里取文本节点，状态行在整张卡片内查找（它不在 details 内部）。
+  function initCiteCopy(root: Document | ShadowRoot = document) {
+    root.querySelectorAll<HTMLElement>('[data-copy-cite]').forEach((btn) => {
+      if (btn.dataset.bound === '1') return;
+      btn.dataset.bound = '1';
       btn.addEventListener('click', async () => {
-        const pre = btn.parentElement?.querySelector('[data-bibtex]') as HTMLPreElement | null;
-        if (!pre) return;
-        const status = btn.parentElement?.querySelector('[data-copy-status]') as HTMLElement | null;
+        const textEl = btn.closest('details')?.querySelector('[data-cite-text]') as HTMLElement | null;
+        if (!textEl) return;
+        const status = btn.closest('[data-cite-card]')?.querySelector('[data-copy-status]') as HTMLElement | null;
         try {
-          await navigator.clipboard.writeText(pre.textContent ?? '');
+          await navigator.clipboard.writeText(textEl.textContent ?? '');
           if (status) status.textContent = '已复制到剪贴板';
         } catch {
           if (status) status.textContent = '复制失败，请手动选择并复制';
@@ -194,6 +276,6 @@ const related = allPubs
       });
     });
   }
-  document.addEventListener('astro:page-load', () => initBibtexCopy());
-  initBibtexCopy();
+  document.addEventListener('astro:page-load', () => initCiteCopy());
+  initCiteCopy();
 </script>

@@ -46,6 +46,14 @@ const publications = defineCollection({
     venue: z.string(),
     year: z.number().int().min(1990).max(2100),
     type: z.enum(['journal', 'conference', 'book', 'patent', 'report']),
+    /**
+     * 卷 / 期 / 页码：GB/T 7714 引用条目必需（`刊名, 年, 卷(期): 起止页码`）。
+     * 全部可选 —— 会议论文、著作、报告通常没有卷期，缺失时引用生成器按类型降级。
+     */
+    volume: z.string().optional(),
+    issue: z.string().optional(),
+    /** 起止页码，用半角连字符，例如 "1-18" */
+    pages: z.string().optional(),
     doi: z.string().optional(),
     pdf: z.string().optional(),
     tags: z.array(z.string()).default([]),
@@ -160,6 +168,36 @@ const topics = defineCollection({
   }),
 });
 
+/**
+ * 数据集：学术产出的一种，与论文同等重要（GB/T 7714 里标识码为 [DS]）。
+ *
+ * 此前它是 `src/pages/datasets.astro` 里的一个常量数组 —— 加数据集要改代码、
+ * 后台管不了、搜索索引收不到。集合化后内容文件重新成为唯一数据源。
+ */
+const datasets = defineCollection({
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/datasets' }),
+  schema: z.object({
+    /** 数据集名称（注意不是 title，避免与「页面标题」混淆） */
+    name: z.string(),
+    description: z.string(),
+    /** 许可协议，例如 CC BY 4.0 */
+    license: z.string(),
+    /** 获取方式，例如「开放下载」「需提交研究用途说明后获取」 */
+    access: z.string(),
+    /** 覆盖时段，例如 2024-2027 */
+    period: z.string().optional(),
+    /** 数据体量或更新频率，例如「按季度更新」 */
+    scale: z.string().optional(),
+    /** 访问链接（开放下载时给出） */
+    href: z.string().optional(),
+    /** 检索关键词 */
+    keywords: z.array(z.string()).default([]),
+    /** 排序权重，越小越靠前 */
+    order: z.number().default(99),
+    draft: z.boolean().default(false),
+  }),
+});
+
 export const collections = {
   news,
   notices,
@@ -169,4 +207,5 @@ export const collections = {
   events,
   projects,
   topics,
+  datasets,
 };

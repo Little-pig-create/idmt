@@ -214,7 +214,15 @@
 - 段落间距 `1.25em`，不使用首行缩进（中文长文可选启用 `text-indent: 2em`，需统一）；
 - 引用块使用左侧 `3px` 主色发丝线 + 斜体，不使用大面积色块；
 - 表格：表头 `--color-surface-subtle`，单元格仅横向分隔线；窄屏容器内横向滚动；
-- 图注：`--color-ink-tertiary`，12px，居左，格式「图 N　说明」。
+- 图注：`--color-ink-tertiary`，12px，**居左**，格式「图 N　说明」。
+- **摘要块**：`.abstract-block`（标识块 + 浅底 + 左侧 3px 主色线），块内字号小一档（`0.9375rem`）；
+  标题 `.abstract-heading` 用无衬线半粗。
+  > 特异性提示：摘要块在 `.prose-academic` 内，必须写成 `.prose-academic .abstract-*`（0,2,0），
+  > 否则会被 `.prose-academic h2`（0,1,1）盖掉，摘要标题会吃掉 `margin-top: 4rem` 与下边框。
+- **关键词行**：`.keywords-line`，独立成行、分号 `；` 分隔，**不写成 chips**（GB/T 7714 与中文期刊体例）。
+- **引用条目**：`.citation-text`（13px / 1.7），侧栏内提供 GB/T 7714 与 BibTeX 两种格式。
+- **三线表**：`table` 只有顶线 + 表头线 + 底线（各 1.5px / 1px `--color-ink`），中间**不加**横线；
+  表头无底色。这是学术表格的排版规范，网页表格的「每行一条下线」不适用。
 
 ---
 
@@ -242,6 +250,7 @@
 | `Pagination` | 组件 | 上一页/下一页 + 页码；当前页 `aria-current="page"` |
 | `EmptyState` | 组件 | 一句说明 + 一个明确动作（如「清除筛选」「查看全部成果」） |
 | `SectionHeading`（区块标题栏） | 组件 | 左侧 `3px` 主色竖线 + 中文标题（衬线）+ 英文标签（等宽）+ 右侧「更多 +」；下方 `section-note` 一句话说明；`eyebrow` 可选、默认不写 |
+| `citation` / `toGbt7714` / `formatVenue` | 工具（`src/lib/citation.ts`） | 学术检索与引用：Highwire `citation_*` 生成、GB/T 7714-2015 条目生成、中文载体名《》分流。**不是组件**，无 DOM 输出，被 `SeoHead.astro` 与成果页调用 |
 | `AbstractFigure` | 组件 | 由 `seed` 确定性生成 SVG 抽象图形（strata / mesh / orbit / grid / signal / prism 六变体），用于焦点图与卡片配图；`aria-hidden`，零外部图片依赖 |
 | `Carousel` | 组件 | 首页焦点轮播：箭头 + 圆点 + 方向键 + 自动播放（5.5s）+ 暂停/继续按钮；悬停/聚焦/减弱动效时暂停；slide 叠在同一网格格切换不跳高；无 JS 降级为第一张静态卡片；标题一律 `h2` |
 | `CoverImage` | 组件 | 卡片配图统一入口：**有 `cover` 就渲染真实图片**（`h-full w-full object-cover` + `alt` + `loading` + `decoding="async"`），没有才回落 `AbstractFigure` 的抽象 SVG。只负责填满外层给定的框，**不改变尺寸语义** —— 漏掉 `h-full w-full` 会撑破 `.figure-frame` |

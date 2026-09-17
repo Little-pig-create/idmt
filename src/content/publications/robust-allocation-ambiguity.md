@@ -6,6 +6,9 @@ authors:
 venue: European Journal of Operational Research
 year: 2024
 type: journal
+volume: '316'
+issue: '3'
+pages: 812-827
 doi: 10.00000/ejor.2024.08.021
 tags:
   - 鲁棒优化

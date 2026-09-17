@@ -4,11 +4,17 @@ interface Props {
   description?: string;
   type?: 'website' | 'article';
   publishedAt?: Date;
+  /**
+   * 学术成果页的 Highwire Press 元数据（Google Scholar 抓取依据）。
+   * 只有 publications 详情页传；其余页面不传，不输出任何 citation_* 标签。
+   */
+  citation?: CitationSource;
 }
 
 import { site } from '../../data/site';
+import { toCitationMeta, type CitationSource } from '../../lib/citation';
 
-const { title, description = site.description, type = 'website', publishedAt } = Astro.props;
+const { title, description = site.description, type = 'website', publishedAt, citation } = Astro.props;
 
 // 搜索引擎通常在 ~60 字符处截断标题。英文论文标题往往很长，
 // 超出时对「页面标题」部分截断（保留院名后缀），避免出现无意义的断句。
@@ -20,6 +26,12 @@ if (title !== site.name) {
   pageTitle = title.length > budget ? `${title.slice(0, budget - 1)}…${suffix}` : `${title}${suffix}`;
 }
 const canonical = new URL(Astro.url.pathname, Astro.site ?? site.url).href;
+
+/**
+ * citation_author 必须一人一条 <meta>，不能合并成一个逗号串 ——
+ * Google Scholar 的解析器按标签出现次数收集作者。
+ */
+const citationTags = citation ? toCitationMeta(citation) : [];
 ---
 
 <title>{pageTitle}</title>
@@ -38,3 +50,10 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? site.url).href;
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content={pageTitle} />
 <meta name="twitter:description" content={description} />
+
+{/* ---------- Highwire Press：学术检索系统的元数据来源 ---------- */}
+{
+  citationTags.map((tag) => (
+    <meta name={tag.name} content={tag.content} />
+  ))
+}

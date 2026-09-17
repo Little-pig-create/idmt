@@ -6,6 +6,9 @@ authors:
 venue: 公共管理学报
 year: 2025
 type: journal
+volume: '22'
+issue: '6'
+pages: 42-58
 doi: 10.00000/jpa.2025.06.004
 tags:
   - 数据局

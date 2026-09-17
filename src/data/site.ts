@@ -44,3 +44,37 @@ export const roleLabels: Record<string, string> = {
   postdoc: '博士后',
   phd: '博士研究生',
 };
+
+/**
+ * 研究方向状态标签。此前在 `research/index.astro` 与 `research/[slug].astro`
+ * 各写了一份完全相同的字面量 —— 同一件事两种写法是漂移隐患，收敛到这里。
+ */
+export const researchStatusLabels: Record<string, string> = {
+  active: '活跃',
+  ongoing: '进行中',
+  planned: '规划中',
+};
+
+export const projectStatusLabels: Record<string, string> = {
+  ongoing: '在研',
+  completed: '已结项',
+};
+
+/**
+ * 页面级眉标签（`PageHero.eyebrow`）的取值来源。
+ *
+ * 学术站点的眉标签统一表示**内容类型**：读者一眼就知道自己在看什么类型的学术产出。
+ * 此前同一个视觉位置承载了 6 种语义（标签、资助方、英文名、编号、页面名），
+ * 同类内容在不同页面读起来像不同的东西。
+ */
+export const sectionEyebrow: Record<string, string> = {
+  publications: '学术成果',
+  news: '新闻动态',
+  notices: '通知公告',
+  events: '学术活动',
+  projects: '科研项目',
+  people: '研究团队',
+  research: '研究方向',
+  topics: '专题',
+  datasets: '数据集与资源',
+};

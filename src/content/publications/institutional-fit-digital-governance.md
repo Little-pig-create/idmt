@@ -6,6 +6,9 @@ authors:
 venue: 公共管理学报
 year: 2025
 type: journal
+volume: '22'
+issue: '4'
+pages: 15-31
 doi: 10.00000/jpa.2025.04.003
 tags:
   - 数字治理

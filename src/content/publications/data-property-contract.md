@@ -6,6 +6,9 @@ authors:
 venue: 管理世界
 year: 2025
 type: journal
+volume: '41'
+issue: '2'
+pages: 88-104
 doi: 10.00000/mw.2025.02.011
 tags:
   - 数据要素

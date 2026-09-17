@@ -7,7 +7,7 @@ import PublicationItem from '../../components/content/PublicationItem.astro';
 import EventItem from '../../components/content/EventItem.astro';
 import DetailFigure from '../../components/ui/DetailFigure.astro';
 import JsonLd from '../../components/seo/JsonLd.astro';
-import { site } from '../../data/site';
+import { site, sectionEyebrow } from '../../data/site';
 
 export async function getStaticPaths() {
   const topics = await getCollection('topics', ({ data }) => !data.draft);
@@ -75,7 +75,7 @@ const involved = people
   />
 
   <PageHero
-    eyebrow={item.data.badge ?? '专题'}
+    eyebrow={sectionEyebrow.topics}
     title={item.data.title}
     description={item.data.summary}
     crumbs={[{ label: '专题', href: '/topics' }, { label: item.data.title }]}

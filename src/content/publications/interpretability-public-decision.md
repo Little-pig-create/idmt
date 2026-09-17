@@ -6,6 +6,9 @@ authors:
 venue: 管理科学学报
 year: 2024
 type: journal
+volume: '27'
+issue: '12'
+pages: 66-82
 doi: 10.00000/jms.2024.12.018
 tags:
   - 可解释性

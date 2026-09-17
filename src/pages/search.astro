@@ -46,7 +46,7 @@ import PageHero from '../components/ui/PageHero.astro';
 </BaseLayout>
 
 <script>
-  type SearchDoc = { title: string; url: string; kind: string; summary: string; tags: string[] };
+  type SearchDoc = { title: string; url: string; kind: string; summary: string; body?: string; tags: string[] };
 
   // View Transitions 安全：DOM 节点在每次换页后重新查询并写入这三个变量，
   // 下方所有函数读取的是变量本身，因此总能拿到当前页面的节点。
@@ -181,10 +181,13 @@ import PageHero from '../components/ui/PageHero.astro';
       .map((d) => {
         const title = d.title.toLowerCase();
         const rest = `${d.summary} ${d.tags.join(' ')} ${d.kind}`.toLowerCase();
+        // 正文命中权重低于标题与元信息：摘要是可检索的，但不该压过标题匹配
+        const body = (d.body ?? '').toLowerCase();
         let score = 0;
         for (const t of terms) {
           if (title.includes(t)) score += 3;
           else if (rest.includes(t)) score += 1;
+          else if (body.includes(t)) score += 1;
           else return { d, score: -1 };
         }
         return { d, score };

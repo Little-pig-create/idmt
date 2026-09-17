@@ -120,6 +120,23 @@ init();
 
 **悬停与点击的顺序陷阱**：桌面端 `mouseenter` 先于 `click` 触发。若 `click` 一律做「打开/关闭」切换，用户鼠标移入打开面板后再点击就会被立刻关掉，表现为「点不开」。Mega Menu 用 `openedByClick` 区分来源：悬停/聚焦打开时不切换，只有「由点击打开」后的再次点击才关闭。
 
+### 2.7 眉标签语义（全站统一）
+
+眉标签（`PageHero.eyebrow`）**只表示内容类型**，取值来自 `src/data/site.ts` 的 `sectionEyebrow`。
+
+学术站点的读者需要一眼判断「这是什么类型的学术产出」。此前同一个视觉位置承载了 6 种互不相干的语义
+（内容标签 / 资助来源 / 英文名 / 序号 / 页面名），同类内容在不同页面读起来像不同的东西。
+
+| 页面 | 眉标签 | 依据 |
+|---|---|---|
+| 成果详情 | 文献类型（期刊论文 / 会议论文 / 著作 / 报告） | `publicationTypeLabels` |
+| 活动详情 | 活动类型（学术讲座 / 研讨会 / 工作坊 / 学术会议） | `eventTypeLabels` |
+| 新闻 / 公告 / 项目 / 成员 / 方向 / 专题详情 | `sectionEyebrow.<collection>` | 内容类型名 |
+
+**禁止**：用 `序号`（`方向 01`）、`资助来源`、`英文名`、或内容标签（首个 tag）充当眉标签。
+序号还违反设计品位门禁 `TASTE-002`（编号式标签）—— 该规则**只在眉标签元素内部**匹配编号，
+不会误伤正文里的数字。
+
 ---
 
 ## 3. 页面清单与模板映射
@@ -244,7 +261,7 @@ init();
 
 | 序 | 区块 | 内容 |
 |---|---|---|
-| 1 | PageHero | 眉标 `方向 0N`、`h1` 方向名、摘要、面包屑（研究 / 方向名） |
+| 1 | PageHero | 眉标 `研究方向`、`h1` 方向名、摘要、面包屑（研究 / 方向名） |
 | 2 | 正文 | MDX 内容：核心问题、研究方法、代表性产出 |
 | 3 | 侧栏（sticky） | 关键词 / 方向负责人 / 相关项目 |
 | 4 | 相关学术成果 | 标签与方向关键词匹配的成果，最多 4 条 |
@@ -322,20 +339,62 @@ init();
 
 ### 4.7.1 成果详情 `/publications/:slug` ★ 新增
 
-**目标**：让引用者一次拿到全部引用要素（作者、年份、期刊、DOI、BibTeX），无需返回列表页。
+**目标**：让引用者一次拿到全部引用要素（作者、年份、期刊、卷期页码、DOI、GB/T 7714 条目、BibTeX），无需返回列表页。
 
-**布局**：`grid lg:grid-cols-[1fr_300px]`，左正文、右吸顶侧栏（偏移 `calc(var(--nav-h) + 1.5rem)`）。
+**布局**：`grid lg:grid-cols-[1fr_320px]`，左正文、右吸顶侧栏（偏移 `calc(var(--nav-h) + 1.5rem)`）。
 
 | 序 | 区块 | 内容 | 备注 |
 |---|---|---|---|
-| 1 | 面包屑 + 类型标签 | `学术成果 / 期刊论文` | 面包屑 `aria-label="面包屑"` |
-| 2 | `h1` 标题 | 衬线，与列表页引用格式一致 | 全站唯一 `h1` |
-| 3 | 作者行 | 当前机构作者加粗，其余常规 | 与 `PublicationItem` 复用同一渲染逻辑 |
-| 4 | 出处行 | 《期刊/会议名》、卷期页码、年份、DOI | 等宽字体对齐 |
-| 5 | 操作条 | `DOI` / `PDF` 外链（`rel="noopener"`），缺失则不渲染 | 不依赖 JS |
-| 6 | 摘要正文 | MDX `render()`，正文排版令牌统一 | 无摘要时整块省略 |
-| 7 | **BibTeX 导出** | `<pre data-bibtex>` + 复制按钮 | 见下 |
-| 8 | 右侧栏 | 同作者其他成果（≤5 条）+ 返回列表 | 吸顶 |
+| 1 | PageHero | 眉标 = 文献类型（`publicationTypeLabels`）、`h1` 标题、面包屑 | 眉标语义见 §2.7 |
+| 2 | 作者行 | 机构作者链到成员主页，外部合著者保持纯文本 | 按姓名精确匹配 `people` |
+| 3 | 出处行 | `<cite>`《中文刊名》/ 拉丁斜体 + 年份 + `卷(期): 起止页`、类型标签 | 语言分流见下 |
+| 4 | 配图 | `DetailFigure`（真实封面或回落抽象图形） | 有图注时显示 |
+| 5 | **摘要块** | `.abstract-block`：标识标题「摘要」+ 浅底正文 | 无正文时显示「（暂无摘要）」 |
+| 6 | **关键词行** | `.keywords-line`：`关键词：` + 分号分隔 | 来自 `tags` |
+| 7 | 右栏·引用出口 | `DOI` / `PDF` 外链（`rel="noopener"`） | 缺失则不渲染 |
+| 8 | 右栏·**GB/T 7714 条目** | `.citation-text` + 「复制引用」按钮 | 默认展开 |
+| 9 | 右栏·**BibTeX 条目** | `<pre data-cite-text>` + 「复制 BibTeX」按钮 | 折叠 |
+| 10 | 右栏·同作者相关 | 同一作者的其他成果（≤5 条） | 吸顶 |
+
+**学术检索元数据（`src/lib/citation.ts` → `SeoHead.astro`）**：
+
+成果详情页输出 Highwire Press `citation_*` 标签，这是 Google Scholar 一类学术检索系统抓取元数据的依据。
+没有它，成果页在常规搜索引擎里能搜到，但在学术检索链路里是**隐形的**。
+
+| 标签 | 来源 | 注意 |
+|---|---|---|
+| `citation_title` | `title` | |
+| `citation_author` | `authors[]` | **一人一条** `<meta>`，不能合并成逗号串 |
+| `citation_publication_date` | `year` | 只有年份，schema 未记月份 |
+| `citation_journal_title` | `venue` | 仅 `type: journal` |
+| `citation_conference_title` | `venue` | 仅 `type: conference`（字段名与期刊不同，写错抓取器整条忽略） |
+| `citation_book_title` / `citation_publisher` | `venue` | 仅 `type: book` |
+| `citation_publisher` | `venue` | 仅 `type: report` |
+| `citation_volume` / `citation_issue` | 同名字段 | 有值才输出 |
+| `citation_firstpage` / `citation_lastpage` | `pages` | 按连字符拆分；单页只出 firstpage |
+| `citation_doi` | `doi` | |
+| `citation_abstract` | 正文 | |
+| `citation_pdf_url` | `pdf` | 转成绝对 URL，相对路径抓取器不认 |
+| `citation_language` | 固定 `zh` | |
+
+**引用条目生成（GB/T 7714-2015）**：
+
+中文期刊投稿与学位论文的**强制**格式。BibTeX 只服务 LaTeX 用户，覆盖不了这批人。
+
+| 类型 | 标识码 | 条目格式 |
+|---|---|---|
+| `journal` | `[J]` | `作者. 题名[J]. 刊名, 年, 卷(期): 起止页.` |
+| `conference` | `[C]` | `作者. 题名[C]. 会议名, 年: 起止页.` |
+| `book` | `[M]` | `作者. 书名[M]. 出版者, 年.` |
+| `report` | `[R]` | `作者. 题名[R]. 出版者, 年.` |
+| `patent` | `[P]` | `作者. 题名[P]. 年.`（schema 无专利号与日期字段，只能给最小条目） |
+
+- 卷 / 期 / 页码**全部可选**，缺失时逐级降级（`22(6)` → `22` → `(6)` → 无），不留空占位符；
+- **补数据才能得到完整条目** —— 内容侧未填 `volume` / `issue` / `pages` 时，条目会缺卷期页码。
+
+**载体名语言分流（`formatVenue()`）**：含 CJK 一律用《》且 `not-italic`，拉丁用斜体。
+中文出版体例用书名号；且 `Noto Serif SC` / `Noto Sans SC` **没有真斜体**，浏览器会合成机械倾斜，
+既不合体例也难看。三处渲染（列表项 / 筛选器 / 详情页）必须共用这一个函数。
 
 **BibTeX 规格（`src/lib/bibtex.ts`）**：
 
@@ -349,15 +408,15 @@ init();
 
 - **引用键生成**：`<第一作者姓><年份><标题首个英文词>`，全部小写并剥离非字母数字。
   中文作者名无空格，`split(/\s+/).pop()` 会取到空串 —— 必须回退为「首字」；否则全部条目的键会塌缩成同一个 `<年份>`。
-- 复制按钮使用 `navigator.clipboard`，失败时回退 `document.execCommand('copy')`；
+- 复制按钮使用 `navigator.clipboard`，失败时给出「请手动选择并复制」提示；
 - 复制结果通过 `aria-live="polite"` 状态区播报，**不依赖视觉提示**；
-- `<pre>` 必须带 `data-bibtex`，审计脚本据此统计；
+- 两种格式的按钮共用 `data-copy-cite`，各自从所属 `<details>` 取 `data-cite-text`；
 - 每条成果的引用键**必须唯一**（当前 10/10 通过）。
 
-**作者行**：按姓名匹配 `people`，命中则链到 `/people/:slug`（用 `.link-title`），机构外作者保持纯文本 ——
-学术成果常有外部合著者，不能因为匹配不上就整行不可点。
-
 **结构化数据**：`ScholarlyArticle`（`headline` / `author` / `datePublished` / `isPartOf`），由 `JsonLd.astro` 以 `@graph` 输出。
+
+> **已知缺失**：`publishedAt` 不再由 `new Date(year, 0, 1)` 伪造 —— 那会把 1 月 1 日当成真实发表日期。
+> 现在只输出年份。若需精确日期，需在 schema 增加发布日期字段。
 
 ---
 
@@ -380,7 +439,7 @@ init();
 
 | 序 | 区块 | 内容 |
 |---|---|---|
-| 1 | PageHero | 眉标 = 资助来源、`h1`、面包屑 |
+| 1 | PageHero | 眉标 `科研项目`、`h1`、面包屑 |
 | 2 | 元信息条 | 状态标签 + 周期 + 资助来源（等宽数字） |
 | 3 | 正文 | MDX `render()` |
 | 4 | 项目相关成果 | 作者与项目成员有交集的成果，按年份倒序，≤5 条，链接到 `/publications/:slug` |
@@ -426,10 +485,14 @@ schema.org 没有可靠的 `ResearchProject` 类型，用 `CreativeWork` 是安�
 |---|---|---|
 | 1 | PageHero | 眉标 `Notices`、`h1`、面包屑 |
 | 2 | 公告索引 | `NoticeList`：置顶 / 分类标签 + 标题 + 等宽日期，锚点指向本页正文 |
-| 3 | 公告正文 | 每条公告一个 `<article id>`，渲染 MDX 正文 |
+| 3 | 公告正文 | 每条公告一个 `<article id>`，渲染 MDX 正文；`attachment` 有值时附「下载附件」按钮 |
 | 4 | 右信息栏（sticky） | 公告分类统计、相关入口 |
 
-**集合**：`notices`（`title` / `date` / `category` / `pinned` / `draft`），`category` 取值 `招生 | 会议 | 科研 | 人事 | 其他`。
+**集合**：`notices`（`title` / `date` / `category` / `pinned` / `attachment` / `draft`），`category` 取值 `招生 | 会议 | 科研 | 人事 | 其他`。
+
+> `attachment` 是招生简章 / 申报指南 / 年度报告这类公告的**必备出口**。
+> 该字段此前在 schema 中声明但**没有任何模板渲染** —— 内容编辑填了也看不到，
+> 等于「声明了却不接上」。现已接到正文块下方，用 `.btn-secondary` + 下载图标。
 **排序**：`pinned` 优先，其次 `date` 倒序。
 **锚点**：索引条目链接到 `#${id}`，与正文 `<article>` 的 `id` 对应；跳转偏移由 §2.4 全局规则处理。
 **状态**：集合为空时展示 `EmptyState`，给出「新闻动态」「学术活动」两个替代方向。
@@ -440,11 +503,12 @@ schema.org 没有可靠的 `ResearchProject` 类型，用 `CreativeWork` 是安�
 
 | 序 | 区块 | 内容 |
 |---|---|---|
-| 1 | PageHero | 日期、标签、`h1` 标题、面包屑 |
+| 1 | PageHero | 眉标 `新闻动态`、日期、标签、`h1` 标题、面包屑 |
 | 2 | 正文 | MDX，宽度 `720px` |
 | 3 | 上下篇 | 同集合内的相邻条目 |
 
 **SEO**：`type="article"`，注入 `article:published_time`；标题格式为「标题 · 机构名」。
+**眉标**：用固定内容类型名，不用首个标签（标签更适合放在日期行，见 §2.7）。
 
 ---
 
@@ -526,8 +590,13 @@ schema.org 没有可靠的 `ResearchProject` 类型，用 `CreativeWork` 是安�
 | 4 | 索取其他材料 | `EmptyState` + 「联系我们」动作 |
 
 **布局**：`grid lg:grid-cols-[1fr_320px]`（原为单栏长文，已改为分栏）。
-**字段**：数据集为页面内静态数组，含 `name` / `desc` / `license` / `citation` / `access`。
+**数据源**：内容集合 `datasets`（`src/content/datasets/*.md`），条目锚点 `#<slug>`。
+集合化之前是页面内静态数组 —— 加数据集要改代码、后台管不了、搜索索引收不到。
+**字段**：`name` / `description` / `license` / `access` / `period` / `scale` / `href` / `keywords` / `order`。
 **约束**：每个数据集必须给出**引用格式**与**许可协议**，缺失则不得发布。
+引用格式由 `toDatasetCitation()` 按 GB/T 7714 的 `[DS]` 标识码生成，责任者由 `keywords`
+反查成员的研究方向得出（数据集不直接记作者）。
+**空态**：集合为空时渲染 `EmptyState`，给出「查看学术成果 / 研究方向」两条替代路径。
 
 ---
 
@@ -586,7 +655,7 @@ schema.org 没有可靠的 `ResearchProject` 类型，用 `CreativeWork` 是安�
 |---|---|
 | 内容列表 | MUI `Table` + `TableSortLabel`：ID、标题、补充信息、状态（草稿/已发布）、更新时间、操作；点表头排序，默认按更新时间倒序 |
 | 编辑表单 | 按集合 Schema 动态生成字段；日期用原生 `<input type="date">`；标签用逗号分隔文本域；**`type: 'image'` 字段**（如封面图）提供「选择…」按钮，从资源库挑图并回填 URL，带缩略图预览与清除 |
-| 集合切换 | 左侧常驻抽屉列出 7 个集合并显示条目数；顶部搜索框在结果内做本地过滤 |
+| 集合切换 | 左侧常驻抽屉列出 9 个集合并显示条目数；顶部搜索框在结果内做本地过滤 |
 | 正文编辑 | **富文本工具栏 + 实时分栏预览**（见 4.17.1）：12 个格式按钮作用于选区，支持快捷键与图片插入 |
 | 发布 | 校验通过后写入 `src/content/<collection>/<slug>.md`；校验失败列出具体字段 |
 | 媒体 | **图片资源库**（见 4.17.2）：上传 / 浏览 / 插入 / 删除，落在 `public/images/`，引用路径 `/images/<name>` |
@@ -716,15 +785,16 @@ schema.org 没有可靠的 `ResearchProject` 类型，用 `CreativeWork` 是安�
 
 ## 10. 交付前总检
 
-- [x] 21 个站点路由（含 3 个机器可读端点）+ 1 个后台应用全部可达 —— `npm run smoke` 20/20 通过
+- [x] 21 个站点路由（含 3 个机器可读端点）+ 1 个后台应用全部可达 —— `npm run smoke` 56/56 通过
 - [ ] 四档视口（375 / 768 / 1024 / 1440）无破版 —— ⏳ 需可信浏览器，本沙箱 `agent-browser` 的截图/`eval` 对真实页面不可靠
 - [ ] 六个状态（加载 / 空 / 无结果 / 错误 / 未找到 / 离线）均有设计
 - [x] 筛选条件可分享 URL，空结果有替代建议
-- [x] 搜索一次输入命中成果 / 人员 / 新闻
-- [x] 内容维护者仅新增 MDX 文件即可发布，无需改代码
-- [x] 后台字段校验与 `content.config.ts` Schema 一致（`server.mjs` 布尔分支已补）
-- [x] `npm run audit` 零告警（38 页：h1 唯一、标题 ≤60 字符、JSON-LD 可解析、资源体积达标）
+- [x] 搜索一次输入命中成果 / 人员 / 新闻 / 数据集（索引含正文，可检索摘要中的概念词）
+- [x] 内容维护者仅新增 MDX 文件即可发布，无需改代码（数据集亦已集合化）
+- [x] 后台字段校验与 `content.config.ts` Schema 一致（`server.mjs` 布尔分支已补；datasets 集合两侧同步）
+- [x] `npm run audit` 零告警（51 页：h1 唯一、标题 ≤60 字符、JSON-LD 可解析、内部链接 3537 条、资源体积达标）
+- [x] 成果详情页输出 Highwire `citation_*` 与 GB/T 7714 引用条目
 - [ ] Lighthouse 性能 / 无障碍评分 —— ⏳ 同上，需可信浏览器
 - [ ] axe 真实无障碍扫描 —— ⏳ 同上
 
-> **自动化门禁**：`npm run build && npm run audit && npm run smoke` 三项必须全绿。**`audit` 与 `smoke` 已覆盖本清单中可静态验证的条目**，剩余 3 项依赖浏览器实测，需在 CI 或有 GUI 的环境补跑。
+> **自动化门禁**：`npm run build && npm run audit && npm run taste && npm run contrast && npm run docs:tokens && npm run smoke` 六项必须全绿。**本清单中可静态验证的条目已被这些门禁覆盖**，剩余 3 项依赖浏览器实测，需在 CI 或有 GUI 的环境补跑。

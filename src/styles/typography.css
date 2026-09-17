@@ -157,25 +157,44 @@
     color: inherit;
   }
 
+  /* ---------- 三线表 ----------
+     学术出版物的表格只有三条线：顶线、表头下线、底线，中间不加横线。
+     此前每一行都带 border-bottom，那是网页表格的形态，不是学术表格。
+     线宽用 1.5px 让顶/底线比表头线略重，与中文期刊的排版惯例一致。 */
   .prose-academic table {
     width: 100%;
     border-collapse: collapse;
     font-size: var(--text-ui);
+    border-top: 1.5px solid var(--color-ink);
+    border-bottom: 1.5px solid var(--color-ink);
   }
 
   .prose-academic thead {
-    background-color: var(--color-surface-subtle);
+    background-color: transparent;
   }
 
   .prose-academic th,
   .prose-academic td {
     padding: 0.625rem 0.875rem;
     text-align: left;
-    border-bottom: 1px solid var(--color-line);
+    border-bottom: 0;
+  }
+
+  .prose-academic thead th {
+    border-bottom: 1px solid var(--color-ink);
   }
 
   .prose-academic th {
     font-weight: 500;
+  }
+
+  /* 表题：三线表上方的居中标题（「表 N　说明」） */
+  .prose-academic table caption {
+    padding-bottom: 0.5rem;
+    font-size: var(--text-meta);
+    line-height: 1.5;
+    color: var(--color-ink-tertiary);
+    text-align: center;
   }
 
   .prose-academic img {
@@ -202,13 +221,74 @@
     font-size: var(--text-meta);
     line-height: 1.5;
     color: var(--color-ink-tertiary);
-    text-align: center;
+    text-align: left;
   }
 
   .prose-academic hr {
     border: 0;
     border-top: 1px solid var(--color-line);
     margin-block: 3rem;
+  }
+
+  /* ---------- 摘要块 ----------
+     学术论文的摘要是一个有标识的块：小一档字号 + 缩进 + 浅底，
+     让读者一眼分辨「这是摘要」而不是正文开头。
+
+     注意选择器特异性：摘要块位于 `.prose-academic` 之内，
+     而 `.prose-academic h2`（0,1,1）会盖过 `.abstract-heading`（0,1,0），
+     导致摘要标题吃到 `margin-top: 4rem` 与下边框。
+     因此这里一律用 `.prose-academic .abstract-*`（0,2,0）提升一级。 */
+  .prose-academic .abstract-block {
+    margin-top: 2rem;
+  }
+
+  .prose-academic .abstract-heading {
+    margin: 0 0 0.75rem;
+    padding-bottom: 0;
+    border-bottom: 0;
+    font-family: var(--font-sans);
+    font-size: var(--text-ui);
+    line-height: 1.5;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--color-ink-secondary);
+  }
+
+  .prose-academic .abstract-body {
+    padding: 1.25rem 1.5rem;
+    border-left: 3px solid var(--color-accent);
+    background-color: var(--color-surface-subtle);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 0.9375rem;
+    line-height: 1.8;
+    color: var(--color-ink);
+  }
+
+  /* 摘要块内的段落不再叠加 prose 的大间距 */
+  .prose-academic .abstract-body > * + * {
+    margin-top: 0.75em;
+  }
+
+  /* ---------- 关键词行 ----------
+     GB/T 7714 与中文期刊体例：关键词独立成行，分号分隔，不写成 chips。 */
+  .prose-academic .keywords-line,
+  .keywords-line {
+    margin-top: 1.25rem;
+    font-size: var(--text-ui);
+    line-height: 1.7;
+    color: var(--color-ink);
+  }
+
+  .keywords-label {
+    color: var(--color-ink-secondary);
+  }
+
+  /* ---------- 引用条目文本 ---------- */
+  .citation-text {
+    font-size: 0.8125rem;
+    line-height: 1.7;
+    color: var(--color-ink-secondary);
+    word-break: break-word;
   }
 
   /* 图注 */

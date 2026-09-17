@@ -47,6 +47,8 @@ function secondaryOf(collection: string, data: Record<string, unknown>): string 
       return String(data.category ?? '');
     case 'news':
       return String(data.author ?? '');
+    case 'datasets':
+      return [data.license, data.access].filter(Boolean).join(' · ');
     default:
       return '';
   }

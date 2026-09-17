@@ -4,6 +4,7 @@ import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
 import SeoHead from '../components/seo/SeoHead.astro';
 import { site } from '../data/site';
+import type { CitationSource } from '../lib/citation';
 import '../styles/global.css';
 // ?raw 在构建期把令牌文件内联成字符串。
 // 不能用 import.meta.url + readFileSync：组件被打包进 dist/.prerender/chunks/ 后，
@@ -15,9 +16,11 @@ interface Props {
   description?: string;
   type?: 'website' | 'article';
   publishedAt?: Date;
+  /** 学术成果页的 Highwire Press 检索元数据；其余页面不传 */
+  citation?: CitationSource;
 }
 
-const { title, description, type, publishedAt } = Astro.props;
+const { title, description, type, publishedAt, citation } = Astro.props;
 
 /**
  * theme-color 是 <meta>，不认 CSS 变量，只能写字面量。
@@ -43,7 +46,7 @@ const canvasColor =
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500&family=Noto+Serif+SC:wght@600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap"
     />
 
-    <SeoHead title={title} description={description} type={type} publishedAt={publishedAt} />
+    <SeoHead title={title} description={description} type={type} publishedAt={publishedAt} citation={citation} />
 
     {/* 原生 View Transitions：多页站点获得类 SPA 的连续感，不引入客户端路由框架 */}
     <ClientRouter fallback="swap" />

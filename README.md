@@ -1,24 +1,25 @@
 # 数字管理研究院 · 学术门户
 
-学术门户网站与内容发布后台。站点为**零 JS 静态输出**（Astro 5），后台为独立的 **React 19 + MUI** 应用。
+学术门户网站与内容发布后台。站点为**零 JS 静态输出**（Astro 7），后台为独立的 **React 19 + MUI** 应用。
 
 ## 当前状态
 
 | 项 | 值 |
 |---|---|
 | 构建页面 | **51**（10 篇成果详情 · 6 篇新闻详情 · 5 场活动详情 · 4 位成员主页 · 4 个方向详情 · 4 个项目详情 · 3 个专题详情 · 1 个专题索引） |
-| 内容条目 | **43**（成果 10 · 通知 7 · 新闻 6 · 活动 5 · 人员 4 · 方向 4 · 项目 4 · 专题 3） |
+| 内容条目 | **45**（成果 10 · 通知 7 · 新闻 6 · 活动 5 · 人员 4 · 方向 4 · 项目 4 · 专题 3 · 数据集 2） |
 | 内部链接 | **3537 条**（`npm run audit` 逐条校验路由与锚点，LINK-001 死链 / LINK-002 坏锚点） |
 | `npm run audit` | ✅ 零告警（a11y + SEO + JSON-LD + 体积预算 + 内部链接 + 产物洁净度 HYG-001） |
 | `npm run taste` | ✅ 零问题（设计品位：破折号清零 / 眉标签克制 / 圆角尺度单一等 8 条） |
 | `npm run contrast` | ✅ 22/22 文字组合 ≥ 4.5:1（WCAG 2.2 AA，从严统一阈值） |
-| `npm run smoke` | ✅ 30/30 |
-| 资源体积（gzip） | **JS 8.6 KB · CSS 14.5 KB** —— 均远低于预算（JS ≤ 30 KB、CSS ≤ 20 KB） |
-| 资源体积（未压缩） | HTML 均值 37 KB/页（最大 88.6 KB，首页）· JS 23 KB · CSS 75 KB · `dist` 1.85 MB |
+| `npm run smoke` | ✅ 56/56（含学术检索元数据与引用格式断言） |
+| 资源体积（gzip） | **JS 8.6 KB · CSS 9.1 KB** —— 均远低于预算（JS ≤ 30 KB、CSS ≤ 20 KB） |
+| 资源体积（未压缩） | HTML 均值 39 KB/页（最大 88.7 KB，首页）· JS 23 KB · CSS 45 KB · `dist` 1.93 MB |
 | 结构化数据 | `ResearchOrganization`×51 · `ScholarlyArticle`×10 · `NewsArticle`×6 · `Event`×5 · `Person`×4 · `CreativeWork`×4 · `CollectionPage`×3 |
+| 学术检索元数据 | 成果详情页输出 Highwire Press `citation_*`（Google Scholar 抓取依据） |
 
-> **体积预算以 gzip 后为准**（`npm run audit` 会同时打印两项）。未压缩的 CSS 75 KB 看着大，
-> gzip 后仅 14.4 KB，且全站共用一个样式表、只下载一次。
+> **体积预算以 gzip 后为准**（`npm run audit` 会同时打印两项）。未压缩的 CSS 45 KB 看着大，
+> gzip 后仅 9.1 KB，且全站共用一个样式表、只下载一次。
 > 详见 `docs/PORTAL_FRAMEWORK.md` §11，其中也记录了两条**已被实测排除**的误判（轮播、`@source` 范围），避免重复排查。
 
 **未覆盖**（本沙箱无法可靠验证，需在 CI / 有 GUI 环境补跑）：Lighthouse 评分、axe 真实无障碍扫描、四档视口视觉回归。
@@ -90,7 +91,9 @@ npm run dev
 
 > **提示**：`admin/` 嵌套在站点项目内，Node 会向上查找 `node_modules`，因此 `vite` 与 `@vitejs/plugin-react` 直接复用站点已安装的版本。如果换环境后提示找不到 `vite`，在 `admin/` 下执行一次 `npm install` 即可。
 
-> **`admin/node_modules` 当前状态**：由于沙箱 npm 在批量解包时会卡住，admin 的 `node_modules` 处于半解包状态（`@mui/material/package.json` 缺失、`@mui/x-data-grid` 已被去掉但残留目录、`@mui/icons-material` 只解出部分文件）。**生产构建产物 `admin/dist/assets/index-*.js` 完全自包含**（无任何运行期对 node_modules 的回查），所以 `node server.mjs` 与 `admin/dist` 的静态部署不受影响。**仅 `cd admin && npm run dev`（Vite dev server）会失败**，需要先执行 `cd admin && rm -rf node_modules && npm install` 重建。
+> **`admin/node_modules` 当前状态**：**已完好**（2026-09-17 复核）。顶层 86 个包，`@mui/material/package.json` 存在，
+> `cd admin && npm run build` 通过。历史上曾因沙箱 npm 批量解包卡住而处于半解包状态，**该问题已不复现**，
+> 无需再 `rm -rf node_modules && npm install`。
 
 ## 内容维护流程
 
@@ -109,7 +112,7 @@ npm run dev
 
 | 层 | 选型 |
 |---|---|
-| 站点框架 | Astro 5（静态输出、岛屿架构） |
+| 站点框架 | Astro 7（静态输出、岛屿架构） |
 | 站点语言 | TypeScript 5（strict） |
 | 站点样式 | Tailwind CSS v4（CSS-first `@theme`） |
 | 站点交互 | React 19 岛屿（`client:visible`） |
@@ -133,8 +136,24 @@ npm run dev
 | `scripts/taste.mjs` | 设计品位门禁（`npm run taste`）：只做能正则可靠判定的项，不假装能查视觉 |
 | `scripts/contrast.mjs` | 色彩对比度门禁（`npm run contrast`）：解析 tokens.css，22 组真实在用的文字组合一律 ≥ 4.5:1 |
 | `scripts/docs-tokens.mjs` | 文档 / 令牌一致性门禁（`npm run docs:tokens`）：反查文档引用的令牌是否都有定义 |
-| `scripts/smoke.mjs` | HTTP 冒烟断言（`npm run smoke`，30 条） |
+| `scripts/smoke.mjs` | HTTP 冒烟断言（`npm run smoke`，56 条） |
 | `.github/workflows/ci.yml` | CI：`build → audit → taste → smoke`，并单独构建 `admin/` |
+
+## 学术体例与检索
+
+站点不只是「看起来像学术站」，成果页按学术出版与检索的规则组织：
+
+| 机制 | 实现位置 | 为什么需要 |
+|---|---|---|
+| Highwire Press `citation_*` 元数据 | `src/lib/citation.ts` → `SeoHead.astro` | Google Scholar 一类学术检索系统靠这套标签抓取元数据；没有它，成果页在学术检索链路里是隐形的。`citation_author` 一人一条，`citation_journal_title` / `citation_conference_title` 按文献类型分流 |
+| GB/T 7714-2015 引用条目 | `src/lib/citation.ts` → 成果详情页侧栏 | 中文期刊投稿与学位论文的**强制**引用格式。BibTeX 只服务 LaTeX 用户，覆盖不了这批人 |
+| 数据集 `[DS]` 引用 | `toDatasetCitation()` | 数据集是学术产出，国标里有独立标识码 |
+| 中文载体名用《》不倾斜 | `formatVenue()` | 中文出版体例用书名号；且 Noto Serif/Sans SC 无真斜体，浏览器会合成机械倾斜 |
+| 摘要 / 关键词标注块 | `publications/[slug].astro` + `typography.css` | 摘要是有标识的块，关键词独立成行用分号分隔，不是散落的 chips |
+| 三线表 | `typography.css` `.prose-academic table` | 顶线 + 表头线 + 底线，中间不加横线 —— 学术表格的排版规范 |
+
+> **卷 / 期 / 页码**（`volume` / `issue` / `pages`）是可选字段：缺失时引用生成器按类型逐级降级
+> （`22(6)` → `22` → `(6)` → 无），不会留下空占位符。**补数据才能得到完整引用条目。**
 
 ## 安全提示
 

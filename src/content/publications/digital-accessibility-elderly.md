@@ -5,6 +5,9 @@ authors:
 venue: 中国行政管理
 year: 2024
 type: journal
+volume: '40'
+issue: '6'
+pages: 112-126
 doi: 10.00000/cpa.2024.06.014
 tags:
   - 数字政府

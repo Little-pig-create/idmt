@@ -6,6 +6,7 @@ authors:
 venue: CHI 2025
 year: 2025
 type: conference
+pages: 1-17
 doi: 10.00000/chi.2025.adapt.014
 tags:
   - 适老化

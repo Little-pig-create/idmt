@@ -4,7 +4,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHero from '../../components/ui/PageHero.astro';
 import JsonLd from '../../components/seo/JsonLd.astro';
 import DetailFigure from '../../components/ui/DetailFigure.astro';
-import { site } from '../../data/site';
+import { site, sectionEyebrow } from '../../data/site';
 
 export async function getStaticPaths() {
   const news = await getCollection('news', ({ data }) => !data.draft);
@@ -39,7 +39,7 @@ const { Content } = await render(item);
     }}
   />
   <PageHero
-    eyebrow={item.data.tags[0] ?? 'News'}
+    eyebrow={sectionEyebrow.news}
     title={item.data.title}
     description={item.data.summary}
     crumbs={[

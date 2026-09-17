@@ -78,10 +78,28 @@ for (const file of pages) {
     add('TASTE-001', rel, `眉标签 ${eyebrow} 个 / 区块 ${h2} 个，上限 ${limit}`);
   }
 
-  // TASTE-002 禁止编号式眉标签（§9.F：00 / INDEX、001 · Capabilities）
-  // 只认「编号 + 斜杠 + 词」这种真正的编号标签；不能把日期 "2026.07 · 地点" 当编号。
-  const numbered = [...text.matchAll(/(?:^|[\s>])0\d\s*\/\s*[A-Za-z\u4e00-\u9fa5]/g)].map((m) => m[0].trim());
-  if (numbered.length) add('TASTE-002', rel, `编号式标签：${numbered.slice(0, 3).join(' / ')}`);
+  // TASTE-002 禁止编号式眉标签（§9.F：00 / INDEX、001 · Capabilities、方向 01）
+  //
+  // 判据：**只在眉标签元素内部**找编号。不能对整页可见文本做正则 ——
+  // 标签剥离后相邻元素会拼到一起（「周敏」+ 日期「06」读起来像「周敏 06」），
+  // 实测会误报活动列表里的主讲人与日期。
+  //
+  // 眉标签元素的识别：class 含 `section-bar-en`（SectionHeading 的英文标签）
+  // 或含独立词 `eyebrow`（PageHero / AsideBox / dt 标签）。
+  const eyebrowTexts = [...html.matchAll(/<([a-z]+)\b[^>]*class="([^"]*\b(?:eyebrow|section-bar-en)\b[^"]*)"[^>]*>([\s\S]*?)<\/\1>/gi)]
+    .map((m) => m[3].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+
+  const numbered = [];
+  for (const label of eyebrowTexts) {
+    // 形态 a)「编号 + 斜杠 + 词」—— 英文式编号标签（00 / INDEX）
+    if (/\b0\d\s*\/\s*\S/.test(label)) numbered.push(label);
+    // 形态 b)「中文前缀 + 补零编号」—— 中文式编号标签（方向 01）
+    // 只认补零编号：这是它与正文数字的可靠分界，放宽会误伤真实内容。
+    // 在眉标签内部做检查，不会碰到正文里的「共 12 条」这类数字。
+    else if (/^[\u4e00-\u9fa5]{1,6}\s+0\d(?:\s|$)/.test(label)) numbered.push(label);
+  }
+  if (numbered.length) add('TASTE-002', rel, `编号式眉标签：${numbered.slice(0, 3).join(' / ')}`);
 
   // TASTE-003 禁止滚动提示（§9.F：Scroll / ↓ scroll / Scroll to explore）
   const cue = [...text.matchAll(/(↓\s*scroll|scroll\s+to\s+(explore|discover)|向下滚动)/gi)].map((m) => m[0]);

@@ -87,6 +87,39 @@ const categories = [...new Set(all.map((n) => n.data.category))].map((c) => ({
                       <div class="prose-academic mt-3 max-w-[68ch]">
                         <Content />
                       </div>
+
+                      {/*
+                        附件下载。招生简章、申报指南、年度报告这类公告，
+                        没有附件入口等于内容不完整。此前 schema 声明了 attachment
+                        字段但没有任何模板渲染它 —— 内容编辑填了也看不到。
+                      */}
+                      {entry.data.attachment && (
+                        <p class="mt-4">
+                          <a
+                            href={entry.data.attachment}
+                            class="btn btn-secondary"
+                            download
+                            rel="noopener"
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              aria-hidden="true"
+                            >
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                              <path d="m7 10 5 5 5-5" />
+                              <path d="M12 15V3" />
+                            </svg>
+                            下载附件
+                          </a>
+                        </p>
+                      )}
                     </article>
                   ))
                 }

@@ -41,7 +41,48 @@ const routes = [
   { path: '/search-index.json', contains: '"/projects/public-data-pricing"' },
   { path: '/search-index.json', contains: '"/events/2026-09-causal-lecture"' },
   { path: '/search-index.json', contains: '"/publications/' },
+  // 数据集集合化后必须进搜索索引（此前是硬编码数组，索引收不到）
+  { path: '/search-index.json', contains: '"/datasets#' },
+  { path: '/search-index.json', contains: '基层治理数字化案例库' },
   { path: '/robots.txt', contains: 'Sitemap' },
+
+  // ---------- 学术检索元数据（Highwire Press）----------
+  // 没有这些标签，成果页在 Google Scholar 一类学术检索链路里是隐形的。
+  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_title"' },
+  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_author" content="陈立"' },
+  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_author" content="何雨桐"' },
+  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_journal_title"' },
+  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_doi"' },
+  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_abstract"' },
+  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_language" content="zh"' },
+  // 卷 / 期 / 页码：GB/T 7714 引用条目必需，缺失时条目会不完整
+  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_volume"' },
+  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_issue"' },
+  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_firstpage"' },
+  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_lastpage"' },
+  // 会议论文的载体字段名与期刊不同，写错抓取器会整条忽略
+  { path: '/publications/elderly-platform-design-workshop', contains: 'name="citation_conference_title"' },
+
+  // ---------- 学术体例 ----------
+  // GB/T 7714 是中文期刊投稿与学位论文的强制引用格式
+  { path: '/publications/local-data-bureau-diffusion', contains: 'GB/T 7714' },
+  { path: '/publications/local-data-bureau-diffusion', contains: '[J]' },
+  // 卷期页码齐备时条目必须是完整的 `刊名, 年, 卷(期): 起止页.`
+  { path: '/publications/local-data-bureau-diffusion', contains: '公共管理学报, 2025, 22(6): 42-58.' },
+  // 各文献类型的标识码（期刊 J / 会议 C / 著作 M / 报告 R）
+  { path: '/publications/data-market-institutions-book', contains: '[M]' },
+  { path: '/publications/elderly-platform-design-workshop', contains: '[C]' },
+  { path: '/publications/open-data-trust-framework', contains: '[R]' },
+  // 中文刊名用书名号，不用斜体（中文无真斜体，浏览器会合成机械倾斜）
+  { path: '/publications/local-data-bureau-diffusion', contains: '《公共管理学报》' },
+  { path: '/publications/local-data-bureau-diffusion', contains: 'not-italic' },
+  // 拉丁刊名保留斜体
+  { path: '/publications/robust-allocation-ambiguity', contains: 'European Journal of Operational Research' },
+  // 摘要与关键词按学术体例标注
+  { path: '/publications/local-data-bureau-diffusion', contains: 'abstract-block' },
+  { path: '/publications/local-data-bureau-diffusion', contains: '关键词：' },
+  // 数据集引用用国标 [DS] 标识码
+  { path: '/datasets', contains: '[DS]' },
 ];
 
 let failed = 0;

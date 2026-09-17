@@ -6,7 +6,7 @@ import AsideBox from '../../components/ui/AsideBox.astro';
 import PublicationItem from '../../components/content/PublicationItem.astro';
 import JsonLd from '../../components/seo/JsonLd.astro';
 import DetailFigure from '../../components/ui/DetailFigure.astro';
-import { site } from '../../data/site';
+import { site, sectionEyebrow, projectStatusLabels } from '../../data/site';
 
 export async function getStaticPaths() {
   const all = await getCollection('projects', ({ data }) => !data.draft);
@@ -24,7 +24,7 @@ export async function getStaticPaths() {
 const { item, prev, next } = Astro.props;
 const { Content } = await render(item);
 
-const statusLabel: Record<string, string> = { ongoing: '在研', completed: '已结项' };
+const statusLabel = projectStatusLabels;
 const isOngoing = item.data.status === 'ongoing';
 
 /** 成员 → 人员主页：按姓名匹配 people 集合 */
@@ -77,7 +77,7 @@ const relatedResearch = research
   />
 
   <PageHero
-    eyebrow={item.data.funder}
+    eyebrow={sectionEyebrow.projects}
     title={item.data.title}
     description={item.data.summary}
     crumbs={[

@@ -1,29 +1,39 @@
 ---
+import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/ui/PageHero.astro';
 import SectionHeading from '../components/ui/SectionHeading.astro';
 import AsideBox from '../components/ui/AsideBox.astro';
 import EmptyState from '../components/ui/EmptyState.astro';
 import { site } from '../data/site';
+import { toDatasetCitation } from '../lib/citation';
 
-const datasets = [
-  {
-    name: '基层治理数字化案例库',
-    desc: '四个观察点的过程追踪记录与访谈材料整理稿，含编码手册。',
-    license: 'CC BY-NC 4.0',
-    citation: '陈立, 何雨桐. 基层治理数字化案例库（2024-2027）[DS]. 数字管理研究院.',
-    access: '需提交研究用途说明后获取',
-  },
-  {
-    name: '公共数据授权运营试点指标集',
-    desc: '试点地区公共数据授权运营的公开运行指标，按季度更新。',
-    license: 'CC BY 4.0',
-    citation: '林思远. 公共数据授权运营试点指标集（2026）[DS]. 数字管理研究院.',
-    access: '开放下载',
-  },
-];
+/**
+ * 数据集从 `src/content/datasets/` 读取 —— 与其余集合一致，内容文件是唯一数据源。
+ * 此前这里是硬编码的常量数组：加数据集要改代码、后台管不了、搜索索引收不到。
+ */
+const all = (await getCollection('datasets', ({ data }) => !data.draft)).sort(
+  (a, b) => a.data.order - b.data.order
+);
 
-const licenses = [...new Set(datasets.map((d) => d.license))];
+/**
+ * 责任者按关键词反查相关成员：数据集不直接记作者，
+ * 用关键词匹配成员的 researchAreas 得到责任者姓名。
+ */
+const people = await getCollection('people', ({ data }) => !data.draft);
+const authorsOf = (keywords: string[]): string[] =>
+  people
+    .filter((p) => p.data.researchAreas.some((area) => keywords.includes(area)))
+    .sort((a, b) => a.data.order - b.data.order)
+    .map((p) => p.data.name);
+
+const items = all.map((entry) => ({
+  id: entry.id,
+  ...entry.data,
+  authors: authorsOf(entry.data.keywords),
+}));
+
+const licenses = [...new Set(items.map((d) => d.license))];
 ---
 
 <BaseLayout
@@ -39,81 +49,162 @@ const licenses = [...new Set(datasets.map((d) => d.license))];
 
   <section class="section">
     <div class="container-page">
-      <div class="grid gap-12 lg:grid-cols-[1fr_320px] lg:gap-16">
-        <div>
-          <SectionHeading eyebrow="Datasets" title="开放数据集" />
+      {
+        items.length === 0 ? (
+          <EmptyState
+            title="暂无开放数据集"
+            description="数据集正在整理中，开放后会在此列出。"
+            suggestions={[
+              { label: '查看学术成果', href: '/publications' },
+              { label: '查看研究方向', href: '/research' },
+            ]}
+          />
+        ) : (
+          <div class="grid gap-12 lg:grid-cols-[1fr_320px] lg:gap-16">
+            <div>
+              <SectionHeading eyebrow="Datasets" title="开放数据集" />
 
-          <div class="space-y-6">
-            {
-              datasets.map((ds) => (
-                <article class="card p-6 lg:p-8">
-                  <h3 class="text-h3">{ds.name}</h3>
-                  <p class="mt-3 max-w-3xl text-ui leading-relaxed text-ink-secondary">{ds.desc}</p>
+              <div class="space-y-6">
+                {items.map((ds) => (
+                  <article id={ds.id} class="card p-6 lg:p-8">
+                    <h3 class="text-h3">{ds.name}</h3>
+                    <p class="mt-3 max-w-3xl text-ui leading-relaxed text-ink-secondary">
+                      {ds.description}
+                    </p>
 
-                  <dl class="mt-5 grid gap-4 border-t border-line pt-5 sm:grid-cols-3">
-                    <div>
-                      <dt class="eyebrow mb-1.5">许可协议</dt>
-                      <dd class="text-ui text-ink">{ds.license}</dd>
+                    <dl class="mt-5 grid gap-4 border-t border-line pt-5 sm:grid-cols-3">
+                      <div>
+                        <dt class="eyebrow mb-1.5">许可协议</dt>
+                        <dd class="text-ui text-ink">{ds.license}</dd>
+                      </div>
+                      <div>
+                        <dt class="eyebrow mb-1.5">获取方式</dt>
+                        <dd class="text-ui text-ink">
+                          {ds.href ? (
+                            <a href={ds.href} rel="noopener" class="link break-all">
+                              {ds.access}
+                            </a>
+                          ) : (
+                            ds.access
+                          )}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt class="eyebrow mb-1.5">覆盖时段</dt>
+                        <dd class="numeric text-ui text-ink">{ds.period ?? '未标注'}</dd>
+                      </div>
+                    </dl>
+
+                    {/*
+                      引用格式独立成块：数据集是学术产出，需要按 GB/T 7714 的 [DS] 体例
+                      给出可复制的引用条目，而不是让使用者自己拼。
+                    */}
+                    <div class="mt-5 border-t border-line pt-5">
+                      <p class="eyebrow mb-2">引用格式（GB/T 7714）</p>
+                      <p class="citation-text" data-cite-text>
+                        {toDatasetCitation({
+                          name: ds.name,
+                          authors: ds.authors,
+                          period: ds.period,
+                          publisher: site.name,
+                        })}
+                      </p>
+                      <button
+                        type="button"
+                        class="btn btn-secondary mt-3 numeric"
+                        data-copy-cite
+                        aria-label="复制数据集引用条目到剪贴板"
+                      >
+                        复制引用
+                      </button>
+                      <p class="mt-2 text-meta text-ink-tertiary" data-copy-status aria-live="polite" />
                     </div>
-                    <div>
-                      <dt class="eyebrow mb-1.5">获取方式</dt>
-                      <dd class="text-ui text-ink">{ds.access}</dd>
-                    </div>
-                    <div>
-                      <dt class="eyebrow mb-1.5">引用格式</dt>
-                      <dd class="text-meta leading-relaxed text-ink-secondary">{ds.citation}</dd>
-                    </div>
-                  </dl>
-                </article>
-              ))
-            }
+
+                    {ds.scale && (
+                      <p class="mt-4 text-meta text-ink-tertiary">体量：{ds.scale}</p>
+                    )}
+
+                    {ds.keywords.length > 0 && (
+                      <p class="keywords-line mt-4">
+                        <span class="keywords-label">关键词：</span>
+                        {ds.keywords.join('；')}
+                      </p>
+                    )}
+                  </article>
+                ))}
+              </div>
+
+              <div class="mt-10">
+                <EmptyState
+                  title="需要其他研究材料？"
+                  description="部分中间成果与编码手册未在此列出，可通过邮件说明研究用途后索取。"
+                  actionHref="/contact"
+                  actionLabel="联系我们"
+                />
+              </div>
+            </div>
+
+            <aside class="lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start">
+              <AsideBox title="使用说明">
+                <p class="text-ui leading-relaxed text-ink-secondary">
+                  开放数据集均已完成去标识化处理。使用前请阅读各数据集的许可协议，并在发表成果时按给出的引用格式标注来源。
+                </p>
+                <p class="mt-3 text-ui leading-relaxed text-ink-secondary">
+                  涉及个人信息的原始材料不对外开放。
+                </p>
+              </AsideBox>
+
+              <AsideBox title="许可协议">
+                <ul class="space-y-2">
+                  {licenses.map((l) => (
+                    <li class="flex items-baseline justify-between gap-3 text-ui">
+                      <span class="text-ink-secondary">{l}</span>
+                      <span class="numeric text-meta text-ink-tertiary">
+                        {items.filter((d) => d.license === l).length} 项
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </AsideBox>
+
+              <AsideBox title="数据咨询">
+                <p class="text-ui leading-relaxed text-ink-secondary">
+                  数据获取与研究用途说明请通过邮件联系院务办公室。
+                </p>
+                <p class="mt-3">
+                  <a href={`mailto:${site.email}`} class="link break-all">{site.email}</a>
+                </p>
+              </AsideBox>
+            </aside>
           </div>
-
-          <div class="mt-10">
-            <EmptyState
-              title="需要其他研究材料？"
-              description="部分中间成果与编码手册未在此列出，可通过邮件说明研究用途后索取。"
-              actionHref="/contact"
-              actionLabel="联系我们"
-            />
-          </div>
-        </div>
-
-        <aside class="lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start">
-          <AsideBox title="使用说明">
-            <p class="text-ui leading-relaxed text-ink-secondary">
-              开放数据集均已完成去标识化处理。使用前请阅读各数据集的许可协议，并在发表成果时按给出的引用格式标注来源。
-            </p>
-            <p class="mt-3 text-ui leading-relaxed text-ink-secondary">
-              涉及个人信息的原始材料不对外开放。
-            </p>
-          </AsideBox>
-
-          <AsideBox title="许可协议">
-            <ul class="space-y-2">
-              {
-                licenses.map((l) => (
-                  <li class="flex items-baseline justify-between gap-3 text-ui">
-                    <span class="text-ink-secondary">{l}</span>
-                    <span class="numeric text-meta text-ink-tertiary">
-                      {datasets.filter((d) => d.license === l).length} 项
-                    </span>
-                  </li>
-                ))
-              }
-            </ul>
-          </AsideBox>
-
-          <AsideBox title="数据咨询">
-            <p class="text-ui leading-relaxed text-ink-secondary">
-              数据获取与研究用途说明请通过邮件联系院务办公室。
-            </p>
-            <p class="mt-3">
-              <a href={`mailto:${site.email}`} class="link break-all">{site.email}</a>
-            </p>
-          </AsideBox>
-        </aside>
-      </div>
+        )
+      }
     </div>
   </section>
 </BaseLayout>
+
+<script>
+  // 复制引用条目：与 publications 详情页同一套交互（状态行在卡片内、4 秒后清空）
+  function initDatasetCopy() {
+    document.querySelectorAll<HTMLElement>('[data-copy-cite]').forEach((btn) => {
+      if (btn.dataset.bound === '1') return;
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', async () => {
+        const textEl = btn.closest('div')?.querySelector('[data-cite-text]') as HTMLElement | null;
+        const status = btn.closest('div')?.querySelector('[data-copy-status]') as HTMLElement | null;
+        if (!textEl) return;
+        try {
+          await navigator.clipboard.writeText(textEl.textContent ?? '');
+          if (status) status.textContent = '已复制到剪贴板';
+        } catch {
+          if (status) status.textContent = '复制失败，请手动选择并复制';
+        }
+        setTimeout(() => {
+          if (status) status.textContent = '';
+        }, 4000);
+      });
+    });
+  }
+  document.addEventListener('astro:page-load', initDatasetCopy);
+  initDatasetCopy();
+</script>

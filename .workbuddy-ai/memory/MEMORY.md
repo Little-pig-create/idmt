@@ -2,7 +2,7 @@
 
 ## 项目定位
 
-学术门户站点（Astro 5 静态输出）+ 内容发布后台（Vite + React 19 + MUI v7，独立应用）。
+学术门户站点（Astro 7 静态输出）+ 内容发布后台（Vite + React 19 + MUI v7，独立应用）。
 内容唯一数据源是 `src/content/**` 的 MDX 文件；后台只是这些文件的图形界面。
 
 ## 技术基线（不要轻易改动）
@@ -148,6 +148,66 @@ npm run build && npm run audit && npm run taste && npm run contrast && npm run d
   §4.8「必须用真实图片」↔ ADR「全站无位图」；§3.C「禁止手写 SVG 图标」↔ ADR-02「不引图标库」。
   这两条要改必须先问用户。
 
+## 学术检索与引用（2026-09-17 新增，勿削弱）
+
+**`src/lib/citation.ts` 是学术检索与引用的唯一入口**，三个出口：
+
+1. `toCitationMeta()` —— Highwire Press `citation_*`，喂给 `SeoHead.astro` 的 `citation` prop。
+   **`citation_author` 必须一人一条 `<meta>`**（Google Scholar 按标签出现次数收集作者，合并成逗号串会解析失败）。
+   载体字段名**按文献类型分流**：`citation_journal_title`（journal）/ `citation_conference_title`（conference）/
+   `citation_book_title` + `citation_publisher`（book）/ `citation_publisher`（report）。**写错字段名抓取器整条忽略。**
+   `citation_pdf_url` 必须是绝对 URL。
+2. `toGbt7714()` —— GB/T 7714-2015 条目（中文期刊投稿与学位论文**强制**格式）。
+   标识码：journal `[J]` / conference `[C]` / book `[M]` / report `[R]` / patent `[P]`。
+   卷期页码可选，缺失时**逐级降级**（`22(6)` → `22` → `(6)` → 无），不留空占位符。
+3. `formatVenue()` —— **中文载体名一律《》且 `not-italic`**。
+   中文出版体例用书名号；且 `Noto Serif SC` / `Noto Sans SC` **没有真斜体**，浏览器会合成机械倾斜。
+   三处渲染（`PublicationItem.astro` / `PublicationExplorer.tsx` / `publications/[slug].astro`）必须共用它。
+
+**`volume` / `issue` / `pages` 是 publications 可选字段**，两处 schema 必须同步（`content.config.ts` + `admin/server.mjs`）。
+未填数据时引用条目会缺卷期页码 —— 这是内容侧待补，不是代码缺陷。
+
+**`publishedAt` 不再用 `new Date(year, 0, 1)` 伪造**（那会把 1 月 1 日当成真实发表日期），现在只输出年份。
+
+## 学术体例样式（在 typography.css）
+
+- `.prose-academic .abstract-block` / `.abstract-heading` / `.abstract-body` —— 摘要标识块。
+  ⚠️ **必须带 `.prose-academic` 前缀**（0,2,0）：否则被 `.prose-academic h2`（0,1,1）盖掉，
+  摘要标题会吃掉 `margin-top: 4rem` 与下边框。**这是实际踩过的坑。**
+- `.keywords-line` —— 关键词独立成行、分号 `；` 分隔，**不写成 chips**。
+- `.citation-text` —— 引用条目文本（13px / 1.7）。
+- **三线表**：`table` 只有顶线 + 表头线 + 底线，中间**不加**横线，表头无底色。
+  历史上是「每行一条 `border-bottom`」，那是网页表格形态，不是学术表格。
+
+## 眉标签语义（全站统一，PAGE_SPECIFICATION §2.7）
+
+`PageHero.eyebrow` **只表示内容类型**，取值来自 `src/data/site.ts` 的 `sectionEyebrow`。
+成果详情用文献类型、活动详情用活动类型，其余用 `sectionEyebrow.<collection>`。
+
+**禁止**用序号（`方向 01`）、资助来源、英文名、首个 tag 充当眉标签 —— 此前同一位置承载 6 种语义。
+序号还违反 `TASTE-002`。
+
+## `TASTE-002` 只在眉标签元素内部匹配编号
+
+**不要对整页可见文本做编号正则** —— 标签剥离后相邻元素会拼到一起，
+实测「主讲人 周敏」+ 日期「06」会被读成「周敏 06」并误报。
+正解是先用 `class` 含 `eyebrow` / `section-bar-en` 抓出眉标签元素，再在其文本内匹配。
+形态 b)（中文前缀 + 补零编号）刻意**只认补零的 01-09**，这是它与正文数字的可靠分界。
+
+## 门禁清单（改动后必跑）
+
+```bash
+export CODEBUDDY_SAFE_DELETE_ENABLED=0
+npm run build && npm run audit && npm run taste && npm run contrast && npm run docs:tokens && npm run smoke
+```
+
+**新增检查必须做反向测试**（注入坏数据确认会报警），否则可能是永不触发的假检查。
+`taste.mjs` 的 TASTE-002 就是这么验的：往 `dist` 注入 `方向 01` 确认报错，再还原。
+
+**`dist` 有陈旧产物残留**：增量构建会在 `dist/_astro/` 累积旧 CSS 哈希文件（实测同时存在 3 个）。
+排查「样式没生效」时先 `Remove-Item dist -Recurse` 再全量构建，否则会读到旧文件误判。
+页面引用的始终是新的那个，但 grep 全目录会看到假的旧值。
+
 ## 环境坑（会重复踩）
 
 - **`export CODEBUDDY_SAFE_DELETE_ENABLED=0`**：否则 `astro build` 清 `dist` 时报 `[vite] ✗ Build failed`，是沙箱拦截不是代码问题。
@@ -179,15 +239,16 @@ npm run build && npm run audit && npm run taste && npm run contrast && npm run d
   **要给 `.md`/`.mdx` 加 remark/rehype 插件，必须先 `npm i @astrojs/markdown-remark`**（沙箱装不了，会卡死）。
   当前正文富文本靠 MDX 原生渲染 + `typography.css` 的 `prose-academic` 扩展（h4 / figure / figcaption）支撑。
 
-## ✅ 版本控制：已迁出父仓库并独立初始化（2026-09-17）
+## ✅ 版本控制：已迁出父仓库、独立初始化并完成首次提交（2026-09-17）
 
 **历史**：本站原位于 `D:/Research/Python数据工作台_2026-07-22/数字管理研究院网站`，
 被父仓库 `.gitignore` 第 78 行显式排除、自身无 `.git` → `git ls-files .` 返回 0，等于完全没有版本控制，
 `.github/workflows/ci.yml` 永不触发。`git status` 显示 "clean" 是假象。
 
 **现状**：2026-09-17 已整体迁移到 **`D:\数字管理研究院网站`**（用户确认「直接移动、原位置删除」），
-并 `git init` 建了**独立仓库**（`git rev-parse --show-toplevel` = `D:/数字管理研究院网站`）。
-**尚未做首次提交**（用户选择「初始化但不提交」），142 个源文件处于未跟踪状态。
+并 `git init` 建了**独立仓库**（`git rev-parse --show-toplevel` = `D:/数字管理研究院网站`），
+**已完成首次提交** `a135ed3`（142 文件基线）。此后本轮「学术体例与检索完善」的改动**尚未提交**。
+仓库本地身份：`user.name=DMI Portal` / `user.email=portal@dmi.local`（未设全局身份，必须仓库级配置）。
 `.gitignore` 已补 `admin/tmp/` 与 `admin/.tmp-*`（构建/调试临时产物，非源码）。
 
 **迁移副作用（已实测，属改善非回归）**：CSS 产物由 76 KB 降到 48 KB（gzip 14.6 → 9.4 KB）。
@@ -221,23 +282,28 @@ slide 标题一律 `h2`（首页 `h1` 在报头，轮播出现 `h1` 会破坏唯
 体积主体是 Tailwind utilities 层（46 KB 未压缩 / 约 1000 条规则），是工具类 CSS 的固有形态。
 真要压，方向是减少 `index.astro` 的**任意值写法**（`text-[1.1875rem]` 这类），改为在 `tokens.css` 定义语义令牌。
 
-## 当前基线（2026-09-13 首页区块重塑后复验）
+## 当前基线（2026-09-17 学术体例与检索完善后复验）
 
-**51 页** · 内容 43 条（成果 10 / 通知 7 / 新闻 6 / 活动 5 / 人员 4 / 方向 4 / 项目 4 / 专题 3）
+**51 页** · 内容 45 条（成果 10 / 通知 7 / 新闻 6 / 活动 5 / 人员 4 / 方向 4 / 项目 4 / 专题 3 / **数据集 2**）
 · audit 零告警（**3537 条内部链接** + 83 个 JSON-LD 块 + HYG-001 洁净度）· taste ✅ ·
-contrast 22/22 ✅ · docs:tokens ✅ · smoke 30/30
-· HTML 均值 37 KB/页（**最大 88.6 KB 首页**，此前 101.5 KB）· gzip JS 8.6 KB / CSS 14.5 KB · dist 1.85 MB。
+contrast 22/22 ✅ · docs:tokens ✅ · **smoke 56/56** ✅
+· HTML 均值 39 KB/页（**最大 88.7 KB 首页**）· gzip JS 8.6 KB / **CSS 9.1 KB** · dist 1.93 MB。
 BibTeX 引用键 10/10 唯一。
 
 结构化数据：`ResearchOrganization`×51 · `ScholarlyArticle`×10 · `NewsArticle`×6 · `Event`×5 ·
 `Person`×4 · `CreativeWork`×4 · `CollectionPage`×3。
 
+**本轮已补齐**：Highwire `citation_*` 元数据 · GB/T 7714 引用条目（含数据集 `[DS]`）·
+中文载体名《》分流 · 摘要/关键词标注块 · 三线表 · 搜索索引含正文并可检索摘要 · 数据集集合化 ·
+`notices.attachment` 接通 · 眉标签语义统一 · `volume/issue/pages` schema 字段。
+
 CI：`.github/workflows/ci.yml` —— `build → audit → taste → contrast → docs:tokens → smoke`
 + 单独构建 `admin/`，两个 job 都用 `npm ci`。
-（⚠️ 但本站未被任何 git 仓库跟踪，CI 实际不会触发 —— 见「版本控制」一节。）
 
 **未完成**：`/500`（静态站由托管平台兜底，不实现）。
-未选做的候补：`/datasets` 集合化、`/notices/:slug` + `/join` 集合化、英文版（i18n）。
+未选做的候补：`/notices/:slug` + `/join` 集合化、英文版（i18n）、成果发布日期精确到月。
+
+**Git**：首次提交 `a135ed3`（142 文件基线），此后本轮改动尚未提交。
 
 ## 专题（topics）聚合的铁律
 

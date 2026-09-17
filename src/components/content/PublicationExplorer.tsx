@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { publicationTypeLabels } from '../../data/site';
+import { formatVenue } from '../../lib/citation';
 
 export interface PublicationRecord {
   id: string;
@@ -21,6 +22,15 @@ interface Props {
 }
 
 type Filters = { type: string; year: string; tag: string };
+
+/**
+ * 载体名按语言分流：中文用书名号且不倾斜（中文无真斜体，浏览器会合成机械倾斜），
+ * 拉丁期刊名用斜体。与 PublicationItem.astro / publications/[slug].astro 同一规则。
+ */
+function Venue({ name }: { name: string }) {
+  const v = formatVenue(name);
+  return <cite className={v.italic ? 'italic' : 'not-italic'}>{v.text}</cite>;
+}
 
 const EMPTY: Filters = { type: '', year: '', tag: '' };
 
@@ -233,7 +243,7 @@ export default function PublicationExplorer({ items, pageSize = 20 }: Props) {
 
                 <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
                   <p className="text-ui text-ink-secondary">
-                    <span className="italic">{item.venue}</span>
+                    <Venue name={item.venue} />
                     <span className="numeric">, {item.year}</span>
                   </p>
 

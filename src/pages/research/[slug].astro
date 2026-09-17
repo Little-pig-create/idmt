@@ -5,6 +5,7 @@ import PageHero from '../../components/ui/PageHero.astro';
 import PublicationItem from '../../components/content/PublicationItem.astro';
 import PersonCard from '../../components/content/PersonCard.astro';
 import DetailFigure from '../../components/ui/DetailFigure.astro';
+import { sectionEyebrow, researchStatusLabels } from '../../data/site';
 
 export async function getStaticPaths() {
   const areas = await getCollection('research', ({ data }) => !data.draft);
@@ -13,13 +14,6 @@ export async function getStaticPaths() {
 
 const { area } = Astro.props;
 const { Content } = await render(area);
-
-/** 方向状态：schema 已声明但此前无任何模板渲染，这里给出中文标签让它可见 */
-const researchStatusLabel: Record<string, string> = {
-  active: '活跃',
-  ongoing: '进行中',
-  planned: '规划中',
-};
 
 const allPeople = await getCollection('people', ({ data }) => !data.draft);
 const lead = area.data.lead ? allPeople.find((p) => p.data.name === area.data.lead) : undefined;
@@ -41,7 +35,7 @@ const projects = (await getCollection('projects', ({ data }) => !data.draft)).fi
   type="article"
 >
   <PageHero
-    eyebrow={`方向 ${String(area.data.order).padStart(2, '0')}`}
+    eyebrow={sectionEyebrow.research}
     title={area.data.title}
     description={area.data.summary}
     crumbs={[{ label: '研究', href: '/research' }, { label: area.data.title }]}
@@ -74,7 +68,7 @@ const projects = (await getCollection('projects', ({ data }) => !data.draft)).fi
     area.data.status && (
       <div class="border-t border-line pt-5">
         <p class="eyebrow mb-3">方向状态</p>
-        <span class="tag tag-quiet">{researchStatusLabel[area.data.status] ?? area.data.status}</span>
+        <span class="tag tag-quiet">{researchStatusLabels[area.data.status] ?? area.data.status}</span>
       </div>
     )
   }

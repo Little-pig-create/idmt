@@ -5,6 +5,9 @@ authors:
 venue: 管理科学学报
 year: 2024
 type: journal
+volume: '27'
+issue: '11'
+pages: 34-50
 doi: 10.00000/jms.2024.11.007
 tags:
   - 鲁棒优化

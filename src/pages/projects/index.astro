@@ -5,13 +5,14 @@ import PageHero from '../../components/ui/PageHero.astro';
 import SectionHeading from '../../components/ui/SectionHeading.astro';
 import AsideBox from '../../components/ui/AsideBox.astro';
 import EmptyState from '../../components/ui/EmptyState.astro';
+import { projectStatusLabels } from '../../data/site';
 
 const all = await getCollection('projects', ({ data }) => !data.draft);
 
 const ongoing = all.filter((p) => p.data.status === 'ongoing');
 const completed = all.filter((p) => p.data.status === 'completed');
 
-const statusLabel: Record<string, string> = { ongoing: '在研', completed: '已结项' };
+const statusLabel = projectStatusLabels;
 
 const funders = [...new Set(all.map((p) => p.data.funder))].map((f) => ({
   label: f,

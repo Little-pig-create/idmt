@@ -1,5 +1,6 @@
 ---
 import { publicationTypeLabels } from '../../data/site';
+import { formatVenue } from '../../lib/citation';
 
 interface Props {
   title: string;
@@ -17,6 +18,8 @@ const { title, authors, venue, year, type, doi, pdf, tags = [], href } = Astro.p
 
 const typeLabel = publicationTypeLabels[type] ?? type;
 const doiHref = doi ? (doi.startsWith('http') ? doi : `https://doi.org/${doi}`) : undefined;
+/** 中文刊名用《》，拉丁刊名用斜体（中文无真斜体，浏览器合成倾斜会变形） */
+const venueText = formatVenue(venue);
 ---
 
 <article class="group border-b border-line py-5 transition-colors duration-150">
@@ -41,7 +44,7 @@ const doiHref = doi ? (doi.startsWith('http') ? doi : `https://doi.org/${doi}`) 
 
   <div class="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
     <p class="text-ui text-ink-secondary">
-      <span class="italic">{venue}</span>
+      <cite class:list={[venueText.italic ? 'italic' : 'not-italic']}>{venueText.text}</cite>
       <span class="numeric">, {year}</span>
     </p>
 

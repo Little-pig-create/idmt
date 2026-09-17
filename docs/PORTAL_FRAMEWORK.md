@@ -92,7 +92,7 @@
 │   └─ 活动详情  /events/:slug
 ├─ 专题专栏  /topics
 │   └─ 专题详情  /topics/:slug   ← 跨内容类型的横向聚合层
-├─ 数据集与资源  /datasets
+├─ 数据集与资源  /datasets       ← 内容集合驱动（`src/content/datasets/`），条目锚点为 `#<slug>`
 ├─ 招生招聘  /join
 ├─ 联系我们  /contact
 ├─ 全站搜索  /search?q=
@@ -390,6 +390,9 @@ authors: [姓名, ...]
 venue: 期刊/会议名称
 year: 2025
 type: journal | conference | book | patent | report
+volume: '22'                 # 可选，GB/T 7714 引用需要
+issue: '6'                   # 可选
+pages: 42-58                 # 可选，半角连字符
 doi: 10.xxxx/xxxxx
 pdf: /files/xxx.pdf          # 可选
 tags: [方向关键词]
@@ -409,10 +412,19 @@ title / startDate / endDate / location / type(seminar|conference|lecture) / spea
 title / order / summary / keywords[] / lead(负责人) / projects[] / publications[]
 
 # 项目 projects
-title / funder / period / amount(可选) / status / members[] / summary
+title / funder / period / status / members[] / summary
+
+# 数据集 datasets
+name / description / license / access / period(可选) / scale(可选) / href(可选) / keywords[] / order
 ```
 
-**约束**：`slug` 由文件名派生；日期统一 `YYYY-MM-DD`；作者名与 `people` 集合做一致性校验（脚本 `scripts/validate-content`）。
+**约束**：`slug` 由文件名派生；日期统一 `YYYY-MM-DD`。
+
+> ⚠️ **本节与实际 schema 存在已知漂移**（`src/content.config.ts` 才是唯一真源）：
+> 上文的 `links`（成果）、`avatar`（成员，实为 `portrait`）、`googleScholar`（实为 `scholar`）、
+> `amount`（项目）、`research.projects[]` / `research.publications[]`（实为运行时反查，非字段），
+> 以及 `scripts/validate-content`（**不存在**，校验由 Astro 构建期 schema 完成）。
+> 引用字段前请以 `src/content.config.ts` 与 `admin/server.mjs` 的 `COLLECTIONS` 为准。
 
 ---
 
@@ -510,20 +522,25 @@ title / funder / period / amount(可选) / status / members[] / summary
 ### 13.1 自动化门禁（每次构建后必跑）
 
 ```bash
-npm run build && npm run audit && npm run smoke
+npm run build && npm run audit && npm run taste && npm run contrast && npm run docs:tokens && npm run smoke
 ```
 
 | 检查 | 命令 | 当前 |
 |---|---|---|
-| 构建通过、38 页产出 | `npm run build` | ✅ |
+| 构建通过、51 页产出 | `npm run build` | ✅ |
 | `<html lang>`、`h1` 唯一、标题 ≤60 字符 | `audit` | ✅ |
 | meta description / canonical / og:title 齐备 | `audit` | ✅ |
 | Skip Link、`<main>` 存在 | `audit` | ✅ |
 | 标题层级不跳级 | `audit` | ✅（修过 5 处 h1→h3） |
 | 图片 `alt`、链接/按钮可访问名称、表单控件 label | `audit` | ✅ |
-| JSON-LD 可解析 + 类型分布正确 | `audit` | ✅ 58 块 |
-| 资源体积预算 | `audit` | ✅（CSS 略超 1 KB，见 §11） |
-| 21 条路由 HTTP 200 + 内容片段 + Content-Type | `smoke` | ✅ 20/20 |
+| JSON-LD 可解析 + 类型分布正确 | `audit` | ✅ 83 块 |
+| 内部链接路由与锚点（3537 条） | `audit` | ✅ LINK-001 / LINK-002 零告警 |
+| 产物洁净度（无内容注释） | `audit` | ✅ HYG-001 |
+| 资源体积预算（gzip：JS ≤ 30 KB / CSS ≤ 20 KB） | `audit` | ✅ JS 8.6 / CSS 9.1 KB |
+| 设计品位（破折号 / 眉标签 / 圆角 / 编号标签等 8 条） | `taste` | ✅ |
+| 文字对比度 22 组 ≥ 4.5:1 | `contrast` | ✅ |
+| 文档引用的令牌都有定义 | `docs:tokens` | ✅ |
+| 56 条路由 HTTP 200 + 内容片段 + Content-Type | `smoke` | ✅ 56/56 |
 
 ### 13.2 人工 / 浏览器实测（⏳ 需在 CI 或有 GUI 环境补跑）
 

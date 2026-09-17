@@ -2,17 +2,11 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHero from '../../components/ui/PageHero.astro';
+import { researchStatusLabels } from '../../data/site';
 
 const areas = (await getCollection('research', ({ data }) => !data.draft)).sort(
   (a, b) => a.data.order - b.data.order
 );
-
-/** 方向状态中文标签（与 research/[slug] 保持一致） */
-const researchStatusLabel: Record<string, string> = {
-  active: '活跃',
-  ongoing: '进行中',
-  planned: '规划中',
-};
 ---
 
 <BaseLayout
@@ -50,7 +44,7 @@ const researchStatusLabel: Record<string, string> = {
                         <li class="tag tag-quiet">{kw}</li>
                       ))}
                       {area.data.status && (
-                        <li class="tag tag-quiet">{researchStatusLabel[area.data.status] ?? area.data.status}</li>
+                        <li class="tag tag-quiet">{researchStatusLabels[area.data.status] ?? area.data.status}</li>
                       )}
                     </ul>
                   </div>
