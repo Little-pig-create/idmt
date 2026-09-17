@@ -1,0 +1,138 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/ui/PageHero.astro';
+import PublicationItem from '../../components/content/PublicationItem.astro';
+import PersonCard from '../../components/content/PersonCard.astro';
+import DetailFigure from '../../components/ui/DetailFigure.astro';
+
+export async function getStaticPaths() {
+  const areas = await getCollection('research', ({ data }) => !data.draft);
+  return areas.map((area) => ({ params: { slug: area.id }, props: { area } }));
+}
+
+const { area } = Astro.props;
+const { Content } = await render(area);
+
+/** 方向状态：schema 已声明但此前无任何模板渲染，这里给出中文标签让它可见 */
+const researchStatusLabel: Record<string, string> = {
+  active: '活跃',
+  ongoing: '进行中',
+  planned: '规划中',
+};
+
+const allPeople = await getCollection('people', ({ data }) => !data.draft);
+const lead = area.data.lead ? allPeople.find((p) => p.data.name === area.data.lead) : undefined;
+
+const allPublications = await getCollection('publications', ({ data }) => !data.draft);
+const relatedPublications = allPublications
+  .filter((p) => p.data.tags.some((t) => area.data.keywords.includes(t)))
+  .sort((a, b) => b.data.year - a.data.year)
+  .slice(0, 4);
+
+const projects = (await getCollection('projects', ({ data }) => !data.draft)).filter((p) =>
+  p.data.members.includes(area.data.lead ?? '')
+);
+---
+
+<BaseLayout
+  title={area.data.title}
+  description={area.data.summary}
+  type="article"
+>
+  <PageHero
+    eyebrow={`方向 ${String(area.data.order).padStart(2, '0')}`}
+    title={area.data.title}
+    description={area.data.summary}
+    crumbs={[{ label: '研究', href: '/research' }, { label: area.data.title }]}
+  />
+
+  <section class="section">
+    <div class="container-page">
+      <div class="grid gap-12 lg:grid-cols-[1fr_300px] lg:gap-16">
+        <div class="container-prose prose-academic lg:mx-0">
+          <DetailFigure
+            cover={area.data.cover}
+            coverAlt={area.data.coverAlt}
+            seed={area.id}
+            caption={area.data.coverAlt}
+            loading="eager"
+            class="mb-8"
+          />
+          <Content />
+        </div>
+
+        <aside class="space-y-8 lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start">
+  <div class="border-t border-line pt-5">
+    <p class="eyebrow mb-3">关键词</p>
+    <ul class="flex flex-wrap gap-1.5">
+      {area.data.keywords.map((kw) => <li class="tag">{kw}</li>)}
+    </ul>
+  </div>
+
+  {
+    area.data.status && (
+      <div class="border-t border-line pt-5">
+        <p class="eyebrow mb-3">方向状态</p>
+        <span class="tag tag-quiet">{researchStatusLabel[area.data.status] ?? area.data.status}</span>
+      </div>
+    )
+  }
+
+  {
+    lead && (
+              <div class="border-t border-line pt-5">
+                <p class="eyebrow mb-3">方向负责人</p>
+                <PersonCard
+                  name={lead.data.name}
+                  nameEn={lead.data.nameEn}
+                  title={lead.data.title}
+                  researchAreas={lead.data.researchAreas}
+                  href={`/people/${lead.id}`}
+                />
+              </div>
+            )
+          }
+
+          {
+            projects.length > 0 && (
+              <div class="border-t border-line pt-5">
+                <p class="eyebrow mb-3">相关项目</p>
+                <ul class="space-y-3">
+                  {projects.map((p) => (
+                    <li>
+                      <a href={`/projects/${p.id}`} class="link-title block text-ui">{p.data.title}</a>
+                      <p class="mt-1 text-meta text-ink-tertiary">{p.data.period}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          }
+        </aside>
+      </div>
+
+      {
+        relatedPublications.length > 0 && (
+          <div class="mt-16 border-t border-line pt-12">
+            <h2 class="text-h2">相关学术成果</h2>
+            <div class="mt-6">
+              {relatedPublications.map((pub) => (
+                <PublicationItem
+                  title={pub.data.title}
+                  authors={pub.data.authors}
+                  venue={pub.data.venue}
+                  year={pub.data.year}
+                  type={pub.data.type}
+                  doi={pub.data.doi}
+                  pdf={pub.data.pdf}
+                  tags={pub.data.tags}
+                />
+              ))}
+            </div>
+          </div>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>

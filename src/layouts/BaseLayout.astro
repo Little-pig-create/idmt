@@ -1,0 +1,80 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import SeoHead from '../components/seo/SeoHead.astro';
+import { site } from '../data/site';
+import '../styles/global.css';
+// ?raw 在构建期把令牌文件内联成字符串。
+// 不能用 import.meta.url + readFileSync：组件被打包进 dist/.prerender/chunks/ 后，
+// 相对路径会指向产物目录而不是源码目录，构建期直接 ENOENT。
+import tokensCss from '../styles/tokens.css?raw';
+
+interface Props {
+  title: string;
+  description?: string;
+  type?: 'website' | 'article';
+  publishedAt?: Date;
+}
+
+const { title, description, type, publishedAt } = Astro.props;
+
+/**
+ * theme-color 是 <meta>，不认 CSS 变量，只能写字面量。
+ * 从 tokens.css 取 --color-canvas，避免手抄一份、改配色时漏掉这里。
+ */
+const canvasColor =
+  tokensCss.match(/--color-canvas:\s*(#[0-9a-fA-F]{3,8})/)?.[1] ?? '#f7f7f7';
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content={canvasColor} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500&family=Noto+Serif+SC:wght@600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap"
+    />
+
+    <SeoHead title={title} description={description} type={type} publishedAt={publishedAt} />
+
+    {/* 原生 View Transitions：多页站点获得类 SPA 的连续感，不引入客户端路由框架 */}
+    <ClientRouter fallback="swap" />
+  </head>
+
+  <body class="flex min-h-screen flex-col">
+    <a href="#main" class="skip-link">跳到主要内容</a>
+
+    <Header />
+
+    <main id="main" class="flex-1">
+      <slot />
+    </main>
+
+    <Footer />
+
+    <script is:inline type="application/ld+json" set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'ResearchOrganization',
+      name: site.name,
+      alternateName: site.nameEn,
+      url: site.url,
+      email: site.email,
+      telephone: site.phone,
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: site.address,
+        postalCode: site.postcode,
+        addressCountry: 'CN',
+      },
+      description: site.description,
+    })} />
+  </body>
+</html>

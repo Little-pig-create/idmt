@@ -1,0 +1,251 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/ui/PageHero.astro';
+---
+
+<BaseLayout title="全站搜索" description="搜索数字管理研究院的学术成果、研究人员、新闻与学术活动。">
+  <PageHero
+    eyebrow="Search"
+    title="全站搜索"
+    description="一次输入即可检索学术成果、研究人员、新闻动态、学术活动、研究方向与科研项目。"
+    crumbs={[{ label: '全站搜索' }]}
+  />
+
+  <section class="section">
+    <div class="container-page">
+      <form role="search" method="get" action="/search" class="max-w-2xl" data-search-form>
+        <label for="q" class="eyebrow mb-2 block">搜索关键词</label>
+        <div class="flex gap-3">
+          <input
+            id="q"
+            name="q"
+            type="search"
+            autocomplete="off"
+            placeholder="例如：数据要素、数字治理、陈立"
+            class="min-h-11 w-full rounded-md border border-line-strong bg-surface px-4 text-ui text-ink outline-none transition-colors duration-150 placeholder:text-ink-tertiary focus:border-accent"
+          />
+          <button type="submit" class="btn btn-primary shrink-0">搜索</button>
+        </div>
+        <p class="mt-3 text-meta text-ink-tertiary">
+          提示：按 <kbd class="numeric rounded-sm border border-line px-1.5 py-0.5">/</kbd> 可随时唤起搜索
+        </p>
+      </form>
+
+      <div class="mt-12" data-search-output aria-live="polite" aria-busy="false">
+        <noscript>
+          <p class="text-ui text-ink-secondary">
+            全站搜索需要启用 JavaScript。你也可以直接浏览
+            <a href="/publications" class="link">学术成果</a>、
+            <a href="/people" class="link">研究团队</a>、
+            <a href="/news" class="link">新闻动态</a>。
+          </p>
+        </noscript>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  type SearchDoc = { title: string; url: string; kind: string; summary: string; tags: string[] };
+
+  // View Transitions 安全：DOM 节点在每次换页后重新查询并写入这三个变量，
+  // 下方所有函数读取的是变量本身，因此总能拿到当前页面的节点。
+  let output: HTMLElement | null = null;
+  let form: HTMLFormElement | null = null;
+  let input: HTMLInputElement | null = null;
+  let debounce: number | undefined;
+
+  function escapeHtml(s: string) {
+    return s.replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string
+    );
+  }
+
+  function highlight(text: string, terms: string[]) {
+    let out = escapeHtml(text);
+    for (const t of terms) {
+      if (t.length < 1) continue;
+      const re = new RegExp(`(${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+      out = out.replace(re, '<mark class="bg-accent-soft text-accent-ink rounded-sm px-0.5">$1</mark>');
+    }
+    return out;
+  }
+
+  function renderInitial() {
+    if (!output) return;
+    output.innerHTML = `
+      <div class="border-t border-line pt-8">
+        <p class="text-ui text-ink">输入关键词开始搜索</p>
+        <p class="mt-2 text-meta text-ink-tertiary">可以搜索成果标题、作者、期刊、研究方向与活动名称</p>
+        <ul class="mt-6 flex flex-wrap gap-2">
+          <li><a href="/publications" class="tag tag-quiet">学术成果</a></li>
+          <li><a href="/people" class="tag tag-quiet">研究团队</a></li>
+          <li><a href="/news" class="tag tag-quiet">新闻动态</a></li>
+          <li><a href="/events" class="tag tag-quiet">学术活动</a></li>
+          <li><a href="/research" class="tag tag-quiet">研究方向</a></li>
+        </ul>
+      </div>`;
+  }
+
+  function renderNoResults(query: string, suggestions: string[]) {
+    if (!output) return;
+    const suggestionHtml = suggestions
+      .map(
+        (s) =>
+          `<li><a href="/search?q=${encodeURIComponent(s)}" class="tag tag-quiet transition-colors duration-150 hover:bg-accent-soft hover:text-accent-ink">${escapeHtml(s)}</a></li>`
+      )
+      .join('');
+    output.innerHTML = `
+      <div class="border-t border-line pt-8">
+        <p class="text-[1.0625rem] font-medium text-ink">没有找到与「${escapeHtml(query)}」匹配的内容</p>
+        <p class="mt-2 text-ui text-ink-secondary">
+          试试更短的关键词，或从下面的方向重新开始。
+        </p>
+        ${suggestions.length ? `<ul class="mt-5 flex flex-wrap gap-2">${suggestionHtml}</ul>` : ''}
+        <div class="mt-6 flex flex-wrap gap-3">
+          <a href="/publications" class="btn btn-secondary">浏览全部成果</a>
+          <a href="/people" class="btn btn-secondary">浏览研究团队</a>
+        </div>
+      </div>`;
+  }
+
+  function renderResults(docs: SearchDoc[], query: string, terms: string[]) {
+    if (!output) return;
+    const groups = new Map<string, SearchDoc[]>();
+    for (const d of docs) {
+      if (!groups.has(d.kind)) groups.set(d.kind, []);
+      groups.get(d.kind)!.push(d);
+    }
+
+    const body = [...groups.entries()]
+      .map(
+        ([kind, items]) => `
+        <section class="mt-8">
+          <h2 class="eyebrow mb-3">${escapeHtml(kind)} · ${items.length}</h2>
+          <ul class="divide-y divide-line">
+            ${items
+              .map(
+                (d) => `
+              <li>
+                <a href="${d.url}" class="block py-4 transition-colors duration-150 hover:bg-surface">
+                  <p class="text-[1.0625rem] font-medium text-ink">${highlight(d.title, terms)}</p>
+                  <p class="mt-1 text-ui text-ink-secondary">${highlight(d.summary, terms)}</p>
+                </a>
+              </li>`
+              )
+              .join('')}
+          </ul>
+        </section>`
+      )
+      .join('');
+
+    output.innerHTML = `
+      <div class="border-t border-line pt-8">
+        <p class="text-ui text-ink-secondary">
+          找到 <span class="numeric text-ink">${docs.length}</span> 条与「${escapeHtml(query)}」相关的内容
+        </p>
+        ${body}
+      </div>`;
+  }
+
+  async function run(query: string) {
+    if (!output) return;
+    const q = query.trim();
+    if (!q) {
+      renderInitial();
+      return;
+    }
+
+    output.setAttribute('aria-busy', 'true');
+    output.innerHTML = `
+      <div class="border-t border-line pt-8 space-y-4">
+        ${Array.from({ length: 4 })
+          .map(() => '<div class="h-14 animate-pulse rounded-md bg-surface-subtle"></div>')
+          .join('')}
+      </div>`;
+
+    let docs: SearchDoc[] = [];
+    try {
+      const res = await fetch('/search-index.json');
+      docs = res.ok ? await res.json() : [];
+    } catch {
+      output.innerHTML =
+        '<div class="border-t border-line pt-8"><p class="text-ui text-ink">索引加载失败，请稍后重试。</p></div>';
+      output.setAttribute('aria-busy', 'false');
+      return;
+    }
+
+    const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+
+    const scored = docs
+      .map((d) => {
+        const title = d.title.toLowerCase();
+        const rest = `${d.summary} ${d.tags.join(' ')} ${d.kind}`.toLowerCase();
+        let score = 0;
+        for (const t of terms) {
+          if (title.includes(t)) score += 3;
+          else if (rest.includes(t)) score += 1;
+          else return { d, score: -1 };
+        }
+        return { d, score };
+      })
+      .filter((x) => x.score >= 0)
+      .sort((a, b) => b.score - a.score)
+      .map((x) => x.d);
+
+    if (scored.length === 0) {
+      const vocabulary = [...new Set(docs.flatMap((d) => d.tags))].slice(0, 6);
+      renderNoResults(q, vocabulary);
+    } else {
+      renderResults(scored, q, terms);
+    }
+    output.setAttribute('aria-busy', 'false');
+  }
+
+  function syncUrl(q: string) {
+    const url = q ? `/search?q=${encodeURIComponent(q)}` : '/search';
+    window.history.replaceState(null, '', url);
+    return url;
+  }
+
+  function initSearch() {
+    output = document.querySelector('[data-search-output]') as HTMLElement | null;
+    form = document.querySelector('[data-search-form]') as HTMLFormElement | null;
+    input = document.getElementById('q') as HTMLInputElement | null;
+
+    const params = new URLSearchParams(window.location.search);
+    const initialQuery = params.get('q') ?? '';
+    if (input) input.value = initialQuery;
+
+    if (form && form.dataset.hb !== '1') {
+      form.dataset.hb = '1';
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const q = input?.value ?? '';
+        syncUrl(q);
+        run(q);
+      });
+    }
+
+    if (input && input.dataset.hb !== '1') {
+      input.dataset.hb = '1';
+      input.addEventListener('input', () => {
+        window.clearTimeout(debounce);
+        debounce = window.setTimeout(() => {
+          const q = input?.value ?? '';
+          syncUrl(q);
+          run(q);
+        }, 220);
+      });
+    }
+
+    run(initialQuery);
+  }
+
+  const root = document as Document & { __searchPage?: boolean };
+  if (!root.__searchPage) {
+    root.__searchPage = true;
+    document.addEventListener('astro:page-load', initSearch);
+  }
+  initSearch();
+</script>

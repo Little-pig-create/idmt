@@ -1,0 +1,132 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/ui/PageHero.astro';
+import SectionHeading from '../../components/ui/SectionHeading.astro';
+import AsideBox from '../../components/ui/AsideBox.astro';
+import EventItem from '../../components/content/EventItem.astro';
+import EmptyState from '../../components/ui/EmptyState.astro';
+import { eventTypeLabels, site } from '../../data/site';
+
+const all = await getCollection('events', ({ data }) => !data.draft);
+const now = Date.now();
+
+const upcoming = all
+  .filter((e) => e.data.startDate.getTime() >= now)
+  .sort((a, b) => a.data.startDate.getTime() - b.data.startDate.getTime());
+
+const past = all
+  .filter((e) => e.data.startDate.getTime() < now)
+  .sort((a, b) => b.data.startDate.getTime() - a.data.startDate.getTime());
+
+const typeCounts = [...new Set(all.map((e) => e.data.type))].map((t) => ({
+  label: eventTypeLabels[t] ?? t,
+  count: all.filter((e) => e.data.type === t).length,
+}));
+
+const locations = [...new Set(all.map((e) => e.data.location))];
+---
+
+<BaseLayout
+  title="学术活动"
+  description="数字管理研究院举办的讲座、研讨会、学术会议与工作坊。"
+>
+  <PageHero
+    eyebrow="Events"
+    title="学术活动"
+    description="研究院举办的学术讲座、研讨会、工作坊与年度论坛，多数面向校内外开放。"
+    crumbs={[{ label: '成果与动态', href: '/publications' }, { label: '学术活动' }]}
+  />
+
+  <section class="section">
+    <div class="container-page">
+      <div class="grid gap-12 lg:grid-cols-[1fr_320px] lg:gap-16">
+        <div>
+          <SectionHeading eyebrow="Upcoming" title="即将举行" />
+          {
+            upcoming.length > 0 ? (
+              <div>
+                {upcoming.map((event) => (
+                  <EventItem
+                    title={event.data.title}
+                    startDate={event.data.startDate}
+                    location={event.data.location}
+                    type={event.data.type}
+                    speakers={event.data.speakers}
+                    summary={event.data.summary}
+                    href={`/events/${event.id}`}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title="暂无即将举行的活动"
+                description="新的讲座与研讨会信息会在此公布。"
+                suggestions={past.length > 0 ? [{ label: '查看往期活动', href: '#past' }] : []}
+              />
+            )
+          }
+
+          {
+            past.length > 0 && (
+              <div id="past" class="mt-16">
+                <SectionHeading title="往期活动" />
+                <div>
+                  {past.map((event) => (
+                    <EventItem
+                      title={event.data.title}
+                      startDate={event.data.startDate}
+                      location={event.data.location}
+                      type={event.data.type}
+                      speakers={event.data.speakers}
+                      summary={event.data.summary}
+                      href={`/events/${event.id}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )
+          }
+        </div>
+
+        <aside class="lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start">
+          <AsideBox title="活动类型">
+            <ul>
+              {
+                typeCounts.map((t) => (
+                  <li class="flex items-baseline justify-between gap-3 border-b border-line py-2 text-ui">
+                    <span class="text-ink-secondary">{t.label}</span>
+                    <span class="numeric text-meta text-ink-tertiary">{t.count}</span>
+                  </li>
+                ))
+              }
+            </ul>
+          </AsideBox>
+
+          <AsideBox title="常用场地">
+            <ul class="space-y-2 text-ui text-ink-secondary">
+              {locations.map((l) => <li>{l}</li>)}
+            </ul>
+          </AsideBox>
+
+          <AsideBox title="参与与咨询">
+            <p class="text-ui leading-relaxed text-ink-secondary">
+              多数活动无需登记，座位先到先得。如需确认日程或申请来访，请联系院务办公室。
+            </p>
+            <p class="mt-3">
+              <a href={`mailto:${site.email}`} class="link break-all">{site.email}</a>
+            </p>
+          </AsideBox>
+
+          <AsideBox title="相关入口">
+            <ul class="space-y-2 text-ui">
+              <li><a href="/news" class="link">新闻动态</a></li>
+              <li><a href="/notices" class="link">通知公告</a></li>
+              <li><a href="/publications" class="link">学术成果</a></li>
+            </ul>
+          </AsideBox>
+        </aside>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,54 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+  actionHref?: string;
+  actionLabel?: string;
+  suggestions?: { label: string; href: string }[];
+}
+
+const { title, description, actionHref, actionLabel, suggestions = [] } = Astro.props;
+---
+
+<div class="card flex flex-col items-center px-6 py-14 text-center">
+  <svg
+    width="28"
+    height="28"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+    class="text-ink-tertiary"
+  >
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+  </svg>
+
+  <p class="mt-4 text-[1.0625rem] font-medium text-ink">{title}</p>
+  {description && <p class="mt-2 max-w-md text-ui leading-relaxed text-ink-secondary">{description}</p>}
+
+  {
+    suggestions.length > 0 && (
+      <ul class="mt-5 flex flex-wrap justify-center gap-2">
+        {suggestions.map((s) => (
+          <li>
+            <a href={s.href} class="tag tag-quiet transition-colors duration-150 hover:bg-accent-soft hover:text-accent-ink">
+              {s.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
+  {
+    actionHref && actionLabel && (
+      <a href={actionHref} class="btn btn-secondary mt-6">
+        {actionLabel}
+      </a>
+    )
+  }
+</div>

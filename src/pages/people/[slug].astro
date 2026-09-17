@@ -1,0 +1,197 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/ui/PageHero.astro';
+import PublicationItem from '../../components/content/PublicationItem.astro';
+import EmptyState from '../../components/ui/EmptyState.astro';
+import PortraitFigure from '../../components/ui/PortraitFigure.astro';
+import JsonLd from '../../components/seo/JsonLd.astro';
+import { site } from '../../data/site';
+
+export async function getStaticPaths() {
+  const people = await getCollection('people', ({ data }) => !data.draft);
+  return people.map((person) => ({ params: { slug: person.id }, props: { person } }));
+}
+
+const { person } = Astro.props;
+const { Content } = await render(person);
+
+const allPublications = await getCollection('publications', ({ data }) => !data.draft);
+const authored = allPublications
+  .filter((p) => p.data.authors.includes(person.data.name))
+  .sort((a, b) => b.data.year - a.data.year);
+
+/** 参与项目：projects.members 按姓名匹配（在研优先，其次周期倒序） */
+const allProjects = await getCollection('projects', ({ data }) => !data.draft);
+const involvedProjects = allProjects
+  .filter((p) => p.data.members.includes(person.data.name))
+  .sort((a, b) =>
+    a.data.status === b.data.status
+      ? b.data.period.localeCompare(a.data.period)
+      : a.data.status === 'ongoing'
+        ? -1
+        : 1
+  );
+
+/** 研究方向：自述方向与 research.title 完全相同时给出链接 */
+const allResearch = await getCollection('research', ({ data }) => !data.draft);
+const areaLinks = new Map(allResearch.map((r) => [r.data.title, `/research/${r.id}`]));
+
+const contacts = [
+  { label: '邮箱', value: person.data.email, href: person.data.email ? `mailto:${person.data.email}` : undefined },
+  { label: '个人主页', value: person.data.homepage, href: person.data.homepage },
+  { label: 'Google Scholar', value: person.data.scholar, href: person.data.scholar },
+  { label: 'ORCID', value: person.data.orcid, href: person.data.orcid ? `https://orcid.org/${person.data.orcid}` : undefined },
+].filter((c) => c.value);
+---
+
+<BaseLayout
+  title={person.data.name}
+  description={`${person.data.name}，${person.data.title}。研究方向：${person.data.researchAreas.join('、')}。`}
+  type="article"
+>
+  <JsonLd
+    data={{
+      '@type': 'Person',
+      name: person.data.name,
+      alternateName: person.data.nameEn,
+      jobTitle: person.data.title,
+      url: new URL(`/people/${person.id}`, site.url).toString(),
+      worksFor: { '@type': 'Organization', name: site.name, url: site.url },
+      knowsAbout: person.data.researchAreas,
+      ...(person.data.email ? { email: `mailto:${person.data.email}` } : {}),
+      ...(person.data.orcid ? { identifier: `https://orcid.org/${person.data.orcid}` } : {}),
+      ...(person.data.scholar ? { sameAs: [person.data.scholar, person.data.homepage].filter(Boolean) } : {}),
+    }}
+  />
+  <PageHero
+    eyebrow={person.data.nameEn ?? 'People'}
+    title={person.data.name}
+    description={person.data.title}
+    crumbs={[{ label: '研究', href: '/research' }, { label: '研究团队', href: '/people' }, { label: person.data.name }]}
+  />
+
+  <section class="section">
+    <div class="container-page">
+      <div class="grid gap-12 lg:grid-cols-[1fr_300px] lg:gap-16">
+        <div>
+          <div class="container-prose prose-academic lg:mx-0">
+            <Content />
+          </div>
+
+          <div class="mt-16 border-t border-line pt-12">
+            <h2 class="text-h3">代表性成果</h2>
+            {
+              authored.length > 0 ? (
+                <div class="mt-6">
+                  {authored.map((pub) => (
+                    <PublicationItem
+                      title={pub.data.title}
+                      authors={pub.data.authors}
+                      venue={pub.data.venue}
+                      year={pub.data.year}
+                      type={pub.data.type}
+                      doi={pub.data.doi}
+                      pdf={pub.data.pdf}
+                      tags={pub.data.tags}
+                      href={`/publications/${pub.id}`}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div class="mt-6">
+                  <EmptyState
+                    title="暂无收录成果"
+                    description="该成员目前没有在成果库中登记的条目。"
+                    actionHref="/publications"
+                    actionLabel="查看全部学术成果"
+                  />
+                </div>
+              )
+            }
+          </div>
+        </div>
+
+        <aside class="space-y-8 lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start">
+          <PortraitFigure
+            name={person.data.name}
+            nameEn={person.data.nameEn}
+            portrait={person.data.portrait}
+            portraitAlt={person.data.portraitAlt}
+          />
+
+          <div class="border-t border-line pt-5">
+            <p class="eyebrow mb-3">研究方向</p>
+            <ul class="flex flex-wrap gap-1.5">
+              {
+                person.data.researchAreas.map((area) => {
+                  const href = areaLinks.get(area);
+                  return (
+                    <li>
+                      {href ? (
+                        <a href={href} class="tag">{area}</a>
+                      ) : (
+                        <span class="tag">{area}</span>
+                      )}
+                    </li>
+                  );
+                })
+              }
+            </ul>
+          </div>
+
+          {
+            involvedProjects.length > 0 && (
+              <div class="border-t border-line pt-5">
+                <p class="eyebrow mb-3">参与项目</p>
+                <ul class="space-y-3">
+                  {involvedProjects.map((p) => (
+                    <li>
+                      <a href={`/projects/${p.id}`} class="link-title block text-ui">
+                        {p.data.title}
+                      </a>
+                      <p class="mt-1 flex flex-wrap items-center gap-2 text-meta text-ink-tertiary">
+                        <span class="numeric">{p.data.period}</span>
+                        {p.data.status === 'ongoing' && <span class="tag">在研</span>}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          }
+
+          {
+            contacts.length > 0 && (
+              <div class="border-t border-line pt-5">
+                <p class="eyebrow mb-3">联系</p>
+                <dl class="space-y-3">
+                  {contacts.map((c) => (
+                    <div>
+                      <dt class="text-meta text-ink-tertiary">{c.label}</dt>
+                      <dd class="mt-0.5 text-ui">
+                        <a
+                          href={c.href}
+                          rel="noopener"
+                          class="link break-all"
+                        >
+                          {c.label === '邮箱' ? c.value : new URL(c.href!).hostname.replace('www.', '')}
+                        </a>
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            )
+          }
+
+          <div class="border-t border-line pt-5">
+            <p class="eyebrow mb-3">收录成果</p>
+            <p class="numeric text-[1.75rem] leading-none font-medium text-ink">{authored.length}</p>
+            <p class="mt-2 text-meta text-ink-tertiary">篇（含期刊、会议、著作与报告）</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

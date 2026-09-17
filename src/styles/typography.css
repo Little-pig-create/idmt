@@ -1,0 +1,220 @@
+/* ============================================================
+   排版基线
+   衬线标题建立期刊感；无衬线正文保证屏幕可读性。
+   中文标题使用 Noto Serif SC，拉丁字符前置 Source Serif 4。
+   ============================================================ */
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--color-ink);
+    text-wrap: balance;
+  }
+
+  h1 {
+    font-size: var(--text-h1);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  h2 {
+    font-size: var(--text-h2);
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+  }
+
+  h3 {
+    font-size: var(--text-h3);
+    line-height: 1.4;
+  }
+
+  h4 {
+    font-size: 1rem;
+    line-height: 1.5;
+    font-family: var(--font-sans);
+    font-weight: 500;
+  }
+}
+
+@layer components {
+  /* ---------- 展示级标题 ---------- */
+  .display {
+    font-family: var(--font-display);
+    font-size: var(--text-display);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    font-weight: 600;
+    text-wrap: balance;
+  }
+
+  /* 中文标题：衬线，中英混排时拉丁部分仍用 display 字体 */
+  .cjk-serif {
+    font-family: var(--font-serif-cjk);
+  }
+
+  /* ---------- 长文正文 ---------- */
+  .prose-academic {
+    font-size: var(--text-body);
+    line-height: 1.75;
+    color: var(--color-ink);
+  }
+
+  .prose-academic > * + * {
+    margin-top: 1.25em;
+  }
+
+  .prose-academic h2 {
+    margin-top: 4rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .prose-academic h3 {
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  /* h4：比 h3 收敛，用无衬线半粗，做小节内的子标题 */
+  .prose-academic h4 {
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .prose-academic p {
+    color: var(--color-ink);
+  }
+
+  .prose-academic ul,
+  .prose-academic ol {
+    padding-left: 1.25rem;
+  }
+
+  .prose-academic ul {
+    list-style: disc;
+  }
+
+  .prose-academic ol {
+    list-style: decimal;
+  }
+
+  .prose-academic li + li {
+    margin-top: 0.375rem;
+  }
+
+  .prose-academic li::marker {
+    color: var(--color-ink-tertiary);
+  }
+
+  .prose-academic a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+
+  .prose-academic a:hover {
+    color: var(--color-accent-hover);
+  }
+
+  /* 引用块：左侧主色发丝线 + 斜体，不用大面积色块 */
+  .prose-academic blockquote {
+    border-left: 3px solid var(--color-accent);
+    padding-left: 1.25rem;
+    font-style: italic;
+    color: var(--color-ink-secondary);
+  }
+
+  .prose-academic code {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    background-color: var(--color-surface-subtle);
+    padding: 0.125rem 0.375rem;
+    border-radius: var(--radius-sm);
+  }
+
+  .prose-academic pre {
+    background-color: var(--color-surface-ink);
+    color: var(--color-ink-invert);
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    font-size: 0.875rem;
+    line-height: 1.65;
+  }
+
+  .prose-academic pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+
+  .prose-academic table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-ui);
+  }
+
+  .prose-academic thead {
+    background-color: var(--color-surface-subtle);
+  }
+
+  .prose-academic th,
+  .prose-academic td {
+    padding: 0.625rem 0.875rem;
+    text-align: left;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .prose-academic th {
+    font-weight: 500;
+  }
+
+  .prose-academic img {
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-line);
+  }
+
+  /* 正文配图：独占一行的图片由 remark-figure 升级为 <figure>，
+     与详情页顶部 DetailFigure 共用同一套视觉语言（圆角 + 发丝边框 + 图注）。 */
+  .prose-academic figure {
+    margin-block: 2rem;
+  }
+
+  .prose-academic figure img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-line);
+  }
+
+  .prose-academic figcaption {
+    margin-top: 0.5rem;
+    font-size: var(--text-meta);
+    line-height: 1.5;
+    color: var(--color-ink-tertiary);
+    text-align: center;
+  }
+
+  .prose-academic hr {
+    border: 0;
+    border-top: 1px solid var(--color-line);
+    margin-block: 3rem;
+  }
+
+  /* 图注 */
+  .figure-caption {
+    font-size: var(--text-meta);
+    color: var(--color-ink-tertiary);
+    margin-top: 0.5rem;
+  }
+}

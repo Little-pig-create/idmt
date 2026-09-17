@@ -1,0 +1,446 @@
+---
+/**
+ * 首页焦点轮播
+ *
+ * 设计约束：
+ * - 配图走 CoverImage：slide 传了 cover 就用真实图片，否则回落 AbstractFigure（确定性 SVG）；
+ * - 标题一律用 h2：全站唯一 h1 在报头（首页）或 PageHero（内页），轮播里出现 h1 会破坏 SEO 审计；
+ * - 无 JS 时降级为「第一张静态卡片」：其余 slide 带 hidden 属性，控件默认 display:none；
+ * - 脚本遵守 docs/PAGE_SPECIFICATION.md §2.6：查询写在 init 内、astro:page-load 驱动、
+ *   data-hb 幂等、末尾立即执行一次。
+ */
+
+import CoverImage from './CoverImage.astro';
+
+interface Slide {
+  /** 同时作为回落 AbstractFigure 的种子与详情页链接的 id */
+  id: string;
+  /** 真实封面图 URL；留空则回落抽象图形 */
+  cover?: string;
+  /** 封面图替代文本 */
+  coverAlt?: string;
+  /** 详情页链接 */
+  href: string;
+  /** 主分类标签（高亮） */
+  badge: string;
+  /** 次分类标签（弱化），可为空 */
+  tag?: string;
+  date: Date;
+  /** 已格式化的日期文本，由调用方统一格式化 */
+  dateText: string;
+  title: string;
+  summary: string;
+}
+
+interface Props {
+  slides: Slide[];
+  /** 自动播放间隔（毫秒） */
+  interval?: number;
+  /** 轮播区的可读名称 */
+  label?: string;
+}
+
+const { slides, interval = 5500, label = '焦点内容' } = Astro.props;
+const total = slides.length;
+---
+
+{
+  total > 0 && (
+    <section
+      class="carousel"
+      data-carousel
+      data-interval={String(interval)}
+      aria-roledescription="carousel"
+      aria-label={label}
+    >
+      <div class="carousel-viewport" data-carousel-viewport aria-live="polite">
+        {slides.map((slide, i) => (
+          <div
+            class="carousel-slide"
+            data-carousel-slide
+            data-active={i === 0 ? 'true' : 'false'}
+            role="group"
+            aria-roledescription="slide"
+            aria-label={`${i + 1} / ${total}`}
+            hidden={i !== 0}
+          >
+            <a href={slide.href} class="portal-card group">
+              <div class="figure-frame aspect-[16/9]">
+                <CoverImage
+                  cover={slide.cover}
+                  alt={slide.coverAlt ?? slide.title}
+                  seed={slide.id}
+                  ratio={16 / 9}
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                />
+              </div>
+              <div class="p-5 lg:p-6">
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <span class="tag">{slide.badge}</span>
+                  {slide.tag && <span class="tag tag-quiet">{slide.tag}</span>}
+                  <time
+                    datetime={slide.date.toISOString().slice(0, 10)}
+                    class="numeric text-meta text-ink-tertiary"
+                  >
+                    {slide.dateText}
+                  </time>
+                </div>
+                <h2 class="mt-3 font-[family-name:var(--font-serif-cjk)] text-[1.375rem] leading-snug text-ink lg:text-[1.75rem]">
+                  <span class="link-title">{slide.title}</span>
+                </h2>
+                <p class="mt-3 max-w-2xl line-clamp-2 text-ui leading-relaxed text-ink-secondary">
+                  {slide.summary}
+                </p>
+              </div>
+            </a>
+          </div>
+        ))}
+      </div>
+
+      {total > 1 && (
+        <div class="carousel-controls" data-carousel-controls>
+          <div class="carousel-dots" role="group" aria-label="轮播分页">
+            {slides.map((_, i) => (
+              <button
+                type="button"
+                class="carousel-dot"
+                data-carousel-dot
+                data-index={String(i)}
+                aria-label={`跳转到第 ${i + 1} 张`}
+                aria-current={i === 0 ? 'true' : undefined}
+              />
+            ))}
+          </div>
+
+          <div class="carousel-buttons">
+            <button type="button" class="carousel-btn" data-carousel-prev aria-label="上一张">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              class="carousel-btn"
+              data-carousel-pause
+              data-state="playing"
+              aria-label="暂停自动播放"
+            >
+              <svg
+                data-icon="pause"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <rect x="7" y="5" width="3.4" height="14" rx="1" />
+                <rect x="13.6" y="5" width="3.4" height="14" rx="1" />
+              </svg>
+              <svg
+                data-icon="play"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M8 5.5v13l11-6.5-11-6.5Z" />
+              </svg>
+            </button>
+
+            <button type="button" class="carousel-btn" data-carousel-next aria-label="下一张">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
+
+<style>
+  .carousel-viewport {
+    position: relative;
+  }
+
+  /* ---------- 有 JS 时：栅格堆叠 + 淡入淡出 ----------
+     所有 slide 叠在同一格，容器高度取最高的一张，切换时不会跳高。 */
+  .carousel[data-ready='true'] .carousel-viewport {
+    display: grid;
+  }
+
+  .carousel[data-ready='true'] .carousel-slide {
+    grid-area: 1 / 1;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity var(--duration-slow) var(--ease-standard),
+      visibility 0s linear var(--duration-slow);
+  }
+
+  .carousel[data-ready='true'] .carousel-slide[data-active='true'] {
+    opacity: 1;
+    visibility: visible;
+    transition:
+      opacity var(--duration-slow) var(--ease-standard),
+      visibility 0s;
+  }
+
+  /* ---------- 控件：无 JS 时不渲染（data-ready 由脚本添加） ---------- */
+  .carousel-controls {
+    display: none;
+  }
+
+  .carousel[data-ready='true'] .carousel-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .carousel-dots {
+    display: flex;
+    align-items: center;
+    gap: 0.125rem;
+  }
+
+  .carousel-dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+  }
+
+  .carousel-dot::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: var(--color-line-strong);
+    transition: background-color var(--duration-fast) var(--ease-standard);
+  }
+
+  .carousel-dot:hover::before {
+    background-color: var(--color-ink-tertiary);
+  }
+
+  .carousel-dot[aria-current='true']::before {
+    background-color: var(--color-accent);
+    transform: scale(1.35);
+  }
+
+  .carousel-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .carousel-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    color: var(--color-ink-secondary);
+    cursor: pointer;
+    transition:
+      background-color var(--duration-fast) var(--ease-standard),
+      color var(--duration-fast) var(--ease-standard);
+  }
+
+  .carousel-btn:hover {
+    background-color: var(--color-surface-subtle);
+    color: var(--color-ink);
+  }
+
+  /* 暂停/继续图标互斥显示 */
+  .carousel-btn[data-state='playing'] [data-icon='play'],
+  .carousel-btn[data-state='paused'] [data-icon='pause'] {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .carousel[data-ready='true'] .carousel-slide,
+    .carousel[data-ready='true'] .carousel-slide[data-active='true'] {
+      transition: none;
+    }
+    .carousel-dot::before {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  // ============================================================
+  // 轮播交互 —— View Transitions 安全版
+  // 元素查询全部写在 initCarousel() 内，由 astro:page-load 驱动重新初始化，
+  // 并用 data-hb 标记保证幂等（换页后 DOM 被替换，脚本不会重新执行）。
+  // ============================================================
+
+  // root 元素 -> 自动播放定时器。
+  // 注意：不能简单地「每次 init 就清空所有定时器」——首次加载时 initCarousel 会执行两次
+  // （末尾手动调一次 + astro:page-load 再触发一次），第二次若把定时器清掉，
+  // 又会因为 data-hb 幂等标记提前 return 而不重建，自动播放就永远停了。
+  // 因此这里只在「root 已经脱离文档」（换页后旧 DOM 被替换）时才清理。
+  const timerMap = new Map<HTMLElement, number>();
+
+  function initCarousel() {
+    // 换页后旧 DOM 的定时器必须清掉，否则会继续操作已卸载的节点
+    timerMap.forEach((id, el) => {
+      if (!el.isConnected) {
+        window.clearInterval(id);
+        timerMap.delete(el);
+      }
+    });
+
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    document.querySelectorAll<HTMLElement>('[data-carousel]').forEach((root) => {
+      if (root.dataset.hb === '1') return; // 已绑定过，跳过（幂等）
+      root.dataset.hb = '1';
+
+      const slides = Array.from(root.querySelectorAll<HTMLElement>('[data-carousel-slide]'));
+      if (slides.length < 2) return; // 只有一张：保持静态卡片，不绑定任何交互
+
+      const dots = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-carousel-dot]'));
+      const pauseBtn = root.querySelector<HTMLButtonElement>('[data-carousel-pause]');
+      const total = slides.length;
+      const interval = Number(root.dataset.interval) || 5500;
+
+      let index = 0;
+      let timer: number | undefined;
+      let hovering = false;
+      let autoPaused = reduce.matches; // 减弱动效时默认不自动播放，用户可手动开启
+
+      // JS 就绪：解除无 JS 时的 hidden 降级，切换到堆叠淡入淡出模式
+      root.dataset.ready = 'true';
+      slides.forEach((s) => {
+        s.hidden = false;
+      });
+
+      const render = () => {
+        slides.forEach((s, i) => {
+          s.dataset.active = String(i === index);
+        });
+        dots.forEach((d, i) => {
+          if (i === index) d.setAttribute('aria-current', 'true');
+          else d.removeAttribute('aria-current');
+        });
+      };
+
+      const stop = () => {
+        if (timer === undefined) return;
+        window.clearInterval(timer);
+        timerMap.delete(root);
+        timer = undefined;
+      };
+
+      const start = () => {
+        stop();
+        if (autoPaused || hovering || reduce.matches || document.hidden) return;
+        timer = window.setInterval(() => go(index + 1), interval);
+        timerMap.set(root, timer);
+      };
+
+      const go = (next: number) => {
+        index = ((next % total) + total) % total;
+        render();
+        start(); // 手动切换后重新计时，避免刚点完就跳下一张
+      };
+
+      const setAutoPaused = (paused: boolean) => {
+        autoPaused = paused;
+        if (pauseBtn) {
+          pauseBtn.dataset.state = paused ? 'paused' : 'playing';
+          pauseBtn.setAttribute('aria-label', paused ? '继续自动播放' : '暂停自动播放');
+        }
+        if (paused) stop();
+        else start();
+      };
+
+      if (pauseBtn) {
+        if (autoPaused) setAutoPaused(true);
+        pauseBtn.addEventListener('click', () => setAutoPaused(!autoPaused));
+      }
+
+      root.querySelector('[data-carousel-prev]')?.addEventListener('click', () => go(index - 1));
+      root.querySelector('[data-carousel-next]')?.addEventListener('click', () => go(index + 1));
+
+      dots.forEach((dot) => {
+        dot.addEventListener('click', () => go(Number(dot.dataset.index) || 0));
+      });
+
+      // 悬停 / 键盘聚焦时暂停（:focus-visible 用于排除鼠标点击带来的焦点）
+      root.addEventListener('mouseenter', () => {
+        hovering = true;
+        stop();
+      });
+      root.addEventListener('mouseleave', () => {
+        hovering = false;
+        start();
+      });
+      root.addEventListener('focusin', (e) => {
+        const el = e.target as HTMLElement | null;
+        if (!el || !el.matches(':focus-visible')) return;
+        hovering = true;
+        stop();
+      });
+      root.addEventListener('focusout', (e) => {
+        const next = (e as FocusEvent).relatedTarget as Node | null;
+        if (next && root.contains(next)) return;
+        hovering = false;
+        start();
+      });
+
+      root.addEventListener('keydown', (e) => {
+        const key = (e as KeyboardEvent).key;
+        if (key === 'ArrowLeft') {
+          e.preventDefault();
+          go(index - 1);
+        } else if (key === 'ArrowRight') {
+          e.preventDefault();
+          go(index + 1);
+        }
+      });
+
+      render();
+      start();
+    });
+  }
+
+  // 模块脚本整站只执行一次；换页后由 astro:page-load 重新初始化。
+  const doc = document as Document & { __portalCarousel?: boolean };
+  if (!doc.__portalCarousel) {
+    doc.__portalCarousel = true;
+    document.addEventListener('astro:page-load', initCarousel);
+  }
+  initCarousel();
+</script>

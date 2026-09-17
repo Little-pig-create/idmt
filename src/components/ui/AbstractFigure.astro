@@ -1,0 +1,270 @@
+---
+/**
+ * 抽象图形生成器（无外部图片依赖）
+ *
+ * 以字符串 seed 为输入，用确定性伪随机数生成一版几何图形，
+ * 因此同一 seed 每次构建的产出完全一致（构建期生成，零运行时开销）。
+ * 用于焦点图、专题卡片与方向卡片等需要视觉锚点的位置。
+ *
+ * 图形为装饰性内容，对辅助技术隐藏。
+ */
+
+interface Props {
+  /** 决定图形形态的种子，通常传标题或 slug */
+  seed: string;
+  /** 图形风格；auto 时由 seed 决定 */
+  variant?: 'auto' | 'strata' | 'mesh' | 'orbit' | 'grid' | 'signal' | 'prism';
+  /** 宽高比（宽 / 高） */
+  ratio?: number;
+  class?: string;
+}
+
+const { seed, variant = 'auto', ratio = 16 / 9, class: className = '' } = Astro.props;
+
+const W = 400;
+const H = Math.round(W / ratio);
+
+/* ---------- 确定性伪随机 ---------- */
+function hashString(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i += 1) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function mulberry32(a: number) {
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const COLORS = [
+  'var(--color-fig-a)',
+  'var(--color-fig-b)',
+  'var(--color-fig-c)',
+  'var(--color-fig-d)',
+  'var(--color-fig-e)',
+];
+
+const n2 = (v: number) => Math.round(v * 100) / 100;
+const pick = <T,>(rnd: () => number, arr: T[]): T => arr[Math.floor(rnd() * arr.length)];
+
+/* ---------- 图形变体 ---------- */
+
+/** 地层面：横向数据分层 */
+function strata(rnd: () => number) {
+  const parts = [`<rect width="${W}" height="${H}" fill="var(--color-surface-subtle)"/>`];
+  const count = 5 + Math.floor(rnd() * 4);
+  const weights = Array.from({ length: count }, () => 0.35 + rnd());
+  const total = weights.reduce((a, b) => a + b, 0);
+  let y = 0;
+
+  for (const w of weights) {
+    const h = (w / total) * H;
+    const fill = pick(rnd, COLORS);
+    const opacity = n2(0.12 + rnd() * 0.6);
+    parts.push(
+      `<rect x="0" y="${n2(y)}" width="${W}" height="${n2(h)}" fill="${fill}" opacity="${opacity}"/>`
+    );
+    y += h;
+  }
+
+  for (let i = 0; i < 3; i += 1) {
+    const ly = n2(rnd() * H);
+    parts.push(
+      `<line x1="0" y1="${ly}" x2="${W}" y2="${ly}" stroke="var(--color-surface)" stroke-width="1" opacity="0.55"/>`
+    );
+  }
+
+  const bx = n2(W * (0.1 + rnd() * 0.5));
+  parts.push(
+    `<rect x="${bx}" y="0" width="${n2(2 + rnd() * 3)}" height="${H}" fill="var(--color-fig-b)" opacity="0.5"/>`
+  );
+  return parts.join('');
+}
+
+/** 网络：节点与连边 */
+function mesh(rnd: () => number) {
+  const parts = [`<rect width="${W}" height="${H}" fill="var(--color-surface-subtle)"/>`];
+  const cols = 6 + Math.floor(rnd() * 4);
+  const rows = Math.max(3, Math.round(cols / ratio));
+  const gx = W / (cols + 1);
+  const gy = H / (rows + 1);
+
+  const pts: Array<[number, number]> = [];
+  for (let r = 0; r < rows; r += 1) {
+    for (let c = 0; c < cols; c += 1) {
+      pts.push([
+        n2(gx * (c + 1) + (rnd() - 0.5) * gx * 0.55),
+        n2(gy * (r + 1) + (rnd() - 0.5) * gy * 0.55),
+      ]);
+    }
+  }
+
+  for (let r = 0; r < rows; r += 1) {
+    for (let c = 0; c < cols; c += 1) {
+      const i = r * cols + c;
+      const stroke = pick(rnd, COLORS);
+      if (c + 1 < cols && rnd() > 0.32) {
+        const j = i + 1;
+        parts.push(
+          `<line x1="${pts[i][0]}" y1="${pts[i][1]}" x2="${pts[j][0]}" y2="${pts[j][1]}" stroke="${stroke}" stroke-width="1" opacity="${n2(0.35 + rnd() * 0.4)}"/>`
+        );
+      }
+      if (r + 1 < rows && rnd() > 0.45) {
+        const j = i + cols;
+        parts.push(
+          `<line x1="${pts[i][0]}" y1="${pts[i][1]}" x2="${pts[j][0]}" y2="${pts[j][1]}" stroke="${stroke}" stroke-width="1" opacity="${n2(0.3 + rnd() * 0.35)}"/>`
+        );
+      }
+    }
+  }
+
+  for (const [x, y] of pts) {
+    const r = n2(1.6 + rnd() * 3.2);
+    parts.push(
+      `<circle cx="${x}" cy="${y}" r="${r}" fill="${pick(rnd, COLORS)}" opacity="${n2(0.5 + rnd() * 0.5)}"/>`
+    );
+  }
+  return parts.join('');
+}
+
+/** 轨道：同心环与分布点 */
+function orbit(rnd: () => number) {
+  const parts = [`<rect width="${W}" height="${H}" fill="var(--color-surface-subtle)"/>`];
+  const cx = n2(W * (0.28 + rnd() * 0.44));
+  const cy = n2(H * (0.3 + rnd() * 0.4));
+  const maxR = Math.max(W, H) * (0.42 + rnd() * 0.22);
+  const rings = 3 + Math.floor(rnd() * 3);
+
+  for (let i = 0; i < rings; i += 1) {
+    const r = n2(maxR * ((i + 1) / rings));
+    parts.push(
+      `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${pick(rnd, COLORS)}" stroke-width="1" opacity="${n2(0.3 + rnd() * 0.35)}"/>`
+    );
+    const dots = 2 + Math.floor(rnd() * 4);
+    for (let d = 0; d < dots; d += 1) {
+      const a = rnd() * Math.PI * 2;
+      parts.push(
+        `<circle cx="${n2(cx + Math.cos(a) * r)}" cy="${n2(cy + Math.sin(a) * r)}" r="${n2(1.8 + rnd() * 2.8)}" fill="${pick(rnd, COLORS)}" opacity="${n2(0.55 + rnd() * 0.45)}"/>`
+      );
+    }
+  }
+
+  parts.push(
+    `<circle cx="${cx}" cy="${cy}" r="${n2(3 + rnd() * 3)}" fill="var(--color-fig-b)"/>`
+  );
+  return parts.join('');
+}
+
+/** 模块网格：不均匀的方格构成 */
+function grid(rnd: () => number) {
+  const parts = [`<rect width="${W}" height="${H}" fill="var(--color-surface-subtle)"/>`];
+  const cols = 5 + Math.floor(rnd() * 4);
+  const rows = Math.max(3, Math.round(cols / ratio));
+  const cw = W / cols;
+  const ch = H / rows;
+
+  const cells: Array<[number, number, number, number]> = [];
+  for (let r = 0; r < rows; r += 1) {
+    for (let c = 0; c < cols; c += 1) {
+      cells.push([c, r, 1, 1]);
+    }
+  }
+
+  for (const [c, r, sc, sr] of cells) {
+    if (rnd() > 0.46) continue;
+    const w = cw * sc;
+    const h = ch * sr;
+    parts.push(
+      `<rect x="${n2(c * cw + 1)}" y="${n2(r * ch + 1)}" width="${n2(w - 2)}" height="${n2(h - 2)}" fill="${pick(rnd, COLORS)}" opacity="${n2(0.18 + rnd() * 0.55)}"/>`
+    );
+  }
+
+  // 少数大块形成主次关系
+  for (let i = 0; i < 2 + Math.floor(rnd() * 2); i += 1) {
+    const c = Math.floor(rnd() * Math.max(1, cols - 1));
+    const r = Math.floor(rnd() * Math.max(1, rows - 1));
+    parts.push(
+      `<rect x="${n2(c * cw + 1)}" y="${n2(r * ch + 1)}" width="${n2(cw * (1.5 + rnd()) - 2)}" height="${n2(ch * (1.5 + rnd()) - 2)}" fill="${pick(rnd, COLORS)}" opacity="${n2(0.35 + rnd() * 0.4)}"/>`
+    );
+  }
+  return parts.join('');
+}
+
+/** 信号：折线与柱列 */
+function signal(rnd: () => number) {
+  const parts = [`<rect width="${W}" height="${H}" fill="var(--color-surface-subtle)"/>`];
+
+  const bars = 14 + Math.floor(rnd() * 10);
+  const bw = W / bars;
+  for (let i = 0; i < bars; i += 1) {
+    const h = H * (0.12 + rnd() * 0.62);
+    parts.push(
+      `<rect x="${n2(i * bw + bw * 0.18)}" y="${n2(H - h)}" width="${n2(bw * 0.64)}" height="${n2(h)}" fill="${pick(rnd, COLORS)}" opacity="${n2(0.2 + rnd() * 0.45)}"/>`
+    );
+  }
+
+  const pts: string[] = [];
+  const steps = 8 + Math.floor(rnd() * 6);
+  for (let i = 0; i <= steps; i += 1) {
+    const x = (i / steps) * W;
+    const y = H * (0.18 + rnd() * 0.6);
+    pts.push(`${n2(x)},${n2(y)}`);
+  }
+  parts.push(
+    `<polyline points="${pts.join(' ')}" fill="none" stroke="var(--color-fig-b)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>`
+  );
+
+  for (let i = 0; i <= steps; i += 1) {
+    const [x, y] = pts[i].split(',');
+    parts.push(`<circle cx="${x}" cy="${y}" r="2.5" fill="var(--color-fig-a)"/>`);
+  }
+  return parts.join('');
+}
+
+/** 棱镜：斜切色块 */
+function prism(rnd: () => number) {
+  const parts = [`<rect width="${W}" height="${H}" fill="var(--color-surface-subtle)"/>`];
+  const bands = 4 + Math.floor(rnd() * 4);
+
+  for (let i = 0; i < bands; i += 1) {
+    const x1 = n2(rnd() * W * 0.7);
+    const x2 = n2(x1 + W * (0.2 + rnd() * 0.6));
+    parts.push(
+      `<polygon points="${x1},0 ${x2},0 ${n2(x2 - H * 0.45)},${H} ${n2(x1 - H * 0.45)},${H}" fill="${pick(rnd, COLORS)}" opacity="${n2(0.16 + rnd() * 0.5)}"/>`
+    );
+  }
+
+  const y = n2(H * (0.25 + rnd() * 0.5));
+  parts.push(
+    `<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="var(--color-fig-b)" stroke-width="1.5" opacity="0.5"/>`
+  );
+  return parts.join('');
+}
+
+const BUILDERS = { strata, mesh, orbit, grid, signal, prism };
+const ORDER = ['strata', 'mesh', 'orbit', 'grid', 'signal', 'prism'] as const;
+
+const base = hashString(seed);
+const rnd = mulberry32(base);
+const resolved =
+  variant === 'auto' ? (ORDER[base % ORDER.length] as keyof typeof BUILDERS) : variant;
+
+const inner = BUILDERS[resolved](rnd);
+---
+
+<svg
+  viewBox={`0 0 ${W} ${H}`}
+  preserveAspectRatio="xMidYMid slice"
+  aria-hidden="true"
+  focusable="false"
+  class={className}
+  set:html={inner}
+/>

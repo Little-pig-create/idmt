@@ -1,0 +1,45 @@
+---
+interface Crumb {
+  label: string;
+  href?: string;
+}
+
+interface Props {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  crumbs?: Crumb[];
+}
+
+const { eyebrow, title, description, crumbs = [] } = Astro.props;
+---
+
+<div class="border-b border-line bg-surface">
+  <div class="container-page py-10 lg:py-14">
+    {
+      crumbs.length > 0 && (
+        <nav aria-label="面包屑" class="mb-5">
+          <ol class="flex flex-wrap items-center gap-x-2 gap-y-1 text-meta text-ink-tertiary">
+            <li>
+              <a href="/" class="transition-colors duration-150 hover:text-accent">首页</a>
+            </li>
+            {crumbs.map((c, i) => (
+              <li class="flex items-center gap-2">
+                <span aria-hidden="true">/</span>
+                {c.href && i < crumbs.length - 1 ? (
+                  <a href={c.href} class="transition-colors duration-150 hover:text-accent">{c.label}</a>
+                ) : (
+                  <span aria-current="page" class="text-ink-secondary">{c.label}</span>
+                )}
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )
+    }
+
+    {eyebrow && <p class="eyebrow mb-3">{eyebrow}</p>}
+    <h1 class="max-w-3xl">{title}</h1>
+    {description && <p class="mt-4 max-w-2xl text-body text-ink-secondary">{description}</p>}
+  </div>
+</div>

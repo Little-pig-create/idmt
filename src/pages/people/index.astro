@@ -1,0 +1,113 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/ui/PageHero.astro';
+import SectionHeading from '../../components/ui/SectionHeading.astro';
+import AsideBox from '../../components/ui/AsideBox.astro';
+import PersonCard from '../../components/content/PersonCard.astro';
+import { roleLabels } from '../../data/site';
+
+const people = (await getCollection('people', ({ data }) => !data.draft)).sort(
+  (a, b) => a.data.order - b.data.order
+);
+
+const faculty = people.filter((p) => p.data.role !== 'phd' && p.data.role !== 'postdoc');
+const students = people.filter((p) => p.data.role === 'phd' || p.data.role === 'postdoc');
+
+const roleCounts = [...new Set(people.map((p) => p.data.role))].map((r) => ({
+  label: roleLabels[r] ?? r,
+  count: people.filter((p) => p.data.role === r).length,
+}));
+
+const areaCounts = new Map<string, number>();
+for (const p of people) {
+  for (const a of p.data.researchAreas) areaCounts.set(a, (areaCounts.get(a) ?? 0) + 1);
+}
+const areas = [...areaCounts.entries()].sort((a, b) => b[1] - a[1]);
+---
+
+<BaseLayout title="研究团队" description="数字管理研究院的研究人员与在读学生。">
+  <PageHero
+    eyebrow="People"
+    title="研究团队"
+    description="研究院现有研究人员与在读学生，覆盖管理学、经济学、公共管理与统计学背景。"
+    crumbs={[{ label: '研究', href: '/research' }, { label: '研究团队' }]}
+  />
+
+  <section class="section">
+    <div class="container-page">
+      <div class="grid gap-12 lg:grid-cols-[1fr_320px] lg:gap-16">
+        <div>
+          <SectionHeading eyebrow="Faculty" title="研究人员" />
+          <div class="grid gap-4 sm:grid-cols-2">
+            {
+              faculty.map((person) => (
+                <PersonCard
+                  name={person.data.name}
+                  nameEn={person.data.nameEn}
+                  title={person.data.title}
+                  researchAreas={person.data.researchAreas}
+                  href={`/people/${person.id}`}
+                />
+              ))
+            }
+          </div>
+
+          {
+            students.length > 0 && (
+              <div class="mt-16">
+                <SectionHeading eyebrow="Students" title="博士后与研究生" />
+                <div class="grid gap-4 sm:grid-cols-2">
+                  {students.map((person) => (
+                    <PersonCard
+                      name={person.data.name}
+                      nameEn={person.data.nameEn}
+                      title={person.data.title}
+                      researchAreas={person.data.researchAreas}
+                      href={`/people/${person.id}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )
+          }
+        </div>
+
+        <aside class="lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start">
+          <AsideBox title="团队构成">
+            <ul>
+              {
+                roleCounts.map((r) => (
+                  <li class="flex items-baseline justify-between gap-3 border-b border-line py-2 text-ui">
+                    <span class="text-ink-secondary">{r.label}</span>
+                    <span class="numeric text-meta text-ink-tertiary">{r.count}</span>
+                  </li>
+                ))
+              }
+            </ul>
+          </AsideBox>
+
+          <AsideBox title="研究方向分布">
+            <ul class="space-y-2">
+              {
+                areas.map(([area, count]) => (
+                  <li class="flex items-baseline justify-between gap-3 text-ui">
+                    <span class="text-ink-secondary">{area}</span>
+                    <span class="numeric text-meta text-ink-tertiary">{count}</span>
+                  </li>
+                ))
+              }
+            </ul>
+          </AsideBox>
+
+          <AsideBox title="加入我们">
+            <p class="text-ui leading-relaxed text-ink-secondary">
+              研究院每年招收硕士研究生，并提供研究助理岗位与博士后职位。
+            </p>
+            <a href="/join" class="btn btn-secondary mt-4 w-full">招生与招聘</a>
+          </AsideBox>
+        </aside>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

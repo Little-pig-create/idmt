@@ -1,0 +1,99 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/ui/PageHero.astro';
+import { site } from '../data/site';
+
+const contacts = [
+  {
+    label: '院务与行政',
+    desc: '合作洽谈、来访预约、材料索取',
+    email: site.email,
+    phone: site.phone,
+  },
+  {
+    label: '研究生招生',
+    desc: '招生咨询、导师联系、材料提交',
+    email: site.email,
+    phone: site.phone,
+  },
+  {
+    label: '媒体与宣传',
+    desc: '采访邀约、内容转载授权',
+    email: site.email,
+    phone: site.phone,
+  },
+];
+---
+
+<BaseLayout
+  title="联系我们"
+  description={`${site.name}的联系方式、地址与来访路线。`}
+>
+  <PageHero
+    eyebrow="Contact"
+    title="联系我们"
+    description="合作洽谈、招生咨询与媒体联络，请通过以下方式联系研究院。"
+    crumbs={[{ label: '加入我们', href: '/join' }, { label: '联系我们' }]}
+  />
+
+  <section class="section">
+    <div class="container-page">
+      <div class="grid gap-14 lg:grid-cols-[1fr_1.2fr] lg:gap-16">
+        <div class="container-prose prose-academic lg:mx-0">
+          <h2>地址</h2>
+          <address class="not-prose not-italic">
+            <p class="text-body leading-relaxed text-ink">{site.address}</p>
+            <p class="numeric mt-2 text-ui text-ink-secondary">邮编 {site.postcode}</p>
+          </address>
+
+          <h2>来访路线</h2>
+          <p>
+            地铁：乘坐至「学院路站」，从 B 口出站后步行约 6 分钟。
+            <br />
+            公交：乘至「学院路北口」站，步行约 3 分钟。
+            <br />
+            驾车：院内不提供访客停车位，建议使用周边公共停车场。
+          </p>
+
+          <h2>办公时间</h2>
+          <p>
+            周一至周五 09:00-17:00（法定节假日除外）。来访请提前邮件预约，
+            以便安排对接人员。
+          </p>
+
+          <h2>地图</h2>
+          <p class="text-ink-secondary">
+            地图组件待接入（需确定使用的地图服务与合规方案后补充）。
+          </p>
+        </div>
+
+        <div>
+          <ul class="space-y-4">
+            {
+              contacts.map((c) => (
+                <li class="card p-6">
+                  <h2 class="text-h3">{c.label}</h2>
+                  <p class="mt-2 text-ui text-ink-secondary">{c.desc}</p>
+                  <dl class="mt-4 space-y-2 border-t border-line pt-4 text-ui">
+                    <div class="flex flex-wrap gap-x-3">
+                      <dt class="text-ink-tertiary">邮箱</dt>
+                      <dd>
+                        <a href={`mailto:${c.email}`} class="link break-all">{c.email}</a>
+                      </dd>
+                    </div>
+                    <div class="flex flex-wrap gap-x-3">
+                      <dt class="text-ink-tertiary">电话</dt>
+                      <dd>
+                        <a href={`tel:${c.phone.replace(/\s/g, '')}`} class="numeric link">{c.phone}</a>
+                      </dd>
+                    </div>
+                  </dl>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

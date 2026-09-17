@@ -1,0 +1,444 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/ui/SectionHeading.astro';
+import CoverImage from '../components/ui/CoverImage.astro';
+import PublicationItem from '../components/content/PublicationItem.astro';
+import PersonCard from '../components/content/PersonCard.astro';
+import EventItem from '../components/content/EventItem.astro';
+import NoticeList from '../components/content/NoticeList.astro';
+import Carousel from '../components/ui/Carousel.astro';
+import { site } from '../data/site';
+
+const fmtDate = (d: Date) =>
+  `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+
+const research = (await getCollection('research', ({ data }) => !data.draft)).sort(
+  (a, b) => a.data.order - b.data.order
+);
+
+const publications = (await getCollection('publications', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.year - a.data.year
+);
+const latestPublications = publications.slice(0, 5);
+
+const people = (await getCollection('people', ({ data }) => !data.draft)).sort(
+  (a, b) => a.data.order - b.data.order
+);
+
+const news = (await getCollection('news', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime()
+);
+const featured = news.find((n) => n.data.featured) ?? news[0];
+const topNews = news.filter((n) => n.id !== featured?.id).slice(0, 3);
+/** 要闻区非对称布局：第一条做头条（大图），其余做右栏简讯（纯文字） */
+const [leadNews, ...briefNews] = topNews;
+
+/** 轮播：焦点（或最新一条）优先，其余按日期倒序补足，共 5 条 */
+const carouselSlides = (featured ? [featured, ...news.filter((n) => n.id !== featured.id)] : news)
+  .slice(0, 5)
+  .map((n, i) => ({
+    id: n.id,
+    href: `/news/${n.id}`,
+    badge: i === 0 ? '焦点' : '要闻',
+    tag: n.data.tags[0],
+    cover: n.data.cover,
+    coverAlt: n.data.coverAlt,
+    date: n.data.date,
+    dateText: fmtDate(n.data.date),
+    title: n.data.title,
+    summary: n.data.summary,
+  }));
+
+const events = (await getCollection('events', ({ data }) => !data.draft)).sort(
+  (a, b) => a.data.startDate.getTime() - b.data.startDate.getTime()
+);
+const now = Date.now();
+const upcomingEvents = events.filter((e) => e.data.startDate.getTime() >= now);
+const shownEvents = (upcomingEvents.length > 0 ? upcomingEvents : events).slice(0, 4);
+
+const notices = (await getCollection('notices', ({ data }) => !data.draft))
+  .sort((a, b) => {
+    if (a.data.pinned !== b.data.pinned) return a.data.pinned ? -1 : 1;
+    return b.data.date.getTime() - a.data.date.getTime();
+  })
+  .slice(0, 6);
+
+const noticeItems = notices.map((n) => ({
+  title: n.data.title,
+  date: n.data.date,
+  href: `/notices#${n.id}`,
+  category: n.data.category,
+  pinned: n.data.pinned,
+}));
+
+/** 专题：首页展示前 3 个（按 order），全部在 /topics */
+const topics = (await getCollection('topics', ({ data }) => !data.draft))
+  .sort((a, b) => a.data.order - b.data.order)
+  .slice(0, 3);
+
+const projects = (await getCollection('projects', ({ data }) => !data.draft)).filter(
+  (p) => p.data.status === 'ongoing'
+);
+
+const ongoingCount = projects.length;
+const completedCount = (await getCollection('projects', ({ data }) => !data.draft)).length - ongoingCount;
+
+const stats = [
+  { value: site.founded, label: '成立年份' },
+  { value: String(research.length), label: '研究方向' },
+  { value: String(publications.length), label: '学术成果' },
+  { value: String(people.length), label: '研究人员' },
+];
+---
+
+<BaseLayout title={site.name} description={site.description}>
+  {/* ============ 机构定位条 ============ */}
+  <div class="border-b border-line bg-surface">
+    <div class="container-page flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 py-4">
+      <p class="font-[family-name:var(--font-serif-cjk)] text-[1.1875rem] font-semibold text-ink lg:text-[1.3125rem]">
+        {site.tagline}
+      </p>
+      <p class="max-w-2xl text-ui leading-relaxed text-ink-secondary">
+        聚焦数字治理与公共管理、数据要素与数字经济、智能决策与优化、数字政府与公共服务四个方向。
+      </p>
+    </div>
+  </div>
+
+  {/* ============ 焦点图 + 通知公告 ============ */}
+  <section class="border-b border-line">
+    <div class="container-page py-8 lg:py-10">
+      <div class="grid gap-8 lg:grid-cols-[1.5fr_1fr] lg:gap-10">
+        {carouselSlides.length > 0 && <Carousel slides={carouselSlides} label="焦点内容" />}
+
+        <div>
+          <SectionHeading
+            eyebrow="Notices"
+            title="通知公告"
+            moreHref="/notices"
+            moreLabel="更多"
+          />
+          <NoticeList items={noticeItems} compact />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* ============ 要闻 ============ */}
+  <section class="section border-b border-line bg-surface">
+    <div class="container-page">
+      <SectionHeading
+        title="要闻"
+        description="研究院的研究进展、合作动态与学术活动报道。"
+        moreHref="/news"
+        moreLabel="更多"
+      />
+
+      {/*
+        非对称布局：头条占 2/3（带图），右栏是纯文字简讯。
+        原先三条等宽卡片看不出主次，也与「研究方向 / 专题」两块长得一模一样；
+        头条配图 + 简讯纯文字，用图像的有无直接建立层级。
+      */}
+      <div class="grid gap-6 lg:grid-cols-3 lg:gap-8">
+        {
+          leadNews && (
+            <a href={`/news/${leadNews.id}`} class="portal-card group lg:col-span-2">
+              <div class="figure-frame aspect-[16/9]">
+                <CoverImage
+                  cover={leadNews.data.cover}
+                  alt={leadNews.data.coverAlt ?? leadNews.data.title}
+                  seed={leadNews.id}
+                  ratio={16 / 9}
+                />
+              </div>
+              <div class="p-5 lg:p-6">
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <time
+                    datetime={leadNews.data.date.toISOString().slice(0, 10)}
+                    class="numeric text-meta text-ink-tertiary"
+                  >
+                    {fmtDate(leadNews.data.date)}
+                  </time>
+                  {leadNews.data.tags.slice(0, 1).map((t) => (
+                    <span class="tag tag-quiet">{t}</span>
+                  ))}
+                  {leadNews.data.featured && <span class="tag">精选</span>}
+                </div>
+                <h3 class="mt-2.5 text-[1.375rem] leading-snug lg:text-[1.5rem]">
+                  <span class="link-title">{leadNews.data.title}</span>
+                </h3>
+                <p class="mt-3 line-clamp-2 text-ui leading-relaxed text-ink-secondary">
+                  {leadNews.data.summary}
+                </p>
+              </div>
+            </a>
+          )
+        }
+
+        <div class="flex flex-col">
+          {
+            briefNews.map((item) => (
+              <a
+                href={`/news/${item.id}`}
+                class="group border-t border-line py-5 first:pt-0 last:pb-0"
+              >
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <time
+                    datetime={item.data.date.toISOString().slice(0, 10)}
+                    class="numeric text-meta text-ink-tertiary"
+                  >
+                    {fmtDate(item.data.date)}
+                  </time>
+                  {item.data.tags.slice(0, 1).map((t) => (
+                    <span class="tag tag-quiet">{t}</span>
+                  ))}
+                  {item.data.featured && <span class="tag">精选</span>}
+                </div>
+                <h3 class="mt-2 text-[1.0625rem] leading-snug">
+                  <span class="link-title">{item.data.title}</span>
+                </h3>
+              </a>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* ============ 学术活动 + 科研项目 ============ */}
+  <section class="section border-b border-line">
+    <div class="container-page grid gap-10 lg:grid-cols-2 lg:gap-14">
+      <div>
+        <SectionHeading title="学术活动" moreHref="/events" moreLabel="更多" />
+        <div>
+          {
+            shownEvents.map((event) => (
+              <EventItem
+                title={event.data.title}
+                startDate={event.data.startDate}
+                location={event.data.location}
+                type={event.data.type}
+                speakers={event.data.speakers}
+                summary={event.data.summary}
+                href={`/events/${event.id}`}
+              />
+            ))
+          }
+        </div>
+      </div>
+
+      <div>
+        <SectionHeading title="科研项目" moreHref="/projects" moreLabel="更多" />
+        <ul class="brief-list">
+          {
+            projects.map((project) => (
+              <li>
+                <a href={`/projects/${project.id}`} class="brief-item group">
+                  <p class="brief-item-title">{project.data.title}</p>
+                  <p class="mt-1 text-meta text-ink-tertiary">
+                    {project.data.funder}
+                    <span aria-hidden="true"> · </span>
+                    <span class="numeric">{project.data.period}</span>
+                  </p>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+        {
+          completedCount > 0 && (
+            <p class="mt-4 text-meta text-ink-tertiary">
+              另有 <span class="numeric text-ink-secondary">{completedCount}</span> 项已结项课题，可在项目页查看。
+            </p>
+          )
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* ============ 研究方向 ============ */}
+  <section class="section border-b border-line bg-surface">
+    <div class="container-page">
+      <SectionHeading
+        eyebrow="Research"
+        title="研究方向"
+        description="四个方向共享同一套问题意识：技术进入管理场景后，制度、组织与人如何回应。"
+        moreHref="/research"
+        moreLabel="更多"
+      />
+
+      {/*
+        排版式四栏，不配图：四个方向各挂一张抽象图形，会与「要闻 / 专题」的图卡连成一片；
+        四张同风格图形并排本身就是重复。改用发丝线分隔的栏式排版
+        （容器 bg-line + gap-px 画出 1px 分隔线），并把此前只在详情页出现的「负责人」提到首页。
+      */}
+      <div
+        class="grid gap-px overflow-hidden rounded-md border border-line bg-line sm:grid-cols-2 lg:grid-cols-4"
+      >
+        {
+          research.map((area) => {
+            const lead = people.find((p) => p.data.name === area.data.lead);
+            return (
+              <div class="group relative flex flex-col bg-surface p-6 transition-colors hover:bg-canvas lg:p-7">
+                <span class="numeric text-meta text-ink-tertiary">
+                  {String(area.data.order).padStart(2, '0')}
+                </span>
+
+                <h3 class="mt-3 text-[1.25rem] leading-snug">
+                  <a href={`/research/${area.id}`} class="link-title stretched-link">
+                    {area.data.title}
+                  </a>
+                </h3>
+
+                <p class="mt-3 flex-1 text-ui leading-relaxed text-ink-secondary">
+                  {area.data.summary}
+                </p>
+
+                {
+                  area.data.lead && (
+                    <p class="mt-5 border-t border-line pt-3 text-meta text-ink-tertiary">
+                      负责人{' '}
+                      {lead ? (
+                        <a href={`/people/${lead.id}`} class="link stretched-link-above">
+                          {area.data.lead}
+                        </a>
+                      ) : (
+                        <span class="text-ink-secondary">{area.data.lead}</span>
+                      )}
+                    </p>
+                  )
+                }
+              </div>
+            );
+          })
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* ============ 学术成果 ============ */}
+  <section class="section border-b border-line">
+    <div class="container-page">
+      <SectionHeading
+        title="学术成果"
+        description="期刊论文、会议论文、著作与研究报告，按年份排列。"
+        moreHref="/publications"
+        moreLabel="更多"
+      />
+
+      <div class="mt-2">
+        {
+          latestPublications.map((pub) => (
+            <PublicationItem
+              title={pub.data.title}
+              authors={pub.data.authors}
+              venue={pub.data.venue}
+              year={pub.data.year}
+              type={pub.data.type}
+              doi={pub.data.doi}
+              pdf={pub.data.pdf}
+              tags={pub.data.tags}
+            />
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* ============ 研究团队 ============ */}
+  <section class="section border-b border-line bg-surface">
+    <div class="container-page">
+      <SectionHeading title="研究团队" moreHref="/people" moreLabel="更多" />
+
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {
+          people.slice(0, 4).map((person) => (
+            <PersonCard
+              name={person.data.name}
+              nameEn={person.data.nameEn}
+              title={person.data.title}
+              researchAreas={person.data.researchAreas}
+              href={`/people/${person.id}`}
+            />
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* ============ 数据统计 ============ */}
+  <section class="stat-band">
+    {/*
+      四个数字原先只是 gap-8 平铺，看不出是一组数据。
+      改用 gap-px + 半透明分隔色画出 1px 发丝线（沿用报头的 --color-on-masthead-line），
+      读起来更像一张数据表。格内 px-6 让发丝线两侧有呼吸。
+    */}
+    <div class="container-page">
+      <div class="grid grid-cols-2 gap-px bg-[var(--color-on-masthead-line)] lg:grid-cols-4">
+        {
+          stats.map((s) => (
+            <div class="bg-masthead px-6 py-10 lg:py-12">
+              <p class="stat-band-value">{s.value}</p>
+              <p class="stat-band-label mt-2">{s.label}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* ============ 专题专栏 ============ */}
+  <section class="section border-b border-line">
+    <div class="container-page">
+      <SectionHeading
+        eyebrow="Topics"
+        title="专题专栏"
+        description="围绕长期议题组织的研究成果、数据与活动。"
+        moreHref="/topics"
+        moreLabel="全部专题"
+      />
+
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          topics.map((topic) => (
+            <a href={`/topics/${topic.id}`} class="portal-card group">
+              <div class="figure-frame aspect-[16/9]">
+                <CoverImage
+                  cover={topic.data.image}
+                  alt={topic.data.title}
+                  seed={topic.data.seed}
+                  ratio={16 / 9}
+                />
+              </div>
+              <div class="p-5">
+                {topic.data.badge && <span class="tag tag-quiet">{topic.data.badge}</span>}
+                <h3 class="mt-2 text-[1.0625rem] leading-snug">
+                  <span class="link-title">{topic.data.title}</span>
+                </h3>
+                <p class="mt-2 text-ui leading-relaxed text-ink-secondary">{topic.data.summary}</p>
+              </div>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* ============ 加入我们 ============ */}
+  <section class="section">
+    <div class="container-page">
+      <div class="grid gap-8 border border-line bg-surface p-8 sm:p-10 lg:grid-cols-[1.5fr_1fr] lg:items-center lg:gap-16 lg:p-12">
+        <div>
+          <h2 class="text-h2">与我们一起研究真实的管理问题</h2>
+          <p class="mt-4 max-w-xl text-body leading-relaxed text-ink-secondary">
+            研究院每年招收硕士研究生，并提供面向在校生的研究助理岗位。我们看重对问题的好奇心，胜过对工具的熟练度。
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-3 lg:justify-end">
+          <a href="/join" class="btn btn-primary">招生与招聘</a>
+          <a href="/contact" class="btn btn-secondary">联系我们</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,35 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="页面未找到" description="请求的页面不存在。">
+  <section class="section">
+    <div class="container-page">
+      <div class="container-prose">
+        <p class="eyebrow mb-4">Error 404</p>
+        <h1>没有找到这个页面</h1>
+        <p class="mt-5 text-body leading-relaxed text-ink-secondary">
+          你访问的地址可能已被移动、重命名，或者链接本身有误。
+          可以回到首页，或通过搜索找到你要的内容。
+        </p>
+
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="/" class="btn btn-primary">返回首页</a>
+          <a href="/search" class="btn btn-secondary">全站搜索</a>
+        </div>
+
+        <div class="mt-12 border-t border-line pt-8">
+          <p class="eyebrow mb-4">常用入口</p>
+          <ul class="flex flex-wrap gap-2">
+            <li><a href="/research" class="tag tag-quiet">研究方向</a></li>
+            <li><a href="/people" class="tag tag-quiet">研究团队</a></li>
+            <li><a href="/publications" class="tag tag-quiet">学术成果</a></li>
+            <li><a href="/news" class="tag tag-quiet">新闻动态</a></li>
+            <li><a href="/events" class="tag tag-quiet">学术活动</a></li>
+            <li><a href="/join" class="tag tag-quiet">招生招聘</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

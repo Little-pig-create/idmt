@@ -1,0 +1,100 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/ui/PageHero.astro';
+import SectionHeading from '../../components/ui/SectionHeading.astro';
+import PublicationExplorer from '../../components/content/PublicationExplorer.tsx';
+import EmptyState from '../../components/ui/EmptyState.astro';
+import { publicationTypeLabels } from '../../data/site';
+
+const publications = (await getCollection('publications', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.year - a.data.year
+);
+
+const records = publications.map((p) => ({
+  id: p.id,
+  title: p.data.title,
+  authors: p.data.authors,
+  venue: p.data.venue,
+  year: p.data.year,
+  type: p.data.type,
+  doi: p.data.doi,
+  pdf: p.data.pdf,
+  tags: p.data.tags,
+  featured: p.data.featured,
+}));
+
+const typeCounts = [...new Set(publications.map((p) => p.data.type))].map((t) => ({
+  label: publicationTypeLabels[t] ?? t,
+  count: publications.filter((p) => p.data.type === t).length,
+}));
+
+const yearCounts = [...new Set(publications.map((p) => p.data.year))]
+  .sort((a, b) => b - a)
+  .map((y) => ({ label: String(y), count: publications.filter((p) => p.data.year === y).length }));
+---
+
+<BaseLayout
+  title="学术成果"
+  description="数字管理研究院的期刊论文、会议论文、著作、专利与研究报告，支持按类型、年份与标签筛选。"
+>
+  <PageHero
+    eyebrow="Publications"
+    title="学术成果"
+    description="研究院的期刊论文、会议论文、著作、专利与研究报告。筛选条件会写入地址栏，可直接分享。"
+    crumbs={[{ label: '成果与动态', href: '/publications' }, { label: '学术成果' }]}
+  />
+
+  <section class="section">
+    <div class="container-page">
+      {
+        records.length === 0 ? (
+          <EmptyState
+            title="暂无收录成果"
+            description="成果库尚未录入条目。"
+            suggestions={[{ label: '查看研究方向', href: '/research' }]}
+          />
+        ) : (
+          <>
+            <SectionHeading eyebrow="All publications" title="全部成果" />
+
+            <dl class="mb-8 grid gap-8 border-b border-line pb-8 sm:grid-cols-2">
+              <div>
+                <dt class="eyebrow mb-3">按类型</dt>
+                <dd>
+                  <ul class="flex flex-wrap gap-1.5">
+                    {
+                      typeCounts.map((t) => (
+                        <li class="tag tag-quiet">
+                          {t.label}
+                          <span class="numeric ml-1 text-ink-tertiary">{t.count}</span>
+                        </li>
+                      ))
+                    }
+                  </ul>
+                </dd>
+              </div>
+              <div>
+                <dt class="eyebrow mb-3">按年份</dt>
+                <dd>
+                  <ul class="flex flex-wrap gap-1.5">
+                    {
+                      yearCounts.map((y) => (
+                        <li class="tag tag-quiet">
+                          <span class="numeric">{y.label}</span>
+                          <span class="numeric ml-1 text-ink-tertiary">{y.count}</span>
+                        </li>
+                      ))
+                    }
+                  </ul>
+                </dd>
+              </div>
+            </dl>
+
+            <PublicationExplorer items={records} pageSize={20} client:visible />
+          </>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>

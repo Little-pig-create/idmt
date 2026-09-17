@@ -1,0 +1,90 @@
+---
+interface Props {
+  currentPage: number;
+  totalPages: number;
+  /** 第一页的路径，例如 /news */
+  basePath: string;
+}
+
+const { currentPage, totalPages, basePath } = Astro.props;
+
+const href = (page: number) => (page === 1 ? basePath : `${basePath}/page/${page}`);
+
+const windowSize = 2;
+const pages: number[] = [];
+for (
+  let p = Math.max(1, currentPage - windowSize);
+  p <= Math.min(totalPages, currentPage + windowSize);
+  p++
+) {
+  pages.push(p);
+}
+
+const hasPrev = currentPage > 1;
+const hasNext = currentPage < totalPages;
+---
+
+{
+  totalPages > 1 && (
+    <nav aria-label="分页" class="mt-12 flex items-center justify-between border-t border-line pt-6">
+      <div>
+        {hasPrev && (
+          <a href={href(currentPage - 1)} rel="prev" class="btn btn-secondary">
+            上一页
+          </a>
+        )}
+      </div>
+
+      <ol class="flex items-center gap-1">
+        {pages[0] > 1 && (
+          <>
+            <li>
+              <a href={href(1)} class="numeric flex min-h-11 min-w-11 items-center justify-center rounded-md text-ui text-ink-secondary hover:bg-surface-subtle">
+                1
+              </a>
+            </li>
+            {pages[0] > 2 && <li aria-hidden="true" class="px-1 text-ink-tertiary">…</li>}
+          </>
+        )}
+
+        {pages.map((p) => (
+          <li>
+            <a
+              href={href(p)}
+              aria-current={p === currentPage ? 'page' : undefined}
+              class:list={[
+                'numeric flex min-h-11 min-w-11 items-center justify-center rounded-md text-ui transition-colors duration-150',
+                p === currentPage
+                  ? 'bg-accent text-ink-invert'
+                  : 'text-ink-secondary hover:bg-surface-subtle',
+              ]}
+            >
+              {p}
+            </a>
+          </li>
+        ))}
+
+        {pages[pages.length - 1] < totalPages && (
+          <>
+            {pages[pages.length - 1] < totalPages - 1 && (
+              <li aria-hidden="true" class="px-1 text-ink-tertiary">…</li>
+            )}
+            <li>
+              <a href={href(totalPages)} class="numeric flex min-h-11 min-w-11 items-center justify-center rounded-md text-ui text-ink-secondary hover:bg-surface-subtle">
+                {totalPages}
+              </a>
+            </li>
+          </>
+        )}
+      </ol>
+
+      <div>
+        {hasNext && (
+          <a href={href(currentPage + 1)} rel="next" class="btn btn-secondary">
+            下一页
+          </a>
+        )}
+      </div>
+    </nav>
+  )
+}

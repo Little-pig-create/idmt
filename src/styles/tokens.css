@@ -1,0 +1,151 @@
+/* ============================================================
+   数字管理研究院 · 设计令牌单一数据源
+   美学方向：Institutional Academia（学术机构风）
+
+   中性层一律为**纯中性灰**（H0 / S0%），不带暖调偏移。
+   依据：清华国情研究院（#6a3177 + #333/#666/#999/#eee）、北大国发院（#a71016 + #333/#6a6a6a/#ededed）、
+   NBER（#025cb9 + #4e505a/#bfc0c1/#f0f0f0）四家的实际样式表 —— 中性色饱和度均在 0-7%，
+   没有一家使用暖米白。暖调画布会读成"杂志 / 设计工作室"，不是机构。
+   历史上 canvas 为 #f7f7f5（H60 S11%），已校正。
+
+   所有颜色 / 字体 / 间距 / 圆角 / 阴影 / 动效均在此定义，
+   组件中禁止硬编码颜色值。
+   ============================================================ */
+
+@theme {
+  /* ---------- 色彩：表面（纯中性） ---------- */
+  --color-canvas: #f7f7f7;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f1f1f1;
+  --color-surface-ink: #14202e;
+
+  /* ---------- 色彩：文字（纯中性） ---------- */
+  --color-ink: #1a1a1a;
+  --color-ink-secondary: #565656;
+  /* 10-12px 的日期 / 英文名 / 月标都用它，必须过正文级 AA（4.5:1）。
+     最不利背景是 accent-soft #eaf0f7（不是 surface-subtle —— 实测前者更暗一点）：
+     #686868 对它是 4.86:1，对 surface-subtle 4.93:1，对 canvas 5.20:1。
+     历史值 #6e6e66 在 accent-soft 上仅 4.48:1，已被 scripts/contrast.mjs 拦下。 */
+  --color-ink-tertiary: #686868;
+  --color-ink-invert: #ffffff;
+
+  /* 深底（报头 / 页脚底条）上的文字与描边层级。
+     历史上这些是散落在 Header / Footer / global.css 里写死的 rgba(247,247,245,·)，
+     共 6 个互不相干的透明度 —— 那是画布色的副本，改配色时不会跟着变。
+     现在收敛为 5 档语义层级，全部由 ink-invert 派生。 */
+  --color-on-masthead: var(--color-ink-invert);
+  --color-on-masthead-soft: color-mix(in srgb, var(--color-ink-invert) 82%, transparent);
+  --color-on-masthead-muted: color-mix(in srgb, var(--color-ink-invert) 66%, transparent);
+  --color-on-masthead-faint: color-mix(in srgb, var(--color-ink-invert) 50%, transparent);
+  --color-on-masthead-line: color-mix(in srgb, var(--color-ink-invert) 28%, transparent);
+  --color-on-masthead-line-strong: color-mix(in srgb, var(--color-ink-invert) 70%, transparent);
+
+  /* ---------- 色彩：描边（纯中性） ---------- */
+  --color-line: #e2e2e2;
+  --color-line-strong: #c9c9c9;
+
+  /* ---------- 色彩：主色（深靛） ---------- */
+  --color-accent: #1d4e89;
+  --color-accent-hover: #163c6b;
+  --color-accent-soft: #eaf0f7;
+  --color-accent-ink: #0f2b4c;
+
+  /* ---------- 色彩：语义状态 ----------
+     站点目前没有用到（无表单校验、无彩色徽章 —— 这是有意的克制），
+     保留是为了状态反馈有据可依；数值已校准到正文级 AA。 */
+  --color-success: #127a54;
+  --color-success-soft: #eaf7f1;
+  --color-warning: #8f5a08;
+  --color-warning-soft: #fff6e5;
+  --color-error: #c53e4a;
+  --color-error-soft: #fff1f2;
+
+  /* ---------- 字体 ---------- */
+  --font-display: "Source Serif 4", "EB Garamond", Georgia, "Noto Serif SC", serif;
+  --font-sans: "IBM Plex Sans", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-serif-cjk: "Noto Serif SC", "Source Han Serif SC", "Source Serif 4", serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+
+  /* ---------- 字号 ---------- */
+  --text-display: clamp(2.5rem, 6vw, 4.5rem);
+  --text-display--line-height: 1.05;
+  --text-h1: clamp(2rem, 4vw, 3rem);
+  --text-h1--line-height: 1.15;
+  --text-h2: clamp(1.5rem, 2.5vw, 2rem);
+  --text-h2--line-height: 1.25;
+  --text-h3: 1.25rem;
+  --text-h3--line-height: 1.4;
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.75;
+  --text-ui: 0.875rem;
+  --text-ui--line-height: 1.5;
+  --text-meta: 0.75rem;
+  --text-meta--line-height: 1.5;
+
+  /* ---------- 圆角 ---------- */
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  /* ---------- 阴影（极轻） ----------
+     色相跟随背景：画布已改为纯中性 #f7f7f7，阴影也用中性灰，
+     不用纯黑（纯黑影子在任何底色上都显脏）。
+     注意 --shadow-sm 当前 0 处引用（卡片按设计就是无阴影，靠描边与留白分层）。
+     历史上还有 --shadow-focus，与 global.css 的 :focus-visible outline 是两套并存的
+     焦点环机制 —— 同义双写是漂移隐患，已删除，焦点环统一走 outline。 */
+  --shadow-sm: 0 1px 2px rgba(58, 58, 58, 0.05);
+  --shadow-menu: 0 8px 28px rgba(58, 58, 58, 0.1);
+  --shadow-dialog: 0 20px 48px rgba(58, 58, 58, 0.16);
+
+  /* ---------- 动效 ---------- */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* ---------- 门户式布局：报头与区块 ---------- */
+  /* 报头深底（深靛），用于报头带与页脚底条 */
+  --color-masthead: #0f2b4c;
+  --color-utility: #f1f1f1;
+
+  /* 遮罩（抽屉 / 弹层） */
+  --color-scrim: color-mix(in srgb, var(--color-ink) 32%, transparent);
+
+  /* ---------- 抽象图形配色（焦点图与专题配图，装饰性） ----------
+     全部落在主色 H209-214 色族内，不再混入暖铜。
+     历史上 fig-d 为 #a98c62（H35 S29% 暖铜），是全站唯一的暖色，
+     与冷靛主色系不同族 —— 已校正为同族冷灰蓝。 */
+  --color-fig-a: #1d4e89;
+  --color-fig-b: #0f2b4c;
+  --color-fig-c: #4a6b8a;
+  --color-fig-d: #7a8798;
+  --color-fig-e: #d8d8d8;
+}
+
+/* ---------- 布局常量（非 Tailwind 命名空间，直接作 CSS 变量） ---------- */
+:root {
+  --layout-max: 1200px;
+  --layout-wide: 1320px;
+  --layout-prose: 720px;
+
+  /* 报头三段高度 */
+  --utility-h: 34px;
+  --masthead-h: 84px;
+  /* 吸顶主导航高度。全站吸顶偏移一律用 var(--nav-h)，不要再新增同义别名（历史上 --header-h 与之重复，已移除） */
+  --nav-h: 52px;
+
+  --duration-fast: 120ms;
+  --duration-normal: 180ms;
+  --duration-slow: 260ms;
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --masthead-h: 64px;
+    --nav-h: 48px;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --masthead-h: 60px;
+    --nav-h: 44px;
+  }
+}

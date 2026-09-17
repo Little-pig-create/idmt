@@ -1,0 +1,52 @@
+---
+/**
+ * 人页肖像位。
+ *
+ * 有肖像照就渲染照片；没有则回落**大号姓氏字牌** ——
+ * 这里刻意不用 AbstractFigure：人不是抽象形状，把人物页塞一张几何图形
+ * 会读成占位符而不是「这个人」。字牌沿用首页 PersonCard 的语言，
+ * 两处保持一致。
+ */
+interface Props {
+  name: string;
+  nameEn?: string;
+  /** 肖像照 URL；为空则回落字牌 */
+  portrait?: string;
+  /** 肖像替代文本；缺省时用姓名 */
+  portraitAlt?: string;
+  class?: string;
+}
+
+const { name, nameEn, portrait, portraitAlt, class: className = '' } = Astro.props;
+const initial = name.slice(0, 1);
+---
+
+<figure class={`not-prose ${className}`.trim()}>
+  <div class="figure-frame aspect-[4/5]">
+    {
+      portrait ? (
+        <img
+          src={portrait}
+          alt={portraitAlt ?? name}
+          loading="eager"
+          decoding="async"
+          class="h-full w-full object-cover"
+        />
+      ) : (
+        <div class="flex h-full w-full flex-col items-center justify-center gap-3 bg-accent-soft">
+          <span
+            aria-hidden="true"
+            class="font-[family-name:var(--font-serif-cjk)] text-[3.25rem] leading-none font-semibold text-accent-ink"
+          >
+            {initial}
+          </span>
+          {nameEn && (
+            <span class="numeric px-4 text-center text-meta tracking-wide text-ink-secondary">
+              {nameEn}
+            </span>
+          )}
+        </div>
+      )
+    }
+  </div>
+</figure>

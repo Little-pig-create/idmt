@@ -1,0 +1,49 @@
+---
+/**
+ * 门户式区块标题栏
+ * 左侧主色竖线 + 中文标题 + 英文标签 + 右侧「更多 +」，下方可接一句说明。
+ * 全站区块统一使用，保证列表页与首页的标题节奏一致。
+ */
+interface Props {
+  /** 英文/眉标签，渲染为等宽小写 */
+  eyebrow?: string;
+  title: string;
+  /** 标题栏下方的一句话说明 */
+  description?: string;
+  moreHref?: string;
+  moreLabel?: string;
+  /** 锚点 id */
+  id?: string;
+  /** 标题层级，默认 h2 */
+  level?: 2 | 3;
+}
+
+const {
+  eyebrow,
+  title,
+  description,
+  moreHref,
+  moreLabel = '更多',
+  id,
+  level = 2,
+} = Astro.props;
+
+const Tag = level === 3 ? 'h3' : 'h2';
+---
+
+<header class="mb-5">
+  <div class="section-bar">
+    <Tag id={id} class="section-bar-title">{title}</Tag>
+    {eyebrow && <span class="section-bar-en">{eyebrow}</span>}
+    {
+      moreHref && (
+        <a href={moreHref} class="section-bar-more">
+          {moreLabel}
+          <span aria-hidden="true">+</span>
+        </a>
+      )
+    }
+  </div>
+
+  {description && <p class="section-note">{description}</p>}
+</header>

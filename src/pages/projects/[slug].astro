@@ -1,0 +1,221 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/ui/PageHero.astro';
+import AsideBox from '../../components/ui/AsideBox.astro';
+import PublicationItem from '../../components/content/PublicationItem.astro';
+import JsonLd from '../../components/seo/JsonLd.astro';
+import DetailFigure from '../../components/ui/DetailFigure.astro';
+import { site } from '../../data/site';
+
+export async function getStaticPaths() {
+  const all = await getCollection('projects', ({ data }) => !data.draft);
+  // 在研优先，其次按周期倒序（周期字符串形如 "2025.01-2026.12"）
+  const sorted = all.sort((a, b) => {
+    if (a.data.status !== b.data.status) return a.data.status === 'ongoing' ? -1 : 1;
+    return b.data.period.localeCompare(a.data.period);
+  });
+  return sorted.map((item, i) => ({
+    params: { slug: item.id },
+    props: { item, prev: sorted[i - 1], next: sorted[i + 1] },
+  }));
+}
+
+const { item, prev, next } = Astro.props;
+const { Content } = await render(item);
+
+const statusLabel: Record<string, string> = { ongoing: '在研', completed: '已结项' };
+const isOngoing = item.data.status === 'ongoing';
+
+/** 成员 → 人员主页：按姓名匹配 people 集合 */
+const people = await getCollection('people', ({ data }) => !data.draft);
+const memberPeople = item.data.members
+  .map((name) => people.find((p) => p.data.name === name))
+  .filter((p): p is NonNullable<typeof p> => Boolean(p));
+const unmatchedMembers = item.data.members.filter(
+  (name) => !people.some((p) => p.data.name === name)
+);
+
+/** 相关成果：作者与项目成员有交集 */
+const publications = await getCollection('publications', ({ data }) => !data.draft);
+const relatedPublications = publications
+  .filter((p) => p.data.authors.some((a) => item.data.members.includes(a)))
+  .sort((a, b) => b.data.year - a.data.year)
+  .slice(0, 5);
+
+/**
+ * 相关方向。两条证据链，取并集：
+ *   1) 主证据：项目成员自述的 researchAreas 与方向 title 完全相同（people.researchAreas[0] 就是方向名）；
+ *   2) 兜底：方向 keywords 出现在项目标题或摘要中。
+ * 只靠 2）会因关键词粒度不匹配而长期为空（例如「定价机制」不匹配任何 keyword），故必须以 1）为主。
+ */
+const memberAreas = new Set(memberPeople.flatMap((p) => p.data.researchAreas));
+const research = await getCollection('research', ({ data }) => !data.draft);
+const relatedResearch = research
+  .filter(
+    (r) =>
+      memberAreas.has(r.data.title) ||
+      r.data.keywords.some((kw) => item.data.summary.includes(kw) || item.data.title.includes(kw))
+  )
+  .sort((a, b) => a.data.order - b.data.order)
+  .slice(0, 3);
+---
+
+<BaseLayout title={item.data.title} description={item.data.summary} type="article">
+  <JsonLd
+    data={{
+      '@type': 'CreativeWork',
+      name: item.data.title,
+      description: item.data.summary,
+      creator: memberPeople.map((p) => ({ '@type': 'Person', name: p.data.name })),
+      funder: { '@type': 'Organization', name: item.data.funder },
+      temporalCoverage: item.data.period,
+      url: new URL(`/projects/${item.id}`, site.url).toString(),
+      publisher: { '@type': 'Organization', name: site.name, url: site.url },
+      inLanguage: 'zh-CN',
+    }}
+  />
+
+  <PageHero
+    eyebrow={item.data.funder}
+    title={item.data.title}
+    description={item.data.summary}
+    crumbs={[
+      { label: '研究', href: '/research' },
+      { label: '科研项目', href: '/projects' },
+      { label: item.data.title },
+    ]}
+  />
+
+  <section class="section">
+    <div class="container-page">
+      <div class="grid gap-12 lg:grid-cols-[1fr_300px] lg:gap-16">
+        <div>
+          <p
+            class="not-prose flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line pb-5 text-meta text-ink-tertiary"
+          >
+            <span class={isOngoing ? 'tag' : 'tag tag-quiet'}>{statusLabel[item.data.status]}</span>
+            <span class="numeric">{item.data.period}</span>
+            <span>{item.data.funder}</span>
+          </p>
+
+          <div class="container-prose prose-academic mt-8 lg:mx-0">
+            <DetailFigure
+              cover={item.data.cover}
+              coverAlt={item.data.coverAlt}
+              seed={item.id}
+              caption={item.data.coverAlt}
+              loading="eager"
+              class="mb-8"
+            />
+            <Content />
+          </div>
+
+          {
+            relatedPublications.length > 0 && (
+              <div class="mt-16 border-t border-line pt-10">
+                <h2 class="text-h2">项目相关成果</h2>
+                <div class="mt-6">
+                  {relatedPublications.map((pub) => (
+                    <PublicationItem
+                      title={pub.data.title}
+                      authors={pub.data.authors}
+                      venue={pub.data.venue}
+                      year={pub.data.year}
+                      type={pub.data.type}
+                      doi={pub.data.doi}
+                      pdf={pub.data.pdf}
+                      tags={pub.data.tags}
+                      href={`/publications/${pub.id}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )
+          }
+
+          <nav
+            aria-label="其他项目"
+            class="mt-16 grid gap-4 border-t border-line pt-8 sm:grid-cols-2"
+          >
+            <div>
+              {
+                prev && (
+                  <a href={`/projects/${prev.id}`} class="group block">
+                    <span class="eyebrow">上一个项目</span>
+                    <span class="link-title mt-2 block text-ui">{prev.data.title}</span>
+                  </a>
+                )
+              }
+            </div>
+            <div class="sm:text-right">
+              {
+                next && (
+                  <a href={`/projects/${next.id}`} class="group block">
+                    <span class="eyebrow">下一个项目</span>
+                    <span class="link-title mt-2 block text-ui">{next.data.title}</span>
+                  </a>
+                )
+              }
+            </div>
+          </nav>
+        </div>
+
+        <aside class="space-y-8 lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start">
+          <AsideBox title="项目信息">
+            <dl class="space-y-2 text-ui">
+              <div class="flex gap-2">
+                <dt class="shrink-0 text-ink-tertiary">状态</dt>
+                <dd class="text-ink-secondary">{statusLabel[item.data.status]}</dd>
+              </div>
+              <div class="flex gap-2">
+                <dt class="shrink-0 text-ink-tertiary">周期</dt>
+                <dd class="numeric text-ink-secondary">{item.data.period}</dd>
+              </div>
+              <div class="flex gap-2">
+                <dt class="shrink-0 text-ink-tertiary">资助</dt>
+                <dd class="text-ink-secondary">{item.data.funder}</dd>
+              </div>
+            </dl>
+          </AsideBox>
+
+          {
+            item.data.members.length > 0 && (
+              <AsideBox title="参与人员">
+                <ul class="space-y-2 text-ui">
+                  {memberPeople.map((p) => (
+                    <li>
+                      <a href={`/people/${p.id}`} class="link">
+                        {p.data.name}
+                      </a>
+                      <span class="ml-2 text-meta text-ink-tertiary">{p.data.title}</span>
+                    </li>
+                  ))}
+                  {unmatchedMembers.map((name) => (
+                    <li class="text-ink-secondary">
+                      {name}
+                    </li>
+                  ))}
+                </ul>
+              </AsideBox>
+            )
+          }
+
+          {
+            relatedResearch.length > 0 && (
+              <AsideBox title="所属方向">
+                <ul class="space-y-2 text-ui">
+                  {relatedResearch.map((r) => (
+                    <li>
+                      <a href={`/research/${r.id}`} class="link">{r.data.title}</a>
+                    </li>
+                  ))}
+                </ul>
+              </AsideBox>
+            )
+          }
+        </aside>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,158 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/ui/PageHero.astro';
+import SectionHeading from '../../components/ui/SectionHeading.astro';
+import AsideBox from '../../components/ui/AsideBox.astro';
+import EmptyState from '../../components/ui/EmptyState.astro';
+
+const all = await getCollection('projects', ({ data }) => !data.draft);
+
+const ongoing = all.filter((p) => p.data.status === 'ongoing');
+const completed = all.filter((p) => p.data.status === 'completed');
+
+const statusLabel: Record<string, string> = { ongoing: '在研', completed: '已结项' };
+
+const funders = [...new Set(all.map((p) => p.data.funder))].map((f) => ({
+  label: f,
+  count: all.filter((p) => p.data.funder === f).length,
+}));
+
+const memberCounts = new Map<string, number>();
+for (const p of all) {
+  for (const m of p.data.members) memberCounts.set(m, (memberCounts.get(m) ?? 0) + 1);
+}
+const members = [...memberCounts.entries()].sort((a, b) => b[1] - a[1]);
+---
+
+<BaseLayout
+  title="科研项目"
+  description="数字管理研究院承担的国家级、省部级与委托课题。"
+>
+  <PageHero
+    eyebrow="Projects"
+    title="科研项目"
+    description="研究院承担的国家社会科学基金项目、校级交叉学科项目与地方政府委托课题。"
+    crumbs={[{ label: '研究', href: '/research' }, { label: '科研项目' }]}
+  />
+
+  <section class="section">
+    <div class="container-page">
+      {
+        all.length === 0 ? (
+          <EmptyState
+            title="暂无项目信息"
+            description="项目信息尚未录入。"
+            actionHref="/research"
+            actionLabel="查看研究方向"
+          />
+        ) : (
+          <div class="grid gap-12 lg:grid-cols-[1fr_320px] lg:gap-16">
+            <div>
+              <SectionHeading eyebrow="Ongoing" title="在研项目" />
+              <ul>
+                {
+                  ongoing.map((project) => (
+                    <li>
+                      <article class="border-b border-line py-7">
+                        <div class="flex flex-wrap items-center gap-2">
+                          <span class="tag">{statusLabel[project.data.status]}</span>
+                          <span class="numeric text-meta text-ink-tertiary">{project.data.period}</span>
+                        </div>
+
+                        <h3 class="mt-3 text-[1.125rem] leading-snug">
+                          <a href={`/projects/${project.id}`} class="link-title">{project.data.title}</a>
+                        </h3>
+                        <p class="mt-2 max-w-3xl text-ui leading-relaxed text-ink-secondary">
+                          {project.data.summary}
+                        </p>
+
+                        <dl class="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-meta">
+                          <div class="flex gap-1.5">
+                            <dt class="text-ink-tertiary">资助来源</dt>
+                            <dd class="text-ink-secondary">{project.data.funder}</dd>
+                          </div>
+                          {
+                            project.data.members.length > 0 && (
+                              <div class="flex gap-1.5">
+                                <dt class="text-ink-tertiary">参与人员</dt>
+                                <dd class="text-ink-secondary">{project.data.members.join('、')}</dd>
+                              </div>
+                            )
+                          }
+                        </dl>
+                      </article>
+                    </li>
+                  ))
+                }
+              </ul>
+
+              {
+                completed.length > 0 && (
+                  <div class="mt-16">
+                    <SectionHeading eyebrow="Completed" title="已结项" />
+                    <ul>
+                      {completed.map((project) => (
+                        <li>
+                          <article class="border-b border-line py-7">
+                            <div class="flex flex-wrap items-center gap-2">
+                              <span class="tag tag-quiet">{statusLabel[project.data.status]}</span>
+                              <span class="numeric text-meta text-ink-tertiary">{project.data.period}</span>
+                            </div>
+                            <h3 class="mt-3 text-[1.0625rem] leading-snug">
+                              <a href={`/projects/${project.id}`} class="link-title">{project.data.title}</a>
+                            </h3>
+                            <p class="mt-2 max-w-3xl text-ui leading-relaxed text-ink-secondary">
+                              {project.data.summary}
+                            </p>
+                          </article>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )
+              }
+            </div>
+
+            <aside class="lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start">
+              <AsideBox title="资助来源">
+                <ul>
+                  {
+                    funders.map((f) => (
+                      <li class="flex items-baseline justify-between gap-3 border-b border-line py-2 text-ui">
+                        <span class="text-ink-secondary">{f.label}</span>
+                        <span class="numeric text-meta text-ink-tertiary">{f.count}</span>
+                      </li>
+                    ))
+                  }
+                </ul>
+              </AsideBox>
+
+              <AsideBox title="参与人员">
+                <ul class="space-y-2">
+                  {
+                    members.map(([name, count]) => (
+                      <li class="flex items-baseline justify-between gap-3 text-ui">
+                        <span class="text-ink-secondary">{name}</span>
+                        <span class="numeric text-meta text-ink-tertiary">{count} 项</span>
+                      </li>
+                    ))
+                  }
+                </ul>
+              </AsideBox>
+
+              <AsideBox title="相关入口">
+                <ul class="space-y-2 text-ui">
+                  <li><a href="/research" class="link">研究方向</a></li>
+                  <li><a href="/people" class="link">研究团队</a></li>
+                  <li><a href="/publications" class="link">学术成果</a></li>
+                  <li><a href="/datasets" class="link">数据集与资源</a></li>
+                </ul>
+              </AsideBox>
+            </aside>
+          </div>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>

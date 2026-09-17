@@ -1,0 +1,70 @@
+---
+/**
+ * 通知公告列表（门户式右栏与公告页共用）
+ * 日期右对齐等宽，悬停时圆点与标题同时变主色。
+ */
+export interface NoticeItem {
+  title: string;
+  date: Date;
+  href: string;
+  category?: string;
+  pinned?: boolean;
+}
+
+interface Props {
+  items: NoticeItem[];
+  /** 紧凑模式：减小内边距，用于侧栏 */
+  compact?: boolean;
+}
+
+const { items, compact = false } = Astro.props;
+
+const fmt = (d: Date) =>
+  `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+---
+
+<ul class:list={['notice-list', compact && 'notice-list-compact']}>
+  {
+    items.map((item) => (
+      <li>
+        <a href={item.href} class="notice-item">
+          <span class="notice-title">
+            {item.pinned && <span class="notice-pin">置顶</span>}
+            {item.category && <span class="notice-cat">{item.category}</span>}
+            {item.title}
+          </span>
+          <time datetime={item.date.toISOString().slice(0, 10)} class="notice-date">
+            {fmt(item.date)}
+          </time>
+        </a>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .notice-list-compact .notice-item {
+    padding: 0.5625rem 0;
+  }
+
+  .notice-pin,
+  .notice-cat {
+    display: inline-block;
+    margin-right: 0.375rem;
+    padding: 0 0.3125rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.6875rem;
+    line-height: 1.6;
+    vertical-align: 1px;
+  }
+
+  .notice-pin {
+    background-color: var(--color-accent);
+    color: var(--color-ink-invert);
+  }
+
+  .notice-cat {
+    background-color: var(--color-surface-subtle);
+    color: var(--color-ink-secondary);
+  }
+</style>

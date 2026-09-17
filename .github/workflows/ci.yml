@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# 门禁说明：
+#   1. build —— 内容 schema 与页面编译必须通过（内容写错会在这里失败）
+#   2. audit —— 扫 dist/ 校验无障碍 / SEO / 结构化数据 / 内部链接 / 体积预算
+#   3. taste —— 扫 dist/ 校验设计品位（破折号清零、眉标签克制、圆角尺度单一）
+#   4. contrast —— 解析 tokens.css 校验文字色对比度（全部 >= 4.5:1）
+#   5. docs:tokens —— 反查文档引用的令牌是否都存在（防文档与令牌漂移）
+#   6. smoke —— 起预览服务后跑 HTTP 断言
+# 任意一个非零退出即视为失败。本地等价命令：
+#   npm run build && npm run audit && npm run taste && npm run contrast && npm run docs:tokens && npm run smoke
+jobs:
+  verify:
+    name: 构建 · 审计 · 冒烟
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 构建静态站点
+        run: npm run build
+
+      # 静态扫描，不需要起服务
+      - name: a11y / SEO / 链接 / 体积审计
+        run: npm run audit
+
+      - name: 设计品位门禁（破折号 / 眉标签 / 圆角尺度）
+        run: npm run taste
+
+      - name: 色彩对比度门禁（WCAG AA）
+        run: npm run contrast
+
+      - name: 文档 / 令牌一致性门禁
+        run: npm run docs:tokens
+
+      - name: 冒烟测试（HTTP 断言）
+        run: |
+          npm run preview &
+          PREVIEW_PID=$!
+          # 等服务就绪，不用额外的 wait-on 依赖
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:4321/ > /dev/null; then
+              echo "预览服务已就绪"
+              break
+            fi
+            sleep 1
+          done
+          npm run smoke
+          kill $PREVIEW_PID
+
+  admin:
+    name: 内容发布后台构建
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 安装依赖
+        run: npm ci
+        working-directory: admin
+
+      - name: 构建后台
+        run: npm run build
+        working-directory: admin

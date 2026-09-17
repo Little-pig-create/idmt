@@ -1,0 +1,205 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/ui/PageHero.astro';
+import AsideBox from '../../components/ui/AsideBox.astro';
+import JsonLd from '../../components/seo/JsonLd.astro';
+import DetailFigure from '../../components/ui/DetailFigure.astro';
+import { eventTypeLabels, site } from '../../data/site';
+
+export async function getStaticPaths() {
+  const events = await getCollection('events', ({ data }) => !data.draft);
+  const sorted = events.sort((a, b) => a.data.startDate.getTime() - b.data.startDate.getTime());
+  return sorted.map((item, i) => ({
+    params: { slug: item.id },
+    props: {
+      item,
+      earlier: sorted[i - 1],
+      later: sorted[i + 1],
+    },
+  }));
+}
+
+const { item, earlier, later } = Astro.props;
+const { Content } = await render(item);
+
+const fmt = (d: Date) =>
+  `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+
+const dateText = item.data.endDate
+  ? `${fmt(item.data.startDate)}-${fmt(item.data.endDate)}`
+  : fmt(item.data.startDate);
+
+const isPast = item.data.startDate.getTime() < Date.now();
+const typeLabel = eventTypeLabels[item.data.type] ?? item.data.type;
+
+/** 相关活动：同类型优先，不足时用近期其他活动补足 */
+const all = await getCollection('events', ({ data }) => !data.draft);
+const others = all.filter((e) => e.id !== item.id);
+const sameType = others
+  .filter((e) => e.data.type === item.data.type)
+  .sort((a, b) => b.data.startDate.getTime() - a.data.startDate.getTime());
+const related = (sameType.length >= 3
+  ? sameType
+  : [
+      ...sameType,
+      ...others
+        .filter((e) => e.data.type !== item.data.type)
+        .sort((a, b) => b.data.startDate.getTime() - a.data.startDate.getTime()),
+    ]
+).slice(0, 3);
+---
+
+<BaseLayout title={item.data.title} description={item.data.summary} type="article">
+  <JsonLd
+    data={{
+      '@type': 'Event',
+      name: item.data.title,
+      description: item.data.summary,
+      startDate: item.data.startDate.toISOString(),
+      endDate: (item.data.endDate ?? item.data.startDate).toISOString(),
+      eventStatus: 'https://schema.org/EventScheduled',
+      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+      location: {
+        '@type': 'Place',
+        name: item.data.location,
+        address: site.address,
+      },
+      organizer: { '@type': 'Organization', name: site.name, url: site.url },
+      ...(item.data.speakers.length > 0
+        ? { performer: item.data.speakers.map((s) => ({ '@type': 'Person', name: s })) }
+        : {}),
+      url: new URL(`/events/${item.id}`, site.url).toString(),
+      inLanguage: 'zh-CN',
+    }}
+  />
+
+  <PageHero
+    eyebrow={typeLabel}
+    title={item.data.title}
+    description={item.data.summary}
+    crumbs={[
+      { label: '成果与动态', href: '/publications' },
+      { label: '学术活动', href: '/events' },
+      { label: item.data.title },
+    ]}
+  />
+
+  <section class="section">
+    <div class="container-page">
+      <div class="grid gap-12 lg:grid-cols-[1fr_300px] lg:gap-16">
+        <div>
+          <p
+            class="not-prose flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line pb-5 text-meta text-ink-tertiary"
+          >
+            <time datetime={item.data.startDate.toISOString().slice(0, 10)} class="numeric">
+              {dateText}
+            </time>
+            <span>{item.data.location}</span>
+            <span class="tag">{typeLabel}</span>
+            {isPast && <span class="tag tag-quiet">已结束</span>}
+          </p>
+
+          <div class="container-prose prose-academic mt-8 lg:mx-0">
+            <DetailFigure
+              cover={item.data.cover}
+              coverAlt={item.data.coverAlt}
+              seed={item.id}
+              caption={item.data.coverAlt}
+              loading="eager"
+              class="mb-8"
+            />
+            <Content />
+          </div>
+
+          <nav
+            aria-label="其他活动"
+            class="mt-16 grid gap-4 border-t border-line pt-8 sm:grid-cols-2"
+          >
+            <div>
+              {
+                earlier && (
+                  <a href={`/events/${earlier.id}`} class="group block">
+                    <span class="eyebrow">上一场</span>
+                    <span class="link-title mt-2 block text-ui">{earlier.data.title}</span>
+                  </a>
+                )
+              }
+            </div>
+            <div class="sm:text-right">
+              {
+                later && (
+                  <a href={`/events/${later.id}`} class="group block">
+                    <span class="eyebrow">下一场</span>
+                    <span class="link-title mt-2 block text-ui">{later.data.title}</span>
+                  </a>
+                )
+              }
+            </div>
+          </nav>
+        </div>
+
+        <aside class="space-y-8 lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start">
+          <AsideBox title="活动信息">
+            <dl class="space-y-2 text-ui">
+              <div class="flex gap-2">
+                <dt class="shrink-0 text-ink-tertiary">时间</dt>
+                <dd class="numeric text-ink-secondary">{dateText}</dd>
+              </div>
+              <div class="flex gap-2">
+                <dt class="shrink-0 text-ink-tertiary">地点</dt>
+                <dd class="text-ink-secondary">{item.data.location}</dd>
+              </div>
+              <div class="flex gap-2">
+                <dt class="shrink-0 text-ink-tertiary">类型</dt>
+                <dd class="text-ink-secondary">{typeLabel}</dd>
+              </div>
+              {
+                item.data.speakers.length > 0 && (
+                  <div class="flex gap-2">
+                    <dt class="shrink-0 text-ink-tertiary">主讲</dt>
+                    <dd class="text-ink-secondary">{item.data.speakers.join('、')}</dd>
+                  </div>
+                )
+              }
+            </dl>
+          </AsideBox>
+
+          {
+            !isPast && (
+              <AsideBox title="参与方式">
+                <p class="text-ui leading-relaxed text-ink-secondary">
+                  本场活动无需登记，座位先到先得。如需确认日程或申请来访，请联系院务办公室。
+                </p>
+                <p class="mt-3">
+                  <a href={`mailto:${site.email}`} class="link break-all">{site.email}</a>
+                </p>
+              </AsideBox>
+            )
+          }
+
+          <AsideBox title="相关活动">
+            {
+              related.length > 0 ? (
+                <ul class="space-y-3">
+                  {related.map((e) => (
+                    <li>
+                      <a href={`/events/${e.id}`} class="link-title block text-ui">
+                        {e.data.title}
+                      </a>
+                      <p class="mt-1 numeric text-meta text-ink-tertiary">
+                        {fmt(e.data.startDate)}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p class="text-ui text-ink-secondary">暂无其他活动。</p>
+              )
+            }
+          </AsideBox>
+        </aside>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

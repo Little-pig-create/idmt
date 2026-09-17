@@ -1,0 +1,102 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/ui/PageHero.astro';
+import JsonLd from '../../components/seo/JsonLd.astro';
+import DetailFigure from '../../components/ui/DetailFigure.astro';
+import { site } from '../../data/site';
+
+export async function getStaticPaths() {
+  const news = await getCollection('news', ({ data }) => !data.draft);
+  const sorted = news.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+  return sorted.map((item, i) => ({
+    params: { slug: item.id },
+    props: { item, prev: sorted[i + 1], next: sorted[i - 1] },
+  }));
+}
+
+const { item, prev, next } = Astro.props;
+const { Content } = await render(item);
+---
+
+<BaseLayout
+  title={item.data.title}
+  description={item.data.summary}
+  type="article"
+  publishedAt={item.data.date}
+>
+  <JsonLd
+    data={{
+      '@type': 'NewsArticle',
+      headline: item.data.title,
+      description: item.data.summary,
+      datePublished: item.data.date.toISOString(),
+      keywords: item.data.tags.join(', '),
+      url: new URL(`/news/${item.id}`, site.url).toString(),
+      publisher: { '@type': 'Organization', name: site.name, url: site.url },
+      author: { '@type': 'Person', name: item.data.author ?? site.name },
+      inLanguage: 'zh-CN',
+    }}
+  />
+  <PageHero
+    eyebrow={item.data.tags[0] ?? 'News'}
+    title={item.data.title}
+    description={item.data.summary}
+    crumbs={[
+      { label: '成果与动态', href: '/publications' },
+      { label: '新闻动态', href: '/news' },
+      { label: item.data.title },
+    ]}
+  />
+
+  <section class="section">
+    <div class="container-page">
+      <div class="container-prose prose-academic">
+        <p class="not-prose flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line pb-5 text-meta text-ink-tertiary">
+          <time datetime={item.data.date.toISOString().slice(0, 10)} class="numeric">
+            {item.data.date.getFullYear()}.
+            {String(item.data.date.getMonth() + 1).padStart(2, '0')}.
+            {String(item.data.date.getDate()).padStart(2, '0')}
+          </time>
+          {item.data.author && <span>{item.data.author}</span>}
+          {item.data.featured && <span class="tag">精选</span>}
+          {item.data.tags.map((tag) => <span class="tag">{tag}</span>)}
+        </p>
+
+        <DetailFigure
+          cover={item.data.cover}
+          coverAlt={item.data.coverAlt}
+          seed={item.id}
+          caption={item.data.coverAlt}
+          loading="eager"
+          class="mb-8"
+        />
+
+        <Content />
+      </div>
+
+      <nav aria-label="上下篇" class="container-prose mt-16 grid gap-4 border-t border-line pt-8 sm:grid-cols-2">
+        <div>
+          {
+            prev && (
+              <a href={`/news/${prev.id}`} class="group block">
+                <span class="eyebrow">上一篇</span>
+                <span class="link-title mt-2 block text-ui">{prev.data.title}</span>
+              </a>
+            )
+          }
+        </div>
+        <div class="sm:text-right">
+          {
+            next && (
+              <a href={`/news/${next.id}`} class="group block">
+                <span class="eyebrow">下一篇</span>
+                <span class="link-title mt-2 block text-ui">{next.data.title}</span>
+              </a>
+            )
+          }
+        </div>
+      </nav>
+    </div>
+  </section>
+</BaseLayout>

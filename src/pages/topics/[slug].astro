@@ -1,0 +1,256 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/ui/PageHero.astro';
+import AsideBox from '../../components/ui/AsideBox.astro';
+import PublicationItem from '../../components/content/PublicationItem.astro';
+import EventItem from '../../components/content/EventItem.astro';
+import DetailFigure from '../../components/ui/DetailFigure.astro';
+import JsonLd from '../../components/seo/JsonLd.astro';
+import { site } from '../../data/site';
+
+export async function getStaticPaths() {
+  const topics = await getCollection('topics', ({ data }) => !data.draft);
+  const sorted = [...topics].sort((a, b) => a.data.order - b.data.order);
+  return sorted.map((item, i) => ({
+    params: { slug: item.id },
+    props: { item, prev: sorted[i - 1], next: sorted[i + 1] },
+  }));
+}
+
+const { item, prev, next } = Astro.props;
+const { Content } = await render(item);
+const kws = item.data.keywords;
+
+/** 命中标签集合（成果/新闻用） */
+const tagged = (tags: string[]) => tags.some((t) => kws.includes(t));
+/** 命中正文关键词（活动/项目无 tags，按标题与摘要匹配） */
+const textual = (...fields: string[]) => kws.some((k) => fields.some((f) => f.includes(k)));
+
+const publications = (await getCollection('publications', ({ data }) => !data.draft))
+  .filter((p) => tagged(p.data.tags))
+  .sort((a, b) => b.data.year - a.data.year);
+
+const news = (await getCollection('news', ({ data }) => !data.draft))
+  .filter((n) => tagged(n.data.tags))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+const events = (await getCollection('events', ({ data }) => !data.draft))
+  .filter((e) => textual(e.data.title, e.data.summary))
+  .sort((a, b) => b.data.startDate.getTime() - a.data.startDate.getTime());
+
+const projects = (await getCollection('projects', ({ data }) => !data.draft))
+  .filter((p) => textual(p.data.title, p.data.summary))
+  .sort((a, b) => (a.data.status === b.data.status ? 0 : a.data.status === 'ongoing' ? -1 : 1));
+
+const research = (await getCollection('research', ({ data }) => !data.draft)).filter(
+  (r) => r.data.keywords.some((k) => kws.includes(k)) || kws.some((k) => r.data.title.includes(k))
+);
+
+const people = await getCollection('people', ({ data }) => !data.draft);
+const lead = item.data.lead ? people.find((p) => p.data.name === item.data.lead) : undefined;
+
+/** 参与成员：由命中的成果作者 ∪ 项目成员 ∪ 负责人推出，不靠猜 */
+const involvedNames = new Set<string>([
+  ...(item.data.lead ? [item.data.lead] : []),
+  ...publications.flatMap((p) => p.data.authors),
+  ...projects.flatMap((p) => p.data.members),
+]);
+const involved = people
+  .filter((p) => involvedNames.has(p.data.name))
+  .sort((a, b) => a.data.order - b.data.order);
+---
+
+<BaseLayout title={item.data.title} description={item.data.summary} type="article">
+  <JsonLd
+    data={{
+      '@type': 'CollectionPage',
+      name: item.data.title,
+      description: item.data.summary,
+      keywords: kws.join(', '),
+      url: new URL(`/topics/${item.id}`, site.url).toString(),
+      isPartOf: { '@type': 'WebSite', name: site.name, url: site.url },
+      inLanguage: 'zh-CN',
+    }}
+  />
+
+  <PageHero
+    eyebrow={item.data.badge ?? '专题'}
+    title={item.data.title}
+    description={item.data.summary}
+    crumbs={[{ label: '专题', href: '/topics' }, { label: item.data.title }]}
+  />
+
+  <section class="section">
+    <div class="container-page">
+      <div class="grid gap-12 lg:grid-cols-[1fr_300px] lg:gap-16">
+        <div>
+          <DetailFigure
+            cover={item.data.image}
+            coverAlt={item.data.title}
+            seed={item.data.seed}
+            loading="eager"
+            class="mb-8"
+          />
+
+          <div class="container-prose prose-academic lg:mx-0">
+            <Content />
+          </div>
+
+          {
+            publications.length > 0 && (
+              <div class="mt-16 border-t border-line pt-10">
+                <h2 class="text-h2">专题成果</h2>
+                <div class="mt-6">
+                  {publications.map((pub) => (
+                    <PublicationItem
+                      title={pub.data.title}
+                      authors={pub.data.authors}
+                      venue={pub.data.venue}
+                      year={pub.data.year}
+                      type={pub.data.type}
+                      doi={pub.data.doi}
+                      pdf={pub.data.pdf}
+                      tags={pub.data.tags}
+                      href={`/publications/${pub.id}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )
+          }
+
+          {
+            news.length > 0 && (
+              <div class="mt-16 border-t border-line pt-10">
+                <h2 class="text-h2">相关动态</h2>
+                <ul class="mt-6">
+                  {news.map((n) => (
+                    <li class="border-b border-line py-4">
+                      <a href={`/news/${n.id}`} class="link-title block text-ui">{n.data.title}</a>
+                      <p class="numeric mt-1 text-meta text-ink-tertiary">
+                        {n.data.date.toISOString().slice(0, 10)}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          }
+
+          {
+            events.length > 0 && (
+              <div class="mt-16 border-t border-line pt-10">
+                <h2 class="text-h2">相关活动</h2>
+                <div class="mt-6">
+                  {events.map((e) => (
+                    <EventItem
+                      title={e.data.title}
+                      startDate={e.data.startDate}
+                      location={e.data.location}
+                      type={e.data.type}
+                      speakers={e.data.speakers}
+                      summary={e.data.summary}
+                      href={`/events/${e.id}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )
+          }
+
+          {
+            projects.length > 0 && (
+              <div class="mt-16 border-t border-line pt-10">
+                <h2 class="text-h2">支撑项目</h2>
+                <ul class="mt-6">
+                  {projects.map((p) => (
+                    <li class="border-b border-line py-4">
+                      <a href={`/projects/${p.id}`} class="link-title block text-ui">
+                        {p.data.title}
+                      </a>
+                      <p class="mt-1 text-meta text-ink-tertiary">
+                        <span class="numeric">{p.data.period}</span> · {p.data.funder}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          }
+
+          <nav aria-label="其他专题" class="mt-16 grid gap-4 border-t border-line pt-8 sm:grid-cols-2">
+            <div>
+              {
+                prev && (
+                  <a href={`/topics/${prev.id}`} class="group block">
+                    <span class="eyebrow">上一个专题</span>
+                    <span class="link-title mt-2 block text-ui">{prev.data.title}</span>
+                  </a>
+                )
+              }
+            </div>
+            <div class="sm:text-right">
+              {
+                next && (
+                  <a href={`/topics/${next.id}`} class="group block">
+                    <span class="eyebrow">下一个专题</span>
+                    <span class="link-title mt-2 block text-ui">{next.data.title}</span>
+                  </a>
+                )
+              }
+            </div>
+          </nav>
+        </div>
+
+        <aside class="space-y-8 lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start">
+          {
+            lead && (
+              <AsideBox title="专题负责人">
+                <a href={`/people/${lead.id}`} class="link-title block text-ui">
+                  {lead.data.name}
+                </a>
+                <p class="mt-1 text-meta text-ink-tertiary">{lead.data.title}</p>
+              </AsideBox>
+            )
+          }
+
+          {
+            involved.length > 0 && (
+              <AsideBox title="参与成员">
+                <ul class="space-y-2 text-ui">
+                  {involved.map((p) => (
+                    <li>
+                      <a href={`/people/${p.id}`} class="link">{p.data.name}</a>
+                      <span class="ml-2 text-meta text-ink-tertiary">{p.data.title}</span>
+                    </li>
+                  ))}
+                </ul>
+              </AsideBox>
+            )
+          }
+
+          {
+            research.length > 0 && (
+              <AsideBox title="相关方向">
+                <ul class="space-y-2 text-ui">
+                  {research.map((r) => (
+                    <li>
+                      <a href={`/research/${r.id}`} class="link">{r.data.title}</a>
+                    </li>
+                  ))}
+                </ul>
+              </AsideBox>
+            )
+          }
+
+          <AsideBox title="专题关键词">
+            <ul class="flex flex-wrap gap-1.5">
+              {kws.map((k) => <li class="tag">{k}</li>)}
+            </ul>
+          </AsideBox>
+        </aside>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

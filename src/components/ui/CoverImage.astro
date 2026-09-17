@@ -1,0 +1,51 @@
+---
+/**
+ * 卡片配图：有真实封面用真实封面，没有则回落抽象图形
+ *
+ * 抽象：只负责「填满外层给的那个框」，不改变任何尺寸语义。
+ * 外层通常是 `.figure-frame aspect-[16/9]` 之类的容器，
+ * 因此真实图片必须显式 h-full w-full + object-cover，否则会撑破卡片。
+ *
+ * 回落用的 AbstractFigure 是装饰性 SVG（aria-hidden），
+ * 真实图片则带 alt，两者对辅助技术的表现一致：都不重复朗读标题。
+ */
+
+import AbstractFigure from './AbstractFigure.astro';
+
+interface Props {
+  /** 真实图片 URL，例如 /images/foo.png；为空则回落抽象图形 */
+  cover?: string;
+  /** 图片替代文本 */
+  alt?: string;
+  /** 回落时 AbstractFigure 的种子 */
+  seed: string;
+  /** 回落时 AbstractFigure 的宽高比 */
+  ratio?: number;
+  /** 是否懒加载（首屏第一张建议 eager） */
+  loading?: 'lazy' | 'eager';
+  class?: string;
+}
+
+const {
+  cover,
+  alt = '',
+  seed,
+  ratio = 16 / 9,
+  loading = 'lazy',
+  class: className = '',
+} = Astro.props;
+---
+
+{
+  cover ? (
+    <img
+      src={cover}
+      alt={alt}
+      loading={loading}
+      decoding="async"
+      class={`h-full w-full object-cover ${className}`.trim()}
+    />
+  ) : (
+    <AbstractFigure seed={seed} ratio={ratio} class={`h-full w-full ${className}`.trim()} />
+  )
+}

@@ -1,0 +1,76 @@
+---
+import { publicationTypeLabels } from '../../data/site';
+
+interface Props {
+  title: string;
+  authors: string[];
+  venue: string;
+  year: number;
+  type: string;
+  doi?: string;
+  pdf?: string;
+  tags?: string[];
+  href?: string;
+}
+
+const { title, authors, venue, year, type, doi, pdf, tags = [], href } = Astro.props;
+
+const typeLabel = publicationTypeLabels[type] ?? type;
+const doiHref = doi ? (doi.startsWith('http') ? doi : `https://doi.org/${doi}`) : undefined;
+---
+
+<article class="group border-b border-line py-5 transition-colors duration-150">
+  <p class="text-ui text-ink-secondary">
+    {
+      authors.map((author, i) => (
+        <>
+          {i > 0 && <span class="text-ink-tertiary">, </span>}
+          <span class="text-ink">{author}</span>
+        </>
+      ))
+    }
+  </p>
+
+  <h3 class="mt-1.5 text-[1.0625rem] leading-snug font-normal">
+    {href ? (
+      <a href={href} class="link-title">{title}</a>
+    ) : (
+      <span class="text-ink">{title}</span>
+    )}
+  </h3>
+
+  <div class="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
+    <p class="text-ui text-ink-secondary">
+      <span class="italic">{venue}</span>
+      <span class="numeric">, {year}</span>
+    </p>
+
+    <span class="tag tag-quiet">{typeLabel}</span>
+
+    {tags.map((tag) => <span class="tag">{tag}</span>)}
+
+    <span class="flex items-center gap-2 sm:opacity-0 sm:transition-opacity sm:duration-150 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+      {
+        pdf && (
+          <a
+            href={pdf}
+            class="numeric inline-flex min-h-8 items-center rounded-sm border border-line-strong px-2 text-[0.6875rem] text-ink-secondary transition-colors duration-150 hover:border-accent hover:text-accent"
+          >
+            PDF
+          </a>
+        )
+      }
+      {
+        doiHref && (
+          <a
+            href={doiHref}
+            rel="noopener"
+            class="numeric inline-flex min-h-8 items-center rounded-sm border border-line-strong px-2 text-[0.6875rem] text-ink-secondary transition-colors duration-150 hover:border-accent hover:text-accent"
+          >
+            DOI
+          </a>
+        )
+      }
+    </span>
+  </div>
+</article>

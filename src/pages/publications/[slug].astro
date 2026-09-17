@@ -1,0 +1,199 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/ui/PageHero.astro';
+import JsonLd from '../../components/seo/JsonLd.astro';
+import DetailFigure from '../../components/ui/DetailFigure.astro';
+import { publicationTypeLabels, site } from '../../data/site';
+import { toBibtex } from '../../lib/bibtex';
+
+export async function getStaticPaths() {
+  const publications = await getCollection('publications', ({ data }) => !data.draft);
+  return publications.map((p) => ({
+    params: { slug: p.id },
+    props: { item: p },
+  }));
+}
+
+const { item } = Astro.props;
+const { Content } = await render(item);
+const data = item.data;
+
+const typeLabel = publicationTypeLabels[data.type] ?? data.type;
+const doiHref = data.doi ? (data.doi.startsWith('http') ? data.doi : `https://doi.org/${data.doi}`) : undefined;
+const bibtex = toBibtex(data);
+
+/** 作者 → 成员主页：按姓名匹配 people，机构外作者保持纯文本 */
+const allPeople = await getCollection('people', ({ data }) => !data.draft);
+const peopleByName = new Map(allPeople.map((p) => [p.data.name, p.id]));
+
+// 同作者相关：同一作者的其他成果（在作者详情页里也已有逻辑；这里按全团队的前 N 篇补充）
+const allPubs = await getCollection('publications', ({ data }) => !data.draft);
+const related = allPubs
+  .filter((p) => p.id !== item.id && p.data.authors.some((a) => data.authors.includes(a)))
+  .sort((a, b) => b.data.year - a.data.year)
+  .slice(0, 5)
+  .map((p) => ({
+    id: p.id,
+    title: p.data.title,
+    authors: p.data.authors,
+    venue: p.data.venue,
+    year: p.data.year,
+    type: p.data.type,
+  }));
+---
+
+<BaseLayout
+  title={data.title}
+  description={`${data.authors.join('、')}。${data.venue}，${data.year}。${typeLabel}。`}
+  type="article"
+  publishedAt={new Date(data.year, 0, 1)}
+>
+  <JsonLd
+    data={{
+      '@type': 'ScholarlyArticle',
+      headline: data.title,
+      name: data.title,
+      datePublished: `${data.year}`,
+      author: data.authors.map((a) => ({ '@type': 'Person', name: a })),
+      isPartOf: { '@type': 'Periodical', name: data.venue },
+      ...(data.doi ? { identifier: data.doi.startsWith('http') ? data.doi : `https://doi.org/${data.doi}` } : {}),
+      keywords: data.tags.join(', '),
+      url: new URL(`/publications/${item.id}`, site.url).toString(),
+      inLanguage: 'zh-CN',
+      publisher: { '@type': 'Organization', name: site.name, url: site.url },
+    }}
+  />
+  <PageHero
+    eyebrow={typeLabel}
+    title={data.title}
+    crumbs={[
+      { label: '成果与动态', href: '/publications' },
+      { label: '学术成果', href: '/publications' },
+      { label: data.title },
+    ]}
+  />
+
+  <section class="section">
+    <div class="container-page">
+      <div class="grid gap-12 lg:grid-cols-[1fr_320px] lg:gap-16">
+        <article class="container-prose prose-academic">
+          <header class="not-prose mb-6 border-b border-line pb-6">
+            <p class="text-ui text-ink-secondary">
+              {data.authors.map((author, i) => {
+                const personId = peopleByName.get(author);
+                return (
+                  <>
+                    {i > 0 && <span class="text-ink-tertiary">, </span>}
+                    {personId ? (
+                      <a href={`/people/${personId}`} class="text-ink link-title">
+                        {author}
+                      </a>
+                    ) : (
+                      <span class="text-ink">{author}</span>
+                    )}
+                  </>
+                );
+              })}
+            </p>
+            <p class="mt-2 text-ui text-ink-secondary">
+              <span class="italic">{data.venue}</span>
+              <span class="numeric">, {data.year}</span>
+              <span class="tag tag-quiet ml-3">{typeLabel}</span>
+              {data.tags.map((tag) => (
+                <span class="tag ml-2">{tag}</span>
+              ))}
+              {data.featured && <span class="tag ml-2">精选</span>}
+            </p>
+          </header>
+
+          <DetailFigure
+            cover={data.cover}
+            coverAlt={data.coverAlt}
+            seed={item.id}
+            caption={data.coverAlt}
+            loading="eager"
+            class="mb-6"
+          />
+
+          {item.body ? <Content /> : (
+            <p class="text-ink-tertiary">（暂无摘要）</p>
+          )}
+        </article>
+
+        <aside class="space-y-8 lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start">
+          {/* 引用出口 */}
+          <div class="rounded-md border border-line bg-surface p-5">
+            <p class="eyebrow mb-3">引用此成果</p>
+            <div class="flex flex-wrap gap-2">
+              {doiHref && (
+                <a href={doiHref} rel="noopener" class="btn btn-secondary numeric">DOI</a>
+              )}
+              {data.pdf && (
+                <a href={data.pdf} class="btn btn-secondary numeric">PDF</a>
+              )}
+            </div>
+            <details class="mt-4">
+              <summary class="cursor-pointer text-meta text-ink-secondary select-none hover:text-accent">BibTeX 引用条目</summary>
+              <pre
+                class="bibtex mt-3 overflow-x-auto rounded-sm border border-line bg-surface-subtle p-3 text-[0.75rem] leading-relaxed text-ink-secondary"
+                data-bibtex>{bibtex}</pre>
+              <button
+                type="button"
+                class="btn btn-secondary mt-3 numeric"
+                data-copy-bibtex
+                aria-label="复制 BibTeX 到剪贴板"
+              >复制 BibTeX</button>
+              <p class="mt-2 text-meta text-ink-tertiary" data-copy-status aria-live="polite"></p>
+            </details>
+          </div>
+
+          {/* 相关成果 */}
+          {related.length > 0 && (
+            <div>
+              <p class="eyebrow mb-3">同作者相关</p>
+              <ul class="space-y-3">
+                {related.map((r) => (
+                  <li class="border-l-2 border-line pl-3">
+                    <a href={`/publications/${r.id}`} class="block">
+                      <p class="text-ui font-medium text-ink hover:text-accent">{r.title}</p>
+                      <p class="numeric mt-0.5 text-meta text-ink-tertiary">
+                        {r.venue}, {r.year}
+                      </p>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </aside>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  // 复制 BibTeX：复制成功后给出状态反馈，5 秒后清空。
+  function initBibtexCopy(root: Document | ShadowRoot = document) {
+    root.querySelectorAll('[data-copy-bibtex]').forEach((btn) => {
+      if ((btn as HTMLElement).dataset.bound === '1') return;
+      (btn as HTMLElement).dataset.bound = '1';
+      btn.addEventListener('click', async () => {
+        const pre = btn.parentElement?.querySelector('[data-bibtex]') as HTMLPreElement | null;
+        if (!pre) return;
+        const status = btn.parentElement?.querySelector('[data-copy-status]') as HTMLElement | null;
+        try {
+          await navigator.clipboard.writeText(pre.textContent ?? '');
+          if (status) status.textContent = '已复制到剪贴板';
+        } catch {
+          if (status) status.textContent = '复制失败，请手动选择并复制';
+        }
+        setTimeout(() => {
+          if (status) status.textContent = '';
+        }, 4000);
+      });
+    });
+  }
+  document.addEventListener('astro:page-load', () => initBibtexCopy());
+  initBibtexCopy();
+</script>

@@ -1,0 +1,44 @@
+---
+interface Props {
+  name: string;
+  nameEn?: string;
+  title: string;
+  researchAreas?: string[];
+  href?: string;
+}
+
+const { name, nameEn, title, researchAreas = [], href } = Astro.props;
+const initial = name.slice(0, 1);
+---
+
+<article class="card card-hover group p-6">
+  <div class="flex items-start gap-4">
+    <span
+      aria-hidden="true"
+      class="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-accent-soft font-[family-name:var(--font-serif-cjk)] text-xl font-semibold text-accent-ink"
+    >
+      {initial}
+    </span>
+    <div class="min-w-0">
+      <h3 class="text-[1.0625rem] leading-snug">
+        {href ? (
+          <a href={href} class="link-title">{name}</a>
+        ) : (
+          <span class="text-ink">{name}</span>
+        )}
+      </h3>
+      {nameEn && <p class="numeric mt-0.5 text-[0.6875rem] tracking-wide text-ink-tertiary">{nameEn}</p>}
+      <p class="mt-1.5 text-ui text-ink-secondary">{title}</p>
+    </div>
+  </div>
+
+  {
+    researchAreas.length > 0 && (
+      <ul class="mt-4 flex flex-wrap gap-1.5">
+        {researchAreas.map((area) => (
+          <li class="tag tag-quiet">{area}</li>
+        ))}
+      </ul>
+    )
+  }
+</article>

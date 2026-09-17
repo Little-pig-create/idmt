@@ -1,0 +1,49 @@
+---
+/**
+ * 详情页统一图片位。
+ *
+ * 语义：**位置始终存在** —— 有真实配图就渲染真图，没有则回落 AbstractFigure。
+ * 版面不随「有没有配图」而变，编辑器补图时不需要改模板。
+ *
+ * 与卡片上的 CoverImage 的关系：CoverImage 只负责「填满外层给的框」，
+ * 本组件负责详情页那一套固定外壳（figure + figure-frame + 可选图注 + not-prose）。
+ * 别在详情页里再手写一遍这层壳，否则图注样式与 not-prose 处理会各写各的。
+ */
+import CoverImage from './CoverImage.astro';
+
+interface Props {
+  /** 真实配图 URL；为空则回落抽象图形 */
+  cover?: string;
+  /** 配图替代文本 */
+  coverAlt?: string;
+  /** 回落抽象图形的种子，通常传条目 id */
+  seed: string;
+  /** 宽高比数值，须与 aspect 对应（AbstractFigure 用它算高度） */
+  ratio?: number;
+  /** 与 ratio 对应的 Tailwind aspect 类 */
+  aspect?: string;
+  /** 图注。有值时展示在图片下方 */
+  caption?: string;
+  /** 首屏第一张建议 eager */
+  loading?: 'lazy' | 'eager';
+  class?: string;
+}
+
+const {
+  cover,
+  coverAlt,
+  seed,
+  ratio = 16 / 9,
+  aspect = 'aspect-[16/9]',
+  caption,
+  loading = 'lazy',
+  class: className = '',
+} = Astro.props;
+---
+
+<figure class={`not-prose ${className}`.trim()}>
+  <div class={`figure-frame ${aspect}`}>
+    <CoverImage cover={cover} alt={coverAlt ?? ''} seed={seed} ratio={ratio} loading={loading} />
+  </div>
+  {caption && <figcaption class="mt-2 text-meta text-ink-tertiary">{caption}</figcaption>}
+</figure>

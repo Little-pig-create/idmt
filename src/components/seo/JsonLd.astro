@@ -1,0 +1,17 @@
+---
+/**
+ * 通用结构化数据组件。
+ *
+ * 每个页面可以输出任意多个 application/ld+json 块；本组件把传入的
+ * data 数组塞进 @graph 后输出，便于搜索引擎聚合。
+ * BaseLayout 会在每页独立输出 ResearchOrganization；详情页通过本组件
+ * 追加具体的 @type（Person / NewsArticle / Event / …）。
+ */
+interface Props {
+  data: Record<string, unknown> | Record<string, unknown>[];
+}
+
+const { data } = Astro.props;
+const items = Array.isArray(data) ? data : [data];
+---
+<script is:inline type="application/ld+json" set:html={JSON.stringify({ '@graph': items })} />

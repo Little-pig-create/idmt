@@ -1,0 +1,75 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/ui/PageHero.astro';
+
+const areas = (await getCollection('research', ({ data }) => !data.draft)).sort(
+  (a, b) => a.data.order - b.data.order
+);
+
+/** 方向状态中文标签（与 research/[slug] 保持一致） */
+const researchStatusLabel: Record<string, string> = {
+  active: '活跃',
+  ongoing: '进行中',
+  planned: '规划中',
+};
+---
+
+<BaseLayout
+  title="研究方向"
+  description="数字管理研究院的四个研究方向：数字治理与公共管理、数据要素与数字经济、智能决策与优化、数字政府与公共服务。"
+>
+  <PageHero
+    eyebrow="Research"
+    title="研究方向"
+    description="四个方向共享同一套问题意识：技术进入管理场景后，制度、组织与人如何回应。"
+    crumbs={[{ label: '研究', href: '/research' }, { label: '研究方向' }]}
+  />
+
+  <section class="section">
+    <div class="container-page">
+      <ul>
+        {
+          areas.map((area) => (
+            <li>
+              <article class="border-b border-line">
+                <a
+                  href={`/research/${area.id}`}
+                  class="group grid gap-4 py-8 transition-colors duration-150 hover:bg-surface lg:grid-cols-[4rem_1.1fr_1.5fr] lg:gap-8 lg:py-10"
+                >
+                  <span class="numeric text-meta text-ink-tertiary lg:pt-2">
+                    {String(area.data.order).padStart(2, '0')}
+                  </span>
+
+                  <div class="lg:pt-1">
+                    <h2 class="text-[1.375rem] leading-snug">
+                      <span class="link-title">{area.data.title}</span>
+                    </h2>
+                    <ul class="mt-4 flex flex-wrap gap-1.5">
+                      {area.data.keywords.map((kw) => (
+                        <li class="tag tag-quiet">{kw}</li>
+                      ))}
+                      {area.data.status && (
+                        <li class="tag tag-quiet">{researchStatusLabel[area.data.status] ?? area.data.status}</li>
+                      )}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <p class="text-body leading-relaxed text-ink-secondary">{area.data.summary}</p>
+                    <span class="mt-4 inline-flex items-center gap-1.5 text-ui font-medium text-accent">
+                      查看方向详情
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="transition-transform duration-150 group-hover:translate-x-0.5 motion-reduce:transition-none">
+                        <path d="M5 12h14M12 5l7 7-7 7" />
+                      </svg>
+                    </span>
+                  </div>
+                </a>
+              </article>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+</BaseLayout>

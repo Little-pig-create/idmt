@@ -1,0 +1,90 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/ui/PageHero.astro';
+import SectionHeading from '../../components/ui/SectionHeading.astro';
+import CoverImage from '../../components/ui/CoverImage.astro';
+import EmptyState from '../../components/ui/EmptyState.astro';
+
+const all = (await getCollection('topics', ({ data }) => !data.draft)).sort(
+  (a, b) => a.data.order - b.data.order
+);
+
+const kws = all.flatMap((t) => t.data.keywords);
+const tagged = (tags: string[]) => tags.some((t) => kws.includes(t));
+const textual = (...fields: string[]) => kws.some((k) => fields.some((f) => f.includes(k)));
+
+const pubs = await getCollection('publications', ({ data }) => !data.draft);
+const news = await getCollection('news', ({ data }) => !data.draft);
+const events = await getCollection('events', ({ data }) => !data.draft);
+const projects = await getCollection('projects', ({ data }) => !data.draft);
+
+/** 每个专题聚合到的条目数，用于列表页显示「含 N 项内容」 */
+const counts = new Map<string, number>();
+for (const t of all) {
+  const hit = (arr: string[]) => arr.some((x) => t.data.keywords.includes(x));
+  const n =
+    pubs.filter((p) => hit(p.data.tags)).length +
+    news.filter((n2) => hit(n2.data.tags)).length +
+    events.filter((e) => t.data.keywords.some((k) => e.data.title.includes(k) || e.data.summary.includes(k)))
+      .length +
+    projects.filter((p) => t.data.keywords.some((k) => p.data.title.includes(k) || p.data.summary.includes(k)))
+      .length;
+  counts.set(t.id, n);
+}
+---
+
+<BaseLayout
+  title="专题专栏"
+  description="围绕长期议题组织的研究成果、数据与活动。"
+>
+  <PageHero
+    eyebrow="Topics"
+    title="专题专栏"
+    description="专题是跨内容类型的聚合：把同一个议题下的成果、动态、活动与项目串在一起。"
+    crumbs={[{ label: '专题' }]}
+  />
+
+  <section class="section">
+    <div class="container-page">
+      {
+        all.length === 0 ? (
+          <EmptyState
+            title="暂无专题"
+            description="专题正在筹备中。"
+            actionHref="/research"
+            actionLabel="查看研究方向"
+          />
+        ) : (
+          <>
+            <SectionHeading eyebrow="All topics" title="全部专题" />
+            <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {all.map((topic) => (
+                <a href={`/topics/${topic.id}`} class="portal-card group">
+                  <div class="figure-frame aspect-[16/9]">
+                    <CoverImage
+                      cover={topic.data.image}
+                      alt={topic.data.title}
+                      seed={topic.data.seed}
+                      ratio={16 / 9}
+                    />
+                  </div>
+                  <div class="p-5">
+                    {topic.data.badge && <span class="tag tag-quiet">{topic.data.badge}</span>}
+                    <h3 class="mt-2 text-[1.0625rem] leading-snug">
+                      <span class="link-title">{topic.data.title}</span>
+                    </h3>
+                    <p class="mt-2 text-ui leading-relaxed text-ink-secondary">{topic.data.summary}</p>
+                    <p class="numeric mt-3 text-meta text-ink-tertiary">
+                      含 {counts.get(topic.id) ?? 0} 项相关内容
+                    </p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>

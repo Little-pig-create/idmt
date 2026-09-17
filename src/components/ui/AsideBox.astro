@@ -1,0 +1,13 @@
+---
+/** 门户式侧栏区块：顶部发丝线 + 眉标题 + 内容插槽 */
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<div class="aside-block border-t border-line pt-5">
+  <p class="eyebrow mb-3">{title}</p>
+  <slot />
+</div>

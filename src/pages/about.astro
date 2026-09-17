@@ -1,0 +1,159 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/ui/PageHero.astro';
+import AsideBox from '../components/ui/AsideBox.astro';
+import { site } from '../data/site';
+
+const structure = [
+  { name: '学术委员会', desc: '负责研究方向审议、课题立项与成果评价。' },
+  { name: '数字治理研究中心', desc: '承接数字治理与公共管理方向的研究与委托课题。' },
+  { name: '数据要素研究中心', desc: '聚焦数据产权、流通机制与行业数据空间。' },
+  { name: '智能决策实验室', desc: '负责建模、数值实验与管理行为实验。' },
+  { name: '公共服务设计工作室', desc: '承担政务服务流程诊断与服务设计实践。' },
+  { name: '院务办公室', desc: '负责行政、对外合作与内容发布。' },
+];
+
+const history = [
+  { year: '2019', event: '研究院成立，首设数字治理与公共管理方向。' },
+  { year: '2021', event: '增设数据要素与数字经济方向，启动首个地方委托课题。' },
+  { year: '2023', event: '智能决策实验室建成，开设管理行为实验平台。' },
+  { year: '2024', event: '获批国家社会科学基金一般项目，首届青年学者论坛举办。' },
+  { year: '2026', event: '增设数字政府与公共服务方向，与地方数据管理部门建立长期合作。' },
+];
+
+const toc = [
+  { id: 'intro', label: '研究院简介' },
+  { id: 'structure', label: '组织架构' },
+  { id: 'history', label: '发展历程' },
+  { id: 'contact', label: '联系方式' },
+];
+---
+
+<BaseLayout title="研究院概况" description={`${site.name}的定位、组织架构与发展历程。`}>
+  <PageHero
+    eyebrow="About"
+    title="研究院概况"
+    description="数字管理研究院成立于 2019 年，是一所聚焦数字技术与管理实践交叉领域的研究机构。"
+    crumbs={[{ label: '研究院概况' }]}
+  />
+
+  <section class="section">
+    <div class="container-page">
+      <div class="grid gap-12 lg:grid-cols-[1fr_260px] lg:gap-16">
+        <div class="container-prose prose-academic lg:mx-0 lg:max-w-none">
+          <h2 id="intro">研究院简介</h2>
+          <p>
+            数字管理研究院成立于 {site.founded} 年，聚焦数字技术与管理实践的交叉地带。
+            我们不把技术当作外生冲击，而是把它视为制度环境的一部分。由此出发，追问数字化在真实组织中
+            改变了什么、又没能改变什么。
+          </p>
+          <p>
+            研究院目前设有四个研究方向，覆盖数字治理与公共管理、数据要素与数字经济、智能决策与优化、
+            数字政府与公共服务。研究工作以实证与建模为主，强调结论可被管理者理解和追责。
+          </p>
+          <blockquote>
+            我们更关心一个问题是否真实，而不是它是否时髦。
+          </blockquote>
+          <p>
+            研究院与地方治理部门、数据管理部门保持长期合作，在真实场景中检验研究结论。
+            同时每年招收硕士研究生，并提供面向在校生的研究助理岗位。
+          </p>
+
+          <h2 id="structure">组织架构</h2>
+          <p>
+            研究院实行学术委员会指导下的院长负责制。学术委员会负责研究方向审议、课题立项与成果评价；
+            各研究中心与实验室承担具体研究工作；院务办公室负责行政、对外合作与内容发布。
+          </p>
+          <div class="mt-8 overflow-hidden rounded-md border border-line">
+            <table class="w-full border-collapse text-ui">
+              <caption class="sr-only">研究院组织架构</caption>
+              <thead class="bg-surface-subtle">
+                <tr>
+                  <th scope="col" class="w-56 px-5 py-3 text-left font-medium text-ink">机构</th>
+                  <th scope="col" class="px-5 py-3 text-left font-medium text-ink">职责</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  structure.map((item) => (
+                    <tr class="border-t border-line">
+                      <th scope="row" class="px-5 py-3 text-left font-medium text-ink">{item.name}</th>
+                      <td class="px-5 py-3 text-ink-secondary">{item.desc}</td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <h2 id="history">发展历程</h2>
+          <ol class="mt-6 space-y-0">
+            {
+              history.map((item) => (
+                <li class="grid grid-cols-[4rem_1fr] gap-4 border-t border-line py-4">
+                  <span class="numeric text-ui font-medium text-accent">{item.year}</span>
+                  <span class="text-ui leading-relaxed text-ink-secondary">{item.event}</span>
+                </li>
+              ))
+            }
+          </ol>
+
+          <h2 id="contact">联系方式</h2>
+          <p>
+            地址：{site.address}
+            <br />
+            邮编：{site.postcode}
+            <br />
+            电话：{site.phone}
+            <br />
+            邮箱：<a href={`mailto:${site.email}`}>{site.email}</a>
+          </p>
+        </div>
+
+        <aside class="lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start">
+          <AsideBox title="本页目录">
+            <nav aria-label="本页目录">
+              <ul class="space-y-2">
+                {
+                  toc.map((item) => (
+                    <li>
+                      <a href={`#${item.id}`} class="text-ui text-ink-secondary transition-colors duration-150 hover:text-accent">
+                        {item.label}
+                      </a>
+                    </li>
+                  ))
+                }
+              </ul>
+            </nav>
+          </AsideBox>
+
+          <AsideBox title="关键数字">
+            <ul>
+              <li class="flex items-baseline justify-between gap-3 border-b border-line py-2 text-ui">
+                <span class="text-ink-secondary">成立年份</span>
+                <span class="numeric text-ink">{site.founded}</span>
+              </li>
+              <li class="flex items-baseline justify-between gap-3 border-b border-line py-2 text-ui">
+                <span class="text-ink-secondary">研究方向</span>
+                <span class="numeric text-ink">4</span>
+              </li>
+              <li class="flex items-baseline justify-between gap-3 border-b border-line py-2 text-ui">
+                <span class="text-ink-secondary">研究机构</span>
+                <span class="numeric text-ink">{structure.length}</span>
+              </li>
+            </ul>
+          </AsideBox>
+
+          <AsideBox title="相关入口">
+            <ul class="space-y-2 text-ui">
+              <li><a href="/research" class="link">研究方向</a></li>
+              <li><a href="/people" class="link">研究团队</a></li>
+              <li><a href="/projects" class="link">科研项目</a></li>
+              <li><a href="/contact" class="link">联系我们</a></li>
+            </ul>
+          </AsideBox>
+        </aside>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
