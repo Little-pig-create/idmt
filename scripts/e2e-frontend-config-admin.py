@@ -1,11 +1,20 @@
-"""验证后台管理界面：模块可见、六个分页签、空状态、保存反馈、无权限隐藏。"""
+"""验证后台管理界面：模块可见、六个分页签、空状态、保存反馈、无权限隐藏。
+
+本脚本**自己拉起** editor 角色的后台实例（端口 4390），
+不依赖人工预先启动 —— 否则在干净环境或 CI 里必然 connection refused。
+"""
 import json
+import os
 import pathlib
+import subprocess
+import sys
+import time
 import urllib.request
 from playwright.sync_api import sync_playwright
 
-ADMIN = "http://127.0.0.1:4322"      # admin 角色
-ADMIN_EDITOR = "http://127.0.0.1:4390"  # editor 角色
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+ADMIN = "http://127.0.0.1:4322"          # admin 角色（由套件 runner 保证在跑）
+ADMIN_EDITOR = "http://127.0.0.1:4390"   # editor 角色（本脚本自起）
 
 results = []
 
@@ -25,6 +34,52 @@ def put(cfg, base=ADMIN):
     with urllib.request.urlopen(req, timeout=10) as r:
         return json.loads(r.read())
 
+
+def start_editor_instance():
+    """起一个 ADMIN_ROLE=editor 的实例，用于验证权限降级。
+
+    若 4390 已被**别的**进程占用（例如上一次运行留下的），
+    本函数不会去抢，而是直接复用 —— 但会先确认它确实是 editor 角色，
+    否则测试会在错误的角色上跑出假结论。
+    """
+
+    def probe():
+        try:
+            with urllib.request.urlopen(ADMIN_EDITOR + "/api/schema", timeout=3) as r:
+                return json.loads(r.read())
+        except Exception:
+            return None
+
+    existing = probe()
+    if existing:
+        role = (existing.get("capabilities") or {}).get("frontendConfig", {}).get("role")
+        if role == "editor":
+            print("· 复用已在运行的 editor 实例")
+            return None
+        raise RuntimeError(
+            f"4390 已被占用，但它的角色是 {role!r} 而非 editor；"
+            "请先停掉该进程再跑本脚本"
+        )
+
+    env = {**os.environ, "ADMIN_ROLE": "editor", "ADMIN_PORT": "4390"}
+    child = subprocess.Popen(
+        ["node", "server.mjs"],
+        cwd=str(ROOT / "admin"),
+        env=env,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        shell=True,
+    )
+    for _ in range(40):
+        time.sleep(0.3)
+        if probe():
+            print("· editor 实例已就绪")
+            return child
+    child.kill()
+    raise RuntimeError("editor 实例启动超时")
+
+
+editor_proc = start_editor_instance()
 
 # 先清空配置，验证空状态
 put({})
@@ -96,6 +151,15 @@ with sync_playwright() as p:
     check("该项为禁用态", disabled is True, str(disabled))
     page2.close()
     b.close()
+
+# 收回本脚本起的 editor 实例，避免留下僵尸进程占着 4390
+if editor_proc is not None:
+    editor_proc.terminate()
+    try:
+        editor_proc.wait(timeout=5)
+    except Exception:
+        editor_proc.kill()
+    print("· editor 实例已停止")
 
 print("\n" + "=" * 60)
 passed = sum(1 for _, ok in results if ok)
