@@ -364,7 +364,10 @@ const total = slides.length;
       let index = 0;
       let timer: number | undefined;
       let hovering = false;
-      let autoPaused = reduce.matches; // 减弱动效时默认不自动播放，用户可手动开启
+      // 减弱动效时默认不自动播放，用户可手动开启；
+      // 前端粒度管理把 carouselAutoplay 关掉时同样默认静止
+      // （运行时会在 root 上写 data-cfg-autoplay="off"）。
+      let autoPaused = reduce.matches || root.dataset.cfgAutoplay === 'off';
 
       // JS 就绪：解除无 JS 时的 hidden 降级，切换到堆叠淡入淡出模式
       root.dataset.ready = 'true';
@@ -416,6 +419,17 @@ const total = slides.length;
         if (autoPaused) setAutoPaused(true);
         pauseBtn.addEventListener('click', () => setAutoPaused(!autoPaused));
       }
+
+      // 运行时的功能开关可能在轮播初始化之后才到达（配置是异步拉取的），
+      // 故监听该属性变化并同步暂停态。放在 setAutoPaused 定义之后。
+      const autoplayObserver = new MutationObserver(() => {
+        const off = root.dataset.cfgAutoplay === 'off';
+        if (off !== autoPaused) setAutoPaused(off);
+      });
+      autoplayObserver.observe(root, {
+        attributes: true,
+        attributeFilter: ['data-cfg-autoplay'],
+      });
 
       root.querySelector('[data-carousel-prev]')?.addEventListener('click', () => go(index - 1));
       root.querySelector('[data-carousel-next]')?.addEventListener('click', () => go(index + 1));

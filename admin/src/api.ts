@@ -1,4 +1,15 @@
-import type { Asset, CollectionMap, Entry, Stats, ValidationError } from './types';
+import type {
+  Asset,
+  Capabilities,
+  CollectionMap,
+  ConfigSaveResponse,
+  ConfigSourceResponse,
+  Entry,
+  FrontendConfig,
+  Stats,
+  SurfaceResponse,
+  ValidationError,
+} from './types';
 
 const BASE = '/api';
 
@@ -20,7 +31,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  schema: () => request<{ collections: CollectionMap }>('/schema'),
+  schema: () =>
+    request<{ collections: CollectionMap; capabilities?: Capabilities }>('/schema'),
 
   stats: () => request<{ stats: Record<string, Stats> }>('/stats'),
 
@@ -53,5 +65,18 @@ export const api = {
     upload: (name: string, type: string, dataBase64: string) =>
       request<{ asset: Asset }>('/assets', { method: 'POST', body: JSON.stringify({ name, type, dataBase64 }) }),
     remove: (name: string) => request<{ name: string }>(`/assets/${encodeURIComponent(name)}`, { method: 'DELETE' }),
+  },
+
+  /** 前端粒度管理 —— 只新增，不影响上面任何方法 */
+  frontendConfig: {
+    surface: () => request<SurfaceResponse>('/frontend-config/surface'),
+    source: () => request<ConfigSourceResponse>('/frontend-config/source'),
+    save: (config: FrontendConfig) =>
+      request<ConfigSaveResponse>('/frontend-config', {
+        method: 'PUT',
+        body: JSON.stringify({ config }),
+      }),
+    /** 前台消费用的动态构建结果（后台用于预览） */
+    delivered: () => request<unknown>('/frontend-config'),
   },
 };

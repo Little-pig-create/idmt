@@ -17,6 +17,22 @@ import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import yaml from 'js-yaml';
 
+import {
+  CONFIG_VERSION,
+  FEATURE_KEYS,
+  LANGUAGES,
+  ROUTE_ACCESS,
+  ROUTE_STATES,
+  SITE_SURFACE,
+  THEME_TOKENS,
+  isConfigEmpty,
+} from '../shared/frontend-config-contract.mjs';
+import {
+  buildDeliveryPayload,
+  readConfig,
+  writeConfig,
+} from './frontend-config-store.mjs';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const CONTENT_DIR = path.join(ROOT, 'src', 'content');
@@ -334,6 +350,33 @@ function json(res, status, payload) {
 
 function fail(res, status, message, details) {
   json(res, status, { ok: false, error: message, details });
+}
+
+/* ------------------------------------------------------------------
+   模块级权限（前端粒度管理）
+   ------------------------------------------------------------------
+   ⚠️ 这不是安全边界，是**界面与接口的能力开关**。
+
+   现状：本后台只监听 127.0.0.1，无账号、无登录、无会话
+   （见文件头与 README「安全提示」）。因此这里的「权限」由环境变量声明，
+   用于满足「不具备管理权限的账号看不到/打不开该模块」的界面要求。
+
+   **真正的安全边界是「只监听回环地址」这一条**，不要把本函数当作鉴权。
+   若要真正的鉴权（账号/登录/会话/密码哈希），需要独立改造。
+
+   用法：
+     ADMIN_ROLE=admin    （默认）→ 可管理
+     ADMIN_ROLE=editor           → 只读，接口返回 403，界面隐藏该模块
+   ------------------------------------------------------------------ */
+const ADMIN_ROLE = process.env.ADMIN_ROLE ?? 'admin';
+const CAN_MANAGE_FRONTEND = ADMIN_ROLE === 'admin' || ADMIN_ROLE === 'owner';
+
+function requireManagePermission() {
+  if (CAN_MANAGE_FRONTEND) return null;
+  return {
+    status: 403,
+    message: `当前角色（${ADMIN_ROLE}）没有「前端粒度管理」的编辑权限，请联系管理员`,
+  };
 }
 
 async function readBody(req, maxBytes = 4 * 1024 * 1024) {
@@ -709,7 +752,14 @@ async function handleApi(req, res, url) {
 
   /* ---- GET /api/schema ---- */
   if (resource === 'schema' && req.method === 'GET') {
-    return json(res, 200, { ok: true, collections: COLLECTIONS });
+    // 只**追加**字段，不改动既有 collections 的结构与语义
+    return json(res, 200, {
+      ok: true,
+      collections: COLLECTIONS,
+      capabilities: {
+        frontendConfig: { canManage: CAN_MANAGE_FRONTEND, role: ADMIN_ROLE },
+      },
+    });
   }
 
   /* ---- GET /api/stats ---- */
@@ -746,6 +796,95 @@ async function handleApi(req, res, url) {
         resolve();
       });
     });
+  }
+
+  /* ==================================================================
+     前端粒度管理 · 配置读写与动态下发
+     ------------------------------------------------------------------
+     只新增，不改动任何既有接口的返回结构与语义。
+
+     GET  /api/frontend-config            → 动态构建并下发配置（前台消费）
+     GET  /api/frontend-config/source     → 原始落盘配置 + 警告（后台编辑用）
+     PUT  /api/frontend-config            → 保存配置
+     GET  /api/frontend-config/surface    → 可配置面清单（路由/区块/元素/语言/开关）
+     ================================================================== */
+  if (resource === 'frontend-config') {
+    /* 可配置面：后台下拉选项与提示的来源 */
+    if (rest[0] === 'surface') {
+      if (req.method !== 'GET') return fail(res, 405, '不支持的方法');
+      return json(res, 200, {
+        ok: true,
+        surface: SITE_SURFACE,
+        languages: LANGUAGES,
+        themeTokens: THEME_TOKENS,
+        featureKeys: FEATURE_KEYS,
+        routeStates: ROUTE_STATES,
+        routeAccess: ROUTE_ACCESS,
+        version: CONFIG_VERSION,
+      });
+    }
+
+    /* 原始配置 + 规范化警告：后台编辑界面用它回填表单 */
+    if (rest[0] === 'source') {
+      if (req.method !== 'GET') return fail(res, 405, '不支持的方法');
+      const { exists, config, warnings } = await readConfig(ROOT);
+      return json(res, 200, {
+        ok: true,
+        config,
+        persisted: exists,
+        empty: isConfigEmpty(config),
+        warnings,
+      });
+    }
+
+    /* 前台消费入口：每次请求实时动态构建 */
+    if (!rest[0]) {
+      if (req.method === 'GET') {
+        const { payload, etag } = await buildDeliveryPayload(ROOT);
+        // ETag 让前台可做条件请求；命中则 304，省流量
+        if (req.headers['if-none-match'] === etag) {
+          res.writeHead(304, { ETag: etag, 'Access-Control-Allow-Origin': '*' });
+          return res.end();
+        }
+        const body = JSON.stringify(payload);
+        res.writeHead(200, {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Content-Length': Buffer.byteLength(body),
+          // 配置不是敏感数据，允许前台跨源拉取（前后端分离部署时必需）
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'no-cache',
+          ETag: etag,
+        });
+        return res.end(body);
+      }
+
+      if (req.method === 'PUT' || req.method === 'POST') {
+        const denied = requireManagePermission(req);
+        if (denied) return fail(res, denied.status, denied.message);
+
+        let payload;
+        try {
+          payload = await readBody(req);
+        } catch (err) {
+          return fail(res, 400, err.message);
+        }
+
+        const source = payload?.config ?? payload;
+        const { config, warnings } = await writeConfig(ROOT, source);
+        return json(res, 200, {
+          ok: true,
+          config,
+          warnings,
+          empty: isConfigEmpty(config),
+          message:
+            warnings.length > 0
+              ? `配置已保存；${warnings.length} 项非法值被忽略`
+              : '配置已保存',
+        });
+      }
+
+      return fail(res, 405, '不支持的方法');
+    }
   }
 
   /* ---- GET|POST /api/assets ---- */

@@ -13,7 +13,8 @@
     "taste": "node scripts/taste.mjs",
     "contrast": "node scripts/contrast.mjs",
     "docs:tokens": "node scripts/docs-tokens.mjs",
-    "schema:refs": "node scripts/schema-refs.mjs"
+    "schema:refs": "node scripts/schema-refs.mjs",
+    "verify:config": "node scripts/verify-frontend-config.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^8.0.1",

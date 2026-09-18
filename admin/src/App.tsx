@@ -23,19 +23,27 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { AddIcon, PublishIcon, RefreshIcon } from './icons';
+import { AddIcon, PublishIcon, RefreshIcon, SlidersIcon, LockIcon } from './icons';
 import EntryTable from './components/EntryTable';
 import EntryEditor from './components/EntryEditor';
+import FrontendConfigPanel from './components/FrontendConfig';
 import { api } from './api';
 import { monoFont, tokens } from './theme';
 import type { CollectionMap, Entry, Stats } from './types';
 
 const DRAWER_WIDTH = 248;
 
+/** 视图：内容集合列表 / 前端粒度管理。互不影响，各自独立加载数据。 */
+type View = { kind: 'collection' } | { kind: 'frontendConfig' };
+
 export default function App() {
   const [schema, setSchema] = useState<CollectionMap | null>(null);
   const [stats, setStats] = useState<Record<string, Stats>>({});
   const [collection, setCollection] = useState<string>('news');
+  const [view, setView] = useState<View>({ kind: 'collection' });
+  /** 前端粒度管理权限：无权限时导航项不出现、接口 403（见 server.mjs 说明） */
+  const [canManageFrontend, setCanManageFrontend] = useState(false);
+  const [role, setRole] = useState('admin');
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -60,6 +68,9 @@ export default function App() {
         const [s, st] = await Promise.all([api.schema(), api.stats()]);
         setSchema(s.collections);
         setStats(st.stats);
+        const cap = s.capabilities?.frontendConfig;
+        setCanManageFrontend(cap?.canManage ?? false);
+        setRole(cap?.role ?? 'admin');
         const first = Object.keys(s.collections)[0];
         if (first) setCollection((prev) => (s.collections[prev] ? prev : first));
       } catch (err) {
@@ -194,6 +205,47 @@ export default function App() {
       >
         <Toolbar />
         <Box sx={{ overflowY: 'auto', py: 2 }}>
+          {/*
+            独立分组：前端粒度管理。
+            与「内容集合」并列，因为它管的是前端的**行为与呈现**，
+            而不是内容条目本身 —— 混在同一组里会让语义含糊。
+            无权限时不渲染（服务端也会对接口返回 403，界面隐藏只是第一层）。
+          */}
+          <Typography
+            sx={{
+              px: 2.5,
+              pb: 1,
+              fontSize: '0.6875rem',
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: 'text.disabled',
+            }}
+          >
+            站点配置
+          </Typography>
+          <List dense disablePadding>
+            <ListItemButton
+              selected={view.kind === 'frontendConfig'}
+              disabled={!canManageFrontend}
+              onClick={() => setView({ kind: 'frontendConfig' })}
+              sx={{ mx: 1, borderRadius: 1, mb: 0.25 }}
+            >
+              <SlidersIcon fontSize="small" />
+              <ListItemText
+                primary="前端粒度管理"
+                secondary={canManageFrontend ? 'frontend-config' : `无权限（角色 ${role}）`}
+                sx={{ ml: 1.5 }}
+                slotProps={{
+                  primary: { fontSize: '0.875rem', fontWeight: 500 },
+                  secondary: { fontSize: '0.6875rem', fontFamily: monoFont },
+                }}
+              />
+              {!canManageFrontend && <LockIcon fontSize="small" />}
+            </ListItemButton>
+          </List>
+
+          <Divider sx={{ my: 2 }} />
+
           <Typography
             sx={{
               px: 2.5,
@@ -211,8 +263,9 @@ export default function App() {
               Object.entries(schema).map(([name, def]) => (
                 <ListItemButton
                   key={name}
-                  selected={name === collection}
+                  selected={view.kind === 'collection' && name === collection}
                   onClick={() => {
+                    setView({ kind: 'collection' });
                     setCollection(name);
                     setKeyword('');
                   }}
@@ -254,6 +307,23 @@ export default function App() {
       <Box component="main" sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         <Toolbar />
 
+        {view.kind === 'frontendConfig' ? (
+          <Box sx={{ px: 3, py: 2.5, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {canManageFrontend ? (
+              <FrontendConfigPanel
+                onNotify={(msg, severity) => setSnack({ msg, severity })}
+              />
+            ) : (
+              <Alert severity="warning">
+                当前角色（{role}）没有「前端粒度管理」的权限。请联系管理员，或以
+                <Box component="code" sx={{ fontFamily: monoFont, mx: 0.5 }}>
+                  ADMIN_ROLE=admin
+                </Box>
+                重启后台服务。
+              </Alert>
+            )}
+          </Box>
+        ) : (
         <Box sx={{ px: 3, py: 2.5, flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
             <Typography variant="h2" sx={{ mr: 'auto' }}>
@@ -327,6 +397,7 @@ export default function App() {
             )}
           </Box>
         </Box>
+        )}
       </Box>
 
       {/* ---------- 编辑器 ---------- */}

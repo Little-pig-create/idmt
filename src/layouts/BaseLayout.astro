@@ -63,6 +63,15 @@ const canvasColor =
 
     <Footer />
 
+    {/*
+      前端粒度管理 · 运行时配置应用
+      前后端分离：本脚本只负责「拉取 + 应用」，配置由后台接口动态构建下发。
+      构建产物里不含任何具体配置值；拉取失败即保持默认渲染。
+    */}
+    <script>
+      import '../scripts/frontend-config-runtime';
+    </script>
+
     <script is:inline type="application/ld+json" set:html={JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'ResearchOrganization',

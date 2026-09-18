@@ -13,8 +13,8 @@ const isActive = (href: string) =>
 const isHome = pathname === '/';
 
 const quickLinks = [
-  { label: '研究生招生', href: '/join' },
-  { label: '联系我们', href: '/contact' },
+  { id: 'quickJoin', label: '研究生招生', href: '/join' },
+  { id: 'quickContact', label: '联系我们', href: '/contact' },
 ];
 ---
 
@@ -26,15 +26,15 @@ const quickLinks = [
         {site.name}·学术门户
       </p>
       <nav aria-label="辅助功能" class="flex shrink-0 items-center gap-1 text-meta">
-        <span class="utility-tag text-accent" aria-current="true">中文</span>
+        <span class="utility-tag text-accent" data-cfg-el="languageSwitch" data-cfg-route="*" aria-current="true">中文</span>
         <span aria-hidden="true" class="utility-sep">|</span>
         <span class="utility-tag text-ink-tertiary" title="英文版建设中">EN</span>
         <span aria-hidden="true" class="utility-sep">|</span>
-        <a href="/search" class="utility-link">
+        <a href="/search" class="utility-link" data-cfg-el="searchTrigger" data-cfg-route="*" data-cfg-label>
           全站搜索
         </a>
         <span aria-hidden="true" class="utility-sep">|</span>
-        <a href="/admin" class="utility-link">
+        <a href="/admin" class="utility-link" data-cfg-el="adminEntry" data-cfg-route="*" data-cfg-label>
           内容发布后台
         </a>
       </nav>
@@ -56,13 +56,13 @@ const quickLinks = [
           </svg>
         </span>
         <div class="brand-text">
-          {isHome ? <h1 class="brand-cn">{site.name}</h1> : <span class="brand-cn">{site.name}</span>}
-          <span class="brand-en">{site.nameEn}</span>
+          {isHome ? <h1 class="brand-cn" data-cfg="logo-text">{site.name}</h1> : <span class="brand-cn" data-cfg="logo-text">{site.name}</span>}
+          <span class="brand-en" data-cfg="logo-subtext">{site.nameEn}</span>
         </div>
       </a>
 
       <div class="masthead-side">
-        <form role="search" method="get" action="/search" class="masthead-search">
+        <form role="search" method="get" action="/search" class="masthead-search" data-cfg="search-form" data-cfg-el="searchForm" data-cfg-route="*">
           <label for="masthead-q" class="sr-only">搜索本站内容</label>
           <input
             id="masthead-q"
@@ -83,7 +83,7 @@ const quickLinks = [
         <nav aria-label="快捷入口" class="masthead-links">
           {
             quickLinks.map((l) => (
-              <a href={l.href} class="masthead-link">{l.label}</a>
+              <a href={l.href} class="masthead-link" data-cfg-el={l.id} data-cfg-route="*" data-cfg-label>{l.label}</a>
             ))
           }
         </nav>
@@ -101,6 +101,7 @@ const quickLinks = [
       <nav aria-label="主导航" class="hidden items-center gap-0.5 lg:flex">
         <a
           href="/"
+          data-cfg-nav="/"
           aria-current={isActive('/') ? 'page' : undefined}
           class:list={[
             'nav-item',
@@ -112,7 +113,7 @@ const quickLinks = [
 
         {
           nav.map((entry, i) => (
-            <div class="relative">
+            <div class="relative" data-cfg-nav={entry.href}>
               {entry.groups ? (
                 <button
                   type="button"
@@ -147,6 +148,7 @@ const quickLinks = [
         <button
           type="button"
           data-search-open
+          data-cfg="search-toggle"
           class="icon-btn lg:hidden"
           aria-label="全站搜索"
         >
@@ -184,7 +186,7 @@ const quickLinks = [
                       <p class="eyebrow mb-3">{group.title}</p>
                       <ul class="space-y-1">
                         {group.items.map((item) => (
-                          <li>
+                          <li data-cfg-nav-item={item.href.split('#')[0]}>
                             <a
                               href={item.href}
                               class="block rounded-md px-2 py-2 transition-colors duration-150 hover:bg-accent-soft"
@@ -231,11 +233,11 @@ const quickLinks = [
     </button>
   </div>
   <nav class="overflow-y-auto p-4" aria-label="移动端主导航">
-    <a href="/" class="drawer-link">首页</a>
+    <a href="/" data-cfg-nav="/" class="drawer-link">首页</a>
     {
       nav.map((entry) =>
         entry.groups ? (
-          <details class="border-b border-line py-1">
+          <details class="border-b border-line py-1" data-cfg-nav={entry.href}>
             <summary class="flex min-h-11 cursor-pointer items-center justify-between text-ui font-medium text-ink">
               {entry.label}
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
@@ -248,7 +250,7 @@ const quickLinks = [
                   <p class="eyebrow mb-1 px-2">{group.title}</p>
                   <ul>
                     {group.items.map((item) => (
-                      <li>
+                      <li data-cfg-nav-item={item.href.split('#')[0]}>
                         <a href={item.href} class="block rounded-md px-2 py-2.5 text-ui text-ink-secondary hover:bg-accent-soft hover:text-ink">
                           {item.label}
                         </a>
@@ -260,7 +262,7 @@ const quickLinks = [
             </div>
           </details>
         ) : (
-          <a href={entry.href} class="drawer-link">{entry.label}</a>
+          <a href={entry.href} data-cfg-nav={entry.href} class="drawer-link">{entry.label}</a>
         )
       )
     }

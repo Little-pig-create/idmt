@@ -94,7 +94,7 @@ const stats = [
 
 <BaseLayout title={site.name} description={site.description}>
   {/* ============ 机构定位条 ============ */}
-  <div class="border-b border-line bg-surface">
+  <div data-cfg-block="positioning" class="border-b border-line bg-surface">
     <div class="container-page flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 py-4">
       <p class="font-[family-name:var(--font-serif-cjk)] text-[1.1875rem] font-semibold text-ink lg:text-[1.3125rem]">
         {site.tagline}
@@ -106,7 +106,7 @@ const stats = [
   </div>
 
   {/* ============ 焦点图 + 通知公告 ============ */}
-  <section class="border-b border-line">
+  <section data-cfg-block="focus" class="border-b border-line">
     <div class="container-page py-8 lg:py-10">
       <div class="grid gap-8 lg:grid-cols-[1.5fr_1fr] lg:gap-10">
         {carouselSlides.length > 0 && <Carousel slides={carouselSlides} label="焦点内容" />}
@@ -125,7 +125,7 @@ const stats = [
   </section>
 
   {/* ============ 要闻 ============ */}
-  <section class="section border-b border-line bg-surface">
+  <section data-cfg-block="news" class="section border-b border-line bg-surface">
     <div class="container-page">
       <SectionHeading
         title="要闻"
@@ -206,7 +206,7 @@ const stats = [
   </section>
 
   {/* ============ 学术活动 + 科研项目 ============ */}
-  <section class="section border-b border-line">
+  <section data-cfg-block="events" class="section border-b border-line">
     <div class="container-page grid gap-10 lg:grid-cols-2 lg:gap-14">
       <div>
         <SectionHeading title="学术活动" moreHref="/events" moreLabel="更多" />
@@ -257,7 +257,7 @@ const stats = [
   </section>
 
   {/* ============ 研究方向 ============ */}
-  <section class="section border-b border-line bg-surface">
+  <section data-cfg-block="research" class="section border-b border-line bg-surface">
     <div class="container-page">
       <SectionHeading
         eyebrow="Research"
@@ -317,7 +317,7 @@ const stats = [
   </section>
 
   {/* ============ 学术成果 ============ */}
-  <section class="section border-b border-line">
+  <section data-cfg-block="publications" class="section border-b border-line">
     <div class="container-page">
       <SectionHeading
         title="学术成果"
@@ -346,7 +346,7 @@ const stats = [
   </section>
 
   {/* ============ 研究团队 ============ */}
-  <section class="section border-b border-line bg-surface">
+  <section data-cfg-block="people" class="section border-b border-line bg-surface">
     <div class="container-page">
       <SectionHeading title="研究团队" moreHref="/people" moreLabel="更多" />
 
@@ -367,7 +367,7 @@ const stats = [
   </section>
 
   {/* ============ 数据统计 ============ */}
-  <section class="stat-band">
+  <section data-cfg-block="statBand" class="stat-band">
     {/*
       四个数字原先只是 gap-8 平铺，看不出是一组数据。
       改用 gap-px + 半透明分隔色画出 1px 发丝线（沿用报头的 --color-on-masthead-line），
@@ -388,7 +388,7 @@ const stats = [
   </section>
 
   {/* ============ 专题专栏 ============ */}
-  <section class="section border-b border-line">
+  <section data-cfg-block="topics" class="section border-b border-line">
     <div class="container-page">
       <SectionHeading
         eyebrow="Topics"
@@ -425,7 +425,7 @@ const stats = [
   </section>
 
   {/* ============ 加入我们 ============ */}
-  <section class="section">
+  <section data-cfg-block="join" class="section">
     <div class="container-page">
       <div class="grid gap-8 border border-line bg-surface p-8 sm:p-10 lg:grid-cols-[1.5fr_1fr] lg:items-center lg:gap-16 lg:p-12">
         <div>
@@ -435,10 +435,11 @@ const stats = [
           </p>
         </div>
         <div class="flex flex-wrap gap-3 lg:justify-end">
-          <a href="/join" class="btn btn-primary">招生与招聘</a>
-          <a href="/contact" class="btn btn-secondary">联系我们</a>
+          <a href="/join" class="btn btn-primary" data-cfg-el="joinPrimary" data-cfg-route="/" data-cfg-label>招生与招聘</a>
+          <a href="/contact" class="btn btn-secondary" data-cfg-el="joinSecondary" data-cfg-route="/" data-cfg-label>联系我们</a>
         </div>
       </div>
     </div>
   </section>
 </BaseLayout>
+

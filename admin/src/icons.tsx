@@ -192,3 +192,20 @@ export const CloseIcon = icon(
     <path d="M18 6 6 18" {...stroke2} />
   </>
 );
+
+/** 前端粒度管理：滑杆面板，示意「逐项调节」 */
+export const SlidersIcon = icon(
+  <>
+    <path d="M4 7h9M17 7h3M4 17h3M11 17h9" {...stroke2} />
+    <circle cx="15" cy="7" r="2.2" {...stroke2} />
+    <circle cx="9" cy="17" r="2.2" {...stroke2} />
+  </>
+);
+
+/** 权限受限：锁 */
+export const LockIcon = icon(
+  <>
+    <rect x="4.5" y="10.5" width="15" height="9.5" rx="1.5" {...stroke2} />
+    <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" {...stroke2} />
+  </>
+);

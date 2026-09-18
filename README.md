@@ -137,7 +137,34 @@ npm run dev
 | `scripts/contrast.mjs` | 色彩对比度门禁（`npm run contrast`）：解析 tokens.css，22 组真实在用的文字组合一律 ≥ 4.5:1 |
 | `scripts/docs-tokens.mjs` | 文档 / 令牌一致性门禁（`npm run docs:tokens`）：反查文档引用的令牌是否都有定义 |
 | `scripts/smoke.mjs` | HTTP 冒烟断言（`npm run smoke`，56 条） |
+| `scripts/verify-frontend-config.mjs` | 前端粒度管理验证套件（`npm run verify:config`，46 项 + 回归守卫） |
+| `docs/FRONTEND_CONFIG.md` | 前端粒度管理：动态构建含义、前后端分离边界、接口、粒度、边界与异常 |
 | `.github/workflows/ci.yml` | CI：`build → audit → taste → smoke`，并单独构建 `admin/` |
+
+## 前端粒度管理
+
+后台可逐项配置前端的**行为与呈现**，运行时下发生效。完整说明见 `docs/FRONTEND_CONFIG.md`。
+
+| 粒度 | 能配什么 |
+|---|---|
+| 页面 / 路由 | 启用 / 隐藏（不展示但可直达）/ 禁用（不可访问并提示）+ 访问级别 |
+| 区块 / 组件 | 单独开关、显示顺序、标题与说明覆盖 |
+| 元素 | 按钮 / 链接 / 图标的显示隐藏、文案、跳转目标 |
+| 文案 i18n | 按语言分别覆盖，未配置回落默认 |
+| 主题样式 | 设计令牌（白名单 + `#hex`）、Logo、页脚 |
+| 功能开关 | 轮播自动播放、全站搜索、后台入口可见性 |
+
+**前后端分离**：配置由后台持久化并在**每个请求时动态构建**下发（`GET /api/frontend-config`），
+前台运行时拉取应用（`src/scripts/frontend-config-runtime.ts`）。
+配置**不预编译进前台静态产物**，前台产物里也不含后台代码。
+
+> **未配置时前台行为与改动前逐字节一致** —— 由 `scripts/config-regression-guard.py` 守护
+> （L1 可见文本 + L2 结构骨架，51/51 页）。
+>
+> ⚠️ 「动态构建」在本项目指 **runtime config resolution**，非 SSR。
+> 代价是**被禁用页面的内容仍在静态 HTML 里**（客户端只负责替换为提示页），
+> 且站点不再「零 JS」（新增约 4.5 KB gzip）。与 `docs/PORTAL_FRAMEWORK.md` §5.2/§5.3
+> 「零 JS 静态输出」的既有 ADR 冲突已在 `docs/FRONTEND_CONFIG.md` §1 明确记录。
 
 ## 学术体例与检索
 

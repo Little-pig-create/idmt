@@ -208,6 +208,61 @@ npm run build && npm run audit && npm run taste && npm run contrast && npm run d
 排查「样式没生效」时先 `Remove-Item dist -Recurse` 再全量构建，否则会读到旧文件误判。
 页面引用的始终是新的那个，但 grep 全目录会看到假的旧值。
 
+## 前端粒度管理（2026-09-18 新增 · 前后端分离）
+
+**「动态构建」在本项目的确切含义 = runtime config resolution（运行时配置解析）**：
+配置**不预编译进前台静态产物**；后台在**每次请求时**从落盘配置实时拼装成
+规范化文档 + 内容指纹（revision / ETag）下发；前台页面加载后 fetch 并应用到 DOM。
+**不是** Astro 构建期注入，**不是** SSR，**不是**多版本产物。
+
+### ⚠️ 与既有 ADR 的冲突（已记录，勿当作失误）
+
+`docs/PORTAL_FRAMEWORK.md` §5.2/§5.3 规定站点坚持「**零 JS 静态输出**」，
+把「依赖 JS 运行时」列为**净损失**；§281 的复查触发条件是
+「若出现登录态 / 个性化 / 服务端实时数据，重新评估 SSR」。本功能触发该条件，
+**用户明确要求运行时应用配置**，故采用静态壳 + 运行时应用。
+
+代价（已实测，勿轻描淡写）：
+1. **被禁用页面的内容仍在静态 HTML 里** —— 客户端只能读到配置后替换为提示页。
+   真正隔离需要 SSR。**这是本方案最大的语义折扣。**
+2. 配置到达前默认内容先渲染，理论上有闪烁（已用默认不解藏 + 3s 超时兜底压到最低）。
+3. 站点不再零 JS：+4.5 KB gzip（audit 预算 JS ≤ 30 KB，当前 13.1 KB）。
+
+### 文件分工（改一处要同步检查其它）
+
+| 文件 | 归属 | 说明 |
+|---|---|---|
+| `shared/frontend-config-contract.mjs` | 契约 | **纯 JS**（无 TS 语法、无 Node API），三端共用同一份，避免各写一份漂移 |
+| `admin/frontend-config-store.mjs` | 后台 | 持久化 + 校验 + 动态构建。**不含任何前台默认值** |
+| `admin/server.mjs` | 后台 | 4 个新接口；`/api/schema` 仅**追加** capabilities |
+| `src/lib/frontend-config.ts` | 前台 | 运行时读取 + **全部默认值都在这里** |
+| `src/scripts/frontend-config-runtime.ts` | 前台 | 只拉取与应用 |
+
+### 踩过的坑（会重复踩）
+
+- **改了共享契约必须重新构建**：`isValidRoutePath` 加 `GLOBAL_SCOPE`（允许 `'*'`）后
+  dist 未重建 → 浏览器里的旧代码把全局元素配置当非法路径丢掉 → `adminEntry` 隐藏失效。
+  **症状是「后台存了、接口下发了、前台没生效」** —— 先查 dist 是否最新，再查逻辑。
+- **`data-cfg-label` 是无值布尔属性**：写正则剥离钩子时 `(?:="[^"]*")?` 匹配不到无值形式，
+  会误报「结构变化」。正确写法 `data-cfg[a-z-]*(?:="[^"]*"|(?=[\s>]))`。
+- **基线不能放仓库内**：`git stash -u` 会把未跟踪的基线文件一起带走。现放 `D:\_dmi-baseline`。
+- **回归守卫要比「可见文本」而非整文件哈希**：本功能必然新增钩子属性与运行时脚本标签，
+  整文件哈希永远不等。分两层：L1 可见文本（强保证）、L2 结构骨架（剥钩子与资源哈希）。
+- **e2e 脚本必须自播种配置**：否则依赖前一个脚本留下的状态，单独跑或换序就全红。
+- **`Start-Process npm` 起不来预览**：用后台 job 跑 `npm run preview`。
+- **杀 node 进程时别在同一条命令里再起一个**：`Stop-Process` 会把新起的也匹配掉。
+
+### 验证
+
+`npm run verify:config` —— 46 项断言 + 回归守卫（需先 `npm run build`）：
+- `e2e-frontend-config.py`（18）：配置应用、导航可见性、隐藏 vs 禁用、接口失败回落
+- `e2e-frontend-config-edge.py`（9）：i18n 语言隔离、JSON 损坏、空配置无副作用
+- `e2e-frontend-config-admin.py`（19）：模块可见、六页签、空状态、保存反馈、无权限禁用
+- `config-regression-guard.py`：空配置 vs 改动前，51/51 页可见文本与结构骨架一致
+
+**权限不是安全边界**：后台只监听 `127.0.0.1`，无账号/登录/会话。
+`ADMIN_ROLE`（`admin` | `editor`）仅用于界面与接口的能力开关。真边界是回环监听。
+
 ## 环境坑（会重复踩）
 
 - **`export CODEBUDDY_SAFE_DELETE_ENABLED=0`**：否则 `astro build` 清 `dist` 时报 `[vite] ✗ Build failed`，是沙箱拦截不是代码问题。
