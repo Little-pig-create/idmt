@@ -182,8 +182,15 @@ const total = slides.length;
 }
 
 <style>
+  /* 栅格子项默认 min-width:auto，会因子项内容宽度而不肯收缩，
+     导致轮播在窄屏撑破父容器。显式置 0 让它能随容器收窄。 */
+  .carousel {
+    min-width: 0;
+  }
+
   .carousel-viewport {
     position: relative;
+    min-width: 0;
   }
 
   /* ---------- 有 JS 时：栅格堆叠 + 淡入淡出 ----------
@@ -218,13 +225,20 @@ const total = slides.length;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    /* 允许换行：圆点与按钮都放大到 44px 后，
+       5 个圆点(228px) + 3 个按钮(140px) + gap(16px) = 384px，
+       在 390px 视口下（容器可用 358px）会撑破版面产生横向滚动。
+       换行后窄屏下按钮落到第二行，不产生溢出。 */
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
     margin-top: 1rem;
   }
 
+  /* 窄屏下圆点组独占一行时居中，避免与按钮挤在一行 */
   .carousel-dots {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 0.125rem;
   }
 
@@ -232,8 +246,10 @@ const total = slides.length;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
+    /* 点击区 44×44（DESIGN_SYSTEM §1.5）：圆点视觉仍是 7px，
+       靠伪元素居中呈现，可点区域向外扩到 44px。此前实测仅 26px。 */
+    width: 44px;
+    height: 44px;
     border-radius: var(--radius-md);
     cursor: pointer;
   }
@@ -251,6 +267,10 @@ const total = slides.length;
     background-color: var(--color-ink-tertiary);
   }
 
+  .carousel-dot:active::before {
+    background-color: var(--color-accent);
+  }
+
   .carousel-dot[aria-current='true']::before {
     background-color: var(--color-accent);
     transform: scale(1.35);
@@ -266,8 +286,9 @@ const total = slides.length;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    /* 40→44，与 DESIGN_SYSTEM §1.5 的 44×44 对齐 */
+    width: 44px;
+    height: 44px;
     border-radius: var(--radius-md);
     color: var(--color-ink-secondary);
     cursor: pointer;
@@ -279,6 +300,11 @@ const total = slides.length;
   .carousel-btn:hover {
     background-color: var(--color-surface-subtle);
     color: var(--color-ink);
+  }
+
+  .carousel-btn:active {
+    background-color: var(--color-accent-soft);
+    color: var(--color-accent-ink);
   }
 
   /* 暂停/继续图标互斥显示 */

@@ -152,6 +152,14 @@
     text-decoration-thickness: 1px;
   }
 
+  /* 按压反馈（taste-skill §4.5）：可交互元素必须有 tactile feedback。
+     本项目此前全站零条 :active 规则 —— 悬停有反馈、按下没有，手感是「半截」的。
+     一律只改颜色或 transform（GPU 合成，不触发重排、不引起布局位移）。 */
+  .link:active,
+  .link-title:active {
+    color: var(--color-accent-ink);
+  }
+
   /* 标题链接：悬停变主色 + 下划线，不做位移 */
   .link-title {
     color: var(--color-ink);
@@ -198,6 +206,30 @@
       background-color var(--duration-normal) var(--ease-standard),
       border-color var(--duration-normal) var(--ease-standard),
       color var(--duration-normal) var(--ease-standard);
+  }
+
+  /* 按下时轻微下沉，模拟物理按压。用 transform 而非 top/margin，
+     不参与布局计算，因此不会引起相邻元素抖动。 */
+  .btn:active {
+    transform: translateY(1px);
+  }
+
+  .btn-primary:active {
+    background-color: var(--color-accent-ink);
+    border-color: var(--color-accent-ink);
+  }
+
+  .btn-secondary:active,
+  .btn-ghost:active {
+    background-color: var(--color-accent-soft);
+    border-color: var(--color-accent);
+  }
+
+  /* 减弱动效时保留颜色反馈，去掉位移 */
+  @media (prefers-reduced-motion: reduce) {
+    .btn:active {
+      transform: none;
+    }
   }
 
   .btn-primary {
@@ -338,8 +370,17 @@
     color: var(--color-ink-tertiary);
   }
 
+  /* 点击区补齐到 44×44。此前实测仅 21px 高、36px 宽。
+     标题栏是 baseline 对齐，链接用负 margin 抵消纵向撑开，
+     并用 min-width + 居中保证横向也达到 44px，视觉上「更多+」仍在右侧。 */
   .section-bar-more {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
     margin-left: auto;
+    min-height: 44px;
+    min-width: 44px;
+    margin-block: -0.6875rem;
     white-space: nowrap;
     font-size: var(--text-ui);
     color: var(--color-accent);
@@ -350,6 +391,12 @@
     color: var(--color-accent-hover);
     text-decoration: underline;
     text-underline-offset: 3px;
+  }
+
+  /* 必须排在 :hover 之后：两者特异性相同，后写的生效。
+     否则按下时 hover 的 underline 会盖掉按压色。 */
+  .section-bar-more:active {
+    color: var(--color-accent-ink);
   }
 
   /* 区块副标题行（标题栏下方的一句话说明） */
@@ -461,6 +508,12 @@
     border-color: var(--color-accent);
   }
 
+  /* 整卡可点时，按下给一层主色浅底，确认「这张被按到了」 */
+  .portal-card:active {
+    background-color: var(--color-accent-soft);
+    border-color: var(--color-accent);
+  }
+
   /* ---------- 数据统计带 ---------- */
   .stat-band {
     background-color: var(--color-masthead);
@@ -502,6 +555,11 @@
   .tab:hover {
     background-color: var(--color-surface-subtle);
     color: var(--color-ink);
+  }
+
+  .tab:active {
+    background-color: var(--color-accent-soft);
+    color: var(--color-accent-ink);
   }
 
   .tab[aria-selected='true'],

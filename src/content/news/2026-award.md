@@ -6,8 +6,6 @@ tags:
   - 荣誉
   - 学术成果
 author: 研究院办公室
-cover: /images/image-1789142094159-vkt8.png
-coverAlt: 年度管理科学优秀成果奖颁奖现场
 featured: true
 draft: false
 ---

@@ -25,16 +25,16 @@ const quickLinks = [
       <p class="truncate text-meta text-ink-secondary">
         {site.name}·学术门户
       </p>
-      <nav aria-label="辅助功能" class="flex shrink-0 items-center gap-3 text-meta">
-        <span class="text-accent" aria-current="true">中文</span>
-        <span aria-hidden="true" class="text-line-strong">|</span>
-        <span class="text-ink-tertiary" title="英文版建设中">EN</span>
-        <span aria-hidden="true" class="text-line-strong">|</span>
-        <a href="/search" class="text-ink-secondary transition-colors duration-150 hover:text-accent">
+      <nav aria-label="辅助功能" class="flex shrink-0 items-center gap-1 text-meta">
+        <span class="utility-tag text-accent" aria-current="true">中文</span>
+        <span aria-hidden="true" class="utility-sep">|</span>
+        <span class="utility-tag text-ink-tertiary" title="英文版建设中">EN</span>
+        <span aria-hidden="true" class="utility-sep">|</span>
+        <a href="/search" class="utility-link">
           全站搜索
         </a>
-        <span aria-hidden="true" class="text-line-strong">|</span>
-        <a href="/admin" class="text-ink-secondary transition-colors duration-150 hover:text-accent">
+        <span aria-hidden="true" class="utility-sep">|</span>
+        <a href="/admin" class="utility-link">
           内容发布后台
         </a>
       </nav>
@@ -318,6 +318,45 @@ const quickLinks = [
     height: 100%;
   }
 
+  /* ---------- 工具条链接：点击区补齐到 44×44 ----------
+     工具条自身只有 34px 高（--utility-h），文字链接实测仅 18px 高，
+     远低于 DESIGN_SYSTEM §1.5 的 44×44 标准，22 个页面全部受影响。
+     做法：链接改为 inline-flex 垂直居中 + min-height 44px，
+     用负 margin 抵消它对工具条高度的撑开，保持 34px 视觉高度不变。
+     这样点击区向上下各外扩 5px，不影响版面。 */
+  .utility-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: 0.5rem;
+    margin-block: -0.3125rem;
+    font-size: var(--text-meta);
+    color: var(--color-ink-secondary);
+    white-space: nowrap;
+    transition: color var(--duration-fast) var(--ease-standard);
+  }
+
+  .utility-link:hover {
+    color: var(--color-accent);
+  }
+
+  .utility-link:active {
+    color: var(--color-accent-ink);
+  }
+
+  /* 语言标识与分隔符同样按 44px 对齐，避免视觉上参差 */
+  .utility-tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-block: -0.3125rem;
+    font-size: var(--text-meta);
+  }
+
+  .utility-sep {
+    color: var(--color-line-strong);
+  }
+
   @media (max-width: 639px) {
     .utility-bar {
       display: none;
@@ -386,10 +425,14 @@ const quickLinks = [
     margin-left: auto;
   }
 
+  /* 点击区补齐到 44px（DESIGN_SYSTEM §1.5）：
+     此前输入框 38px、按钮 38×40，全部页面受影响。
+     外层有 overflow:hidden，故容器与内部元素必须一起长高，否则会被裁掉。 */
   .masthead-search {
     display: flex;
     align-items: center;
     width: clamp(200px, 24vw, 300px);
+    min-height: 44px;
     border: 1px solid var(--color-on-masthead-line);
     border-radius: var(--radius-md);
     overflow: hidden;
@@ -403,7 +446,7 @@ const quickLinks = [
   .masthead-search-input {
     flex: 1;
     min-width: 0;
-    min-height: 38px;
+    min-height: 44px;
     padding-inline: 0.875rem;
     background: transparent;
     color: var(--color-on-masthead);
@@ -420,8 +463,8 @@ const quickLinks = [
     align-items: center;
     justify-content: center;
     flex: none;
-    width: 40px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
     color: var(--color-on-masthead-soft);
     cursor: pointer;
     transition: color var(--duration-fast) var(--ease-standard);
@@ -431,13 +474,24 @@ const quickLinks = [
     color: var(--color-on-masthead);
   }
 
+  .masthead-search-btn:active {
+    color: var(--color-on-masthead-faint);
+    background-color: var(--color-on-masthead-line);
+  }
+
   .masthead-links {
     display: flex;
     align-items: center;
     gap: 1rem;
   }
 
+  /* 点击区补齐到 44×44：此前实测仅 21px 高，低于 DESIGN_SYSTEM §1.5 标准。
+     报头有 min-height 84px，链接纵向延伸到 44px 不会撑开版面。 */
   .masthead-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: 0.25rem;
     font-size: var(--text-ui);
     color: var(--color-on-masthead-soft);
     white-space: nowrap;
@@ -446,6 +500,10 @@ const quickLinks = [
 
   .masthead-link:hover {
     color: var(--color-on-masthead);
+  }
+
+  .masthead-link:active {
+    color: var(--color-on-masthead-faint);
   }
 
   @media (max-width: 1023px) {

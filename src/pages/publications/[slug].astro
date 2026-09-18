@@ -198,7 +198,9 @@ const related = allPubs
               BibTeX 服务 LaTeX 用户。只给 BibTeX 等于只覆盖了一半的使用场景。
             */}
             <details class="mt-4" open>
-              <summary class="cursor-pointer text-meta text-ink-secondary select-none hover:text-accent">
+              <summary
+                class="flex min-h-11 cursor-pointer list-none items-center text-meta text-ink-secondary select-none hover:text-accent"
+              >
                 GB/T 7714 引用条目
               </summary>
               <p
@@ -214,7 +216,9 @@ const related = allPubs
             </details>
 
             <details class="mt-3">
-              <summary class="cursor-pointer text-meta text-ink-secondary select-none hover:text-accent">BibTeX 引用条目</summary>
+              <summary
+                class="flex min-h-11 cursor-pointer list-none items-center text-meta text-ink-secondary select-none hover:text-accent"
+              >BibTeX 引用条目</summary>
               <pre
                 class="bibtex mt-3 overflow-x-auto rounded-sm border border-line bg-surface-subtle p-3 text-[0.75rem] leading-relaxed text-ink-secondary"
                 data-cite-text>{bibtex}</pre>

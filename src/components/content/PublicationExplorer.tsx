@@ -129,7 +129,7 @@ export default function PublicationExplorer({ items, pageSize = 20 }: Props) {
               onClick={() => apply({ ...filters, type: '' })}
               aria-pressed={filters.type === ''}
               className={[
-                'min-h-9 rounded-sm px-3 text-ui transition-colors duration-150',
+                'min-h-11 rounded-sm px-3 text-ui transition-colors duration-150',
                 filters.type === ''
                   ? 'bg-accent text-ink-invert'
                   : 'text-ink-secondary hover:bg-surface-subtle hover:text-ink',
@@ -144,7 +144,7 @@ export default function PublicationExplorer({ items, pageSize = 20 }: Props) {
                 onClick={() => toggle('type', t)}
                 aria-pressed={filters.type === t}
                 className={[
-                  'min-h-9 rounded-sm px-3 text-ui transition-colors duration-150',
+                  'min-h-11 rounded-sm px-3 text-ui transition-colors duration-150',
                   filters.type === t
                     ? 'bg-accent text-ink-invert'
                     : 'text-ink-secondary hover:bg-surface-subtle hover:text-ink',
@@ -161,7 +161,7 @@ export default function PublicationExplorer({ items, pageSize = 20 }: Props) {
               value={filters.year}
               onChange={(e) => apply({ ...filters, year: e.target.value })}
               aria-label="按年份筛选"
-              className="numeric min-h-9 rounded-sm border border-line-strong bg-surface px-2 text-ui text-ink outline-none focus:border-accent"
+              className="numeric min-h-11 rounded-sm border border-line-strong bg-surface px-2 text-ui text-ink outline-none focus:border-accent"
             >
               <option value="">全部年份</option>
               {years.map((y) => (
@@ -180,7 +180,7 @@ export default function PublicationExplorer({ items, pageSize = 20 }: Props) {
             <button
               type="button"
               onClick={() => apply(EMPTY)}
-              className="min-h-9 rounded-sm px-3 text-ui text-accent transition-colors duration-150 hover:bg-accent-soft"
+              className="min-h-11 rounded-sm px-3 text-ui text-accent transition-colors duration-150 hover:bg-accent-soft"
             >
               清除筛选
             </button>
@@ -196,7 +196,8 @@ export default function PublicationExplorer({ items, pageSize = 20 }: Props) {
                 onClick={() => toggle('tag', t)}
                 aria-pressed={filters.tag === t}
                 className={[
-                  'rounded-sm px-2 py-0.5 text-meta transition-colors duration-150',
+                  // min-h-11 = 44px，点击区对齐 DESIGN_SYSTEM §1.5
+                  'inline-flex min-h-11 items-center rounded-sm px-2.5 text-meta transition-colors duration-150',
                   filters.tag === t
                     ? 'bg-accent text-ink-invert'
                     : 'bg-accent-soft text-accent-ink hover:bg-accent hover:text-ink-invert',
@@ -259,7 +260,7 @@ export default function PublicationExplorer({ items, pageSize = 20 }: Props) {
                     {item.pdf && (
                       <a
                         href={item.pdf}
-                        className="numeric inline-flex min-h-8 items-center rounded-sm border border-line-strong px-2 text-[0.6875rem] text-ink-secondary transition-colors duration-150 hover:border-accent hover:text-accent"
+                        className="numeric inline-flex min-h-11 items-center rounded-sm border border-line-strong px-2 text-[0.6875rem] text-ink-secondary transition-colors duration-150 hover:border-accent hover:text-accent"
                       >
                         PDF
                       </a>
@@ -268,7 +269,7 @@ export default function PublicationExplorer({ items, pageSize = 20 }: Props) {
                       <a
                         href={item.doi.startsWith('http') ? item.doi : `https://doi.org/${item.doi}`}
                         rel="noopener"
-                        className="numeric inline-flex min-h-8 items-center rounded-sm border border-line-strong px-2 text-[0.6875rem] text-ink-secondary transition-colors duration-150 hover:border-accent hover:text-accent"
+                        className="numeric inline-flex min-h-11 items-center rounded-sm border border-line-strong px-2 text-[0.6875rem] text-ink-secondary transition-colors duration-150 hover:border-accent hover:text-accent"
                       >
                         DOI
                       </a>
