@@ -47,8 +47,8 @@ import { u } from '../lib/paths';
 </BaseLayout>
 
 <script>
-  /** 部署前缀：Astro 不重写客户端脚本里手写的根绝对路径 */
-  const BASE = import.meta.env.BASE_URL;
+  /** 部署前缀（带尾斜杠）：Astro 不重写客户端脚本里手写的根绝对路径 */
+  import { baseSlash as BASE } from '../lib/paths';
   type SearchDoc = { title: string; url: string; kind: string; summary: string; body?: string; tags: string[] };
 
   // View Transitions 安全：DOM 节点在每次换页后重新查询并写入这三个变量，

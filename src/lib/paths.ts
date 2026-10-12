@@ -13,6 +13,14 @@ const raw = import.meta.env.BASE_URL ?? '/';
 /** '' 或 '/idmt' —— 末尾不带斜杠，拼接时由调用方给出前导斜杠 */
 export const base = raw === '/' ? '' : raw.replace(/\/+$/, '');
 
+/**
+ * '/idmt/' 或 '/' —— 末尾一定带斜杠，供客户端直接拼相对路径用。
+ * `import.meta.env.BASE_URL` 就是 astro.config 里写的 `base` 原值，
+ * **不补尾斜杠**；`BASE_URL + 'search-index.json'` 会拼成
+ * `/idmtsearch-index.json`，这类错只有浏览器能发现，HTTP 冒烟测不出来。
+ */
+export const baseSlash = base === '' ? '/' : base + '/';
+
 /** 给根绝对路径加上部署前缀；外链 / 协议链接 / 锚点原样返回 */
 export function u(path: string): string {
   if (!base || !path.startsWith('/')) return path;

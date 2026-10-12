@@ -302,6 +302,28 @@ for (const f of files) {
   for (const m of html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)) missingCssUrl(m[1], f);
 }
 
+/* ---------- 部署前缀只能有一个出口 ---------- */
+// import.meta.env.BASE_URL 就是 astro.config 的 base 原值，**不补尾斜杠**：
+// `BASE_URL + 'search-index.json'` 拼出 /idmtsearch-index.json。
+// 这类断链既不在 <a href> 里（LINK-001/003 查不到），也不在构建产物文本里
+// （编译后只剩变量拼接），HTTP 冒烟同样测不出 —— 只有浏览器会暴露。
+// 所以在源码层禁止直接用它，一律经 src/lib/paths.ts 的 u()/baseSlash/routeOf。
+const SRC = path.resolve(__dirname, '..', 'src');
+const ALLOWED_BASE_URL_FILE = path.join(SRC, 'lib', 'paths.ts');
+for (const f of walkAll(SRC).filter((p) => /\.(astro|tsx?|jsx?|css)$/.test(p))) {
+  if (f === ALLOWED_BASE_URL_FILE) continue;
+  const text = fs.readFileSync(f, 'utf8');
+  for (const m of text.matchAll(/import\.meta\.env\.BASE_URL/g)) {
+    const line = text.slice(0, m.index).split('\n').length;
+    add(
+      path.relative(SRC, f) + ':' + line,
+      'error',
+      'LINK-004',
+      '直接用 import.meta.env.BASE_URL 拼路径（它不带尾斜杠，会拼成 /idmtxxx）；请改用 src/lib/paths.ts 导出的 u() 或 baseSlash'
+    );
+  }
+}
+
 /* ---------- 站点整体资源预算 ---------- */
 let assetBytes = 0;
 for (const f of walk(DIST)) assetBytes += fs.statSync(f).size;

@@ -26,6 +26,7 @@ import {
   resolveTheme,
   themeTokenCss,
 } from '../lib/frontend-config';
+import { routeOf, u } from '../lib/paths';
 
 /** 隐藏节点。用 hidden 而非 remove —— 保留回滚与调试余地。 */
 function hide(el: Element | null | undefined): void {
@@ -47,10 +48,7 @@ function setLabel(el: HTMLElement, value: string): void {
  * `location.pathname` 带前缀，不归一会所有按路由的配置静默失效。
  */
 function currentRoute(): string {
-  const base = (import.meta.env.BASE_URL ?? '/').replace(/\/+$/, '');
-  let p = window.location.pathname.replace(/\/+$/, '');
-  if (base && p.startsWith(base)) p = p.slice(base.length);
-  return p === '' ? '/' : p;
+  return routeOf(window.location.pathname);
 }
 
 /* ------------------------------------------------------------------
@@ -125,7 +123,7 @@ function applyElements(): void {
       const labelHost = el.querySelector<HTMLElement>('[data-cfg-label]') ?? el;
       setLabel(labelHost, cfg.label);
     }
-    if (cfg.href && el instanceof HTMLAnchorElement) el.href = cfg.href;
+    if (cfg.href && el instanceof HTMLAnchorElement) el.href = u(cfg.href);
     if (cfg.ariaLabel) el.setAttribute('aria-label', cfg.ariaLabel);
   });
 }
@@ -215,7 +213,7 @@ function applyRouteGate(): void {
     ['全站搜索', '/search', 'btn btn-secondary'],
   ] as const) {
     const a = document.createElement('a');
-    a.href = href;
+    a.href = u(href);
     a.className = cls;
     a.textContent = label;
     actions.appendChild(a);

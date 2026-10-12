@@ -163,7 +163,7 @@ npm run dev
 | `docs/PAGE_SPECIFICATION.md` | 页面级唯一规格：路由、区块顺序、状态、响应式、无障碍 |
 | `docs/PORTAL_FRAMEWORK.md` | 架构与选型：信息架构、技术栈决策记录、目录结构、实施路线 |
 | `docs/DESIGN_SYSTEM.md` | 设计令牌、排版规范、组件规范、交付前自检 |
-| `scripts/audit.mjs` | 静态 a11y + SEO + 内部链接 + 体积预算 + 产物洁净度（HYG-001）+ 部署前缀（LINK-003）+ CSS `url()` 可达（CSS-001）审计（`npm run audit`） |
+| `scripts/audit.mjs` | 静态 a11y + SEO + 内部链接 + 体积预算 + 产物洁净度（HYG-001）+ 部署前缀（LINK-003/004）+ CSS `url()` 可达（CSS-001）审计（`npm run audit`） |
 | `scripts/taste.mjs` | 设计品位门禁（`npm run taste`）：只做能正则可靠判定的项，不假装能查视觉 |
 | `scripts/contrast.mjs` | 色彩对比度门禁（`npm run contrast`）：解析 tokens.css，22 组真实在用的文字组合一律 ≥ 4.5:1 |
 | `scripts/docs-tokens.mjs` | 文档 / 令牌一致性门禁（`npm run docs:tokens`）：反查文档引用的令牌是否都有定义 |
@@ -232,10 +232,17 @@ npm run dev
 - 组件的 `href` prop 由**叶子组件**在发射 `<a>` 时加前缀，调用方不提前加 —— 两边都加会得到 `/idmt/idmt/…`；
 - 路由匹配一律 `routeOf()` 归一（`Header.astro` 的 active 判定、`frontend-config-runtime` 的按路由配置），
   否则设了 base 之后 `pathname === '/'` 不成立，首页 `<h1>` 会静默消失；
-- 客户端脚本里用 `import.meta.env.BASE_URL`（Vite 构建期替换）。
+- 客户端脚本拼相对路径用 `src/lib/paths.ts` 的 `baseSlash`（`'/idmt/'` 或 `'/'`），
+  **不要直接用 `import.meta.env.BASE_URL`** —— 它就是 `base` 原值、不带尾斜杠，
+  `BASE_URL + 'search-index.json'` 会拼成 `/idmtsearch-index.json`；
+- 运行时往 DOM 写链接（`el.href = …`、`document.createElement('a')`）同样要过 `u()`：
+  前台粒度管理的 `ELEMENT_DEFAULTS` 存的是根绝对路径，直接赋给 `el.href`
+  会把构建期已经加好前缀的 `<a href="/idmt/admin">` 覆写成 `/admin`。
 
-漏网有三门门禁兜着：`LINK-003`（内部链接缺前缀）、`CSS-001`（CSS `url()` 指向不存在的产物）、
-`FONTS-002`（字体 URL 前缀 ≠ 当前 base）。
+漏网有四门门禁兜着：`LINK-003`（内部链接缺前缀）、`CSS-001`（CSS `url()` 指向不存在的产物）、
+`FONTS-002`（字体 URL 前缀 ≠ 当前 base）、`LINK-004`（源码里直接拼 `BASE_URL`）。
+注意门禁全是静态扫产物 + HTTP 断言，**覆写型**的运行时拼错（上一条那种）它们看不见，
+改完 `base` 记得在浏览器里点一遍导航与搜索。
 
 **换自定义域名时**：删掉 `base`、把 `astro.config.mjs` 的 `site` 与 `src/data/site.ts` 的 `url`
 换成新域名、加 `public/CNAME`，然后重跑 `npm run fonts`（fonts.css 里的字体 URL 跟着 base 走）。

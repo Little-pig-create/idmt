@@ -28,6 +28,7 @@ import {
   isValidRoutePath,
   normalizeConfig,
 } from '../../shared/frontend-config-contract.mjs';
+import { u } from './paths';
 
 /* ------------------------------------------------------------------
    默认值 —— 全部属于前台
@@ -111,7 +112,7 @@ function publish(next: Config) {
  *
  * 超时 3s：配置是增强项，不值得让用户等。
  */
-export async function loadConfig(endpoint = '/api/frontend-config', timeoutMs = 3000): Promise<Config> {
+export async function loadConfig(endpoint = u('/api/frontend-config'), timeoutMs = 3000): Promise<Config> {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);

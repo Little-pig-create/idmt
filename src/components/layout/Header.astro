@@ -680,8 +680,8 @@ const quickLinks = [
 </style>
 
 <script>
-  /** 部署前缀：Astro 不重写客户端脚本里手写的根绝对路径 */
-  const BASE = import.meta.env.BASE_URL;
+  /** 部署前缀（带尾斜杠）：Astro 不重写客户端脚本里手写的根绝对路径 */
+  import { baseSlash as BASE } from '../../lib/paths';
   // ============================================================
   // 报头交互 —— View Transitions 安全版
   //
