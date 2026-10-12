@@ -243,7 +243,7 @@
 | 预取 | **Astro `prefetch`**（`prefetchAll: true`，`defaultStrategy: viewport`） | 进入视口的链接自动预取；内部按浏览器能力在 `link rel=prefetch` 与 Speculation Rules 之间选择，无需手工标注 |
 | 浮层 | **原生 `<dialog>` + Popover API** | 浏览器原生焦点陷阱、`Esc` 关闭、顶层渲染，省掉弹层库 |
 | 图标 | **不引入图标库**：装饰配图 `AbstractFigure`（确定性 SVG）＋ UI 图标手写内联 SVG，统一 24×24 / `currentColor` / `aria-hidden` | 禁止 emoji 充当图标；UI 图标实际只有 6–8 个，为一个图标库增加依赖不划算 |
-| 字体 | **Google Fonts + 本地回退**，`display=swap` | 首屏不阻塞；生产环境建议自托管子集 |
+| 字体 | **自托管子集**（`public/fonts/`，由 `npm run fonts` 裁剪）+ 本地回退，`display=swap` | 不依赖外部字体 CDN；子集按站点实际用字生成，5 族合计 955 KB。详见 `README.md`「字体（自托管子集）」 |
 | 质量门禁 | **`scripts/audit.mjs` + `scripts/smoke.mjs`**（零依赖 Node 脚本） | 静态 a11y/SEO 扫描 + 20 条 HTTP 断言，见 §13 验收标准 |
 | 部署 | 静态托管（任意 CDN / 对象存储） | 纯静态输出，成本低、抗压 |
 
@@ -494,7 +494,7 @@ name / description / license / access / period(可选) / scale(可选) / href(�
 
 - 默认零 JS；岛屿按需加载（`client:visible` 优先）；
 - **图片：全站无位图**。配图为 `AbstractFigure` 确定性 SVG，头像为文字首字母，因此无需 `astro:assets`、`srcset` 与 CLS 防护；
-- 字体：Google Fonts + 本地回退，`display=swap`；生产环境建议自托管子集；
+- 字体：5 族自托管子集（`src/styles/fonts.css`），无外部 CDN 依赖，`display=swap`；子集由 `npm run fonts` 按站点用字裁剪，`npm run fonts:check` 提示缺字（不阻断）；
 - SEO：每页唯一 `title`（≤60 字符，超长自动截断）/ `description` / `canonical` / `og:*`；
   `sitemap-index.xml`、`robots.txt`、RSS；四类结构化数据提升学术检索收录；
 - 预算与实测：

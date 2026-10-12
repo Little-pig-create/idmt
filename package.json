@@ -13,6 +13,8 @@
     "taste": "node scripts/taste.mjs",
     "contrast": "node scripts/contrast.mjs",
     "docs:tokens": "node scripts/docs-tokens.mjs",
+    "fonts": "node scripts/fonts.mjs",
+    "fonts:check": "node scripts/fonts-check.mjs",
     "schema:refs": "node scripts/schema-refs.mjs",
     "verify:config": "node scripts/verify-frontend-config.mjs"
   },

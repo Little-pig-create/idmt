@@ -109,6 +109,9 @@
 
 **中文标题实现**：`font-family: var(--font-serif-cjk)`，并对拉丁字符前置 `--font-display`，形成中英混排的期刊感。
 
+**加载方式**：5 个家族都是自托管子集（`src/styles/fonts.css` + `public/fonts/`），不引用外部字体 CDN；
+重新裁剪用 `npm run fonts`，覆盖度提示用 `npm run fonts:check`。新增带生僻字的栏目后若缺字，会回落系统字体而非豆腐块。
+
 ### 1.3 字号与行高（流式）
 
 | 用途 | 字号 | 行高 | 字重 |

@@ -11,3 +11,6 @@ admin/.data/
 admin/tmp/
 admin/.tmp-*
 
+# 字体子集的源字体（约 41 MB），由 npm run fonts 按需读取，不入库
+.fonts-src/
+

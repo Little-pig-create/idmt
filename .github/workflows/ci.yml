@@ -14,6 +14,11 @@ on:
 #   6. smoke —— 起预览服务后跑 HTTP 断言
 # 任意一个非零退出即视为失败。本地等价命令：
 #   npm run build && npm run audit && npm run taste && npm run contrast && npm run docs:tokens && npm run smoke
+#
+# 另有一项**提示级**检查，不参与上面的失败判定：
+#   fonts:check —— 比对 dist 渲染字符与字体子集字符表，报出未覆盖的用字。
+#   重生成子集要 41 MB 源字体 + python 工具链，不是改内容的人能做的，
+#   所以新用字只提示、不卡发布（未覆盖的字会回退到系统字体，不会变豆腐块）。
 jobs:
   verify:
     name: 构建 · 审计 · 冒烟
@@ -44,6 +49,9 @@ jobs:
 
       - name: 文档 / 令牌一致性门禁
         run: npm run docs:tokens
+
+      - name: 字体子集覆盖度检查（提示级，不阻断）
+        run: npm run fonts:check
 
       - name: 冒烟测试（HTTP 断言）
         run: |

@@ -27,13 +27,16 @@
 —— **色彩对比度不在「未覆盖」之列**，它可精确计算，已固化为门禁。
 
 **持续集成**：`.github/workflows/ci.yml` 在 push / PR 上跑
-`build → audit → taste → contrast → docs:tokens → smoke`，另有一个 job 单独构建 `admin/`（防止后台改动悄悄破坏构建）。
+`build → audit → taste → contrast → docs:tokens → smoke`，另有一个 job 单独构建 `admin/`（防止后台改动悄悄破坏构建），
+以及一个不阻断的 `fonts:check` 提示步骤。
 本地提交前跑同一组命令即可，无需等待 CI。
 
-> ℹ️ **版本控制现状**：本站已迁出原父仓库（`D:\Research\Python数据工作台_2026-07-22\`，
-> 该仓库 `.gitignore` 第 78 行曾把本站整体排除），现位于 `D:\数字管理研究院网站`，
-> 并已初始化**独立 git 仓库**（仓库根即本站目录）。`.github/workflows/ci.yml` 自此可正常触发。
-> 注意：仓库已 `git init` 但**尚未做首次提交**，142 个源文件处于未跟踪状态。
+> ℹ️ **版本控制现状**：本站已迁出原父仓库（其 `.gitignore` 第 78 行曾把本站整体排除），
+> 现仓库根即本站目录，独立 git 仓库（`master` 分支，157 个文件已跟踪）。
+> **尚未配置 remote**：推上 GitHub 前需 `git remote add origin …`，并把 `ci.yml` 里的
+> `branches: [main]` 与实际分支对齐（或本地改名 `main`）。
+> 另注意：`node_modules/` **不可跨系统复用**（锁文件按平台解析出 `@esbuild/win32-x64` 一类二进制），
+> 换到 Linux / CI 首跑需删除后重装；Astro 7 要求 **Node ≥ 22.12**。
 
 ## 目录结构
 
@@ -47,6 +50,7 @@
 │  ├─ lib/                  工具函数
 │  ├─ pages/                路由
 │  └─ styles/               设计令牌与全局样式
+├─ public/                  静态资源：favicon、自托管字体子集（fonts/）、.nojekyll
 ├─ admin/                   内容发布后台（独立应用）
 │  ├─ server.mjs            零依赖 API 服务，直接读写 src/content
 │  └─ src/                  React 19 + MUI 管理端
@@ -67,6 +71,8 @@ npm run audit      # 静态审计：扫 dist/ 检查 a11y 与 SEO 常见回归
 npm run taste      # 设计品位门禁：破折号清零 / 眉标签克制 / 圆角尺度单一
 npm run contrast   # 色彩对比度门禁：22 组文字组合 ≥ 4.5:1（解析 tokens.css）
 npm run docs:tokens # 文档 / 令牌一致性：反查文档引用的令牌是否都存在
+npm run fonts      # 按站点实际用字重新生成字体子集（需本地 .fonts-src/ 源字体）
+npm run fonts:check # 字体子集覆盖度：缺字只提示，不阻断发布
 npm run smoke      # e2e 冒烟：HTTP 断言 + 内容片段 + Content-Type
 ```
 
@@ -125,6 +131,31 @@ npm run dev
 
 > **为什么站点不用 MUI**：MUI 依赖 Emotion 运行时，会破坏站点的「零 JS 静态输出」，且 Material 观感与学术机构风冲突。详见 `docs/PORTAL_FRAMEWORK.md` §5。
 
+## 字体（自托管子集）
+
+站点不引用任何外部字体 CDN，5 个家族全部以子集形式自托管在 `public/fonts/`，由 `src/styles/fonts.css` 声明。
+
+| 家族 | 绑定的令牌 | 子集大小 | 可变轴 |
+|---|---|---|---|
+| Source Serif 4 | `--font-display` | 154 KB | `opsz` `wght` |
+| IBM Plex Sans | `--font-sans` | 48 KB | `wdth` `wght` |
+| Noto Serif SC | `--font-serif-cjk` | 407 KB | `wght` |
+| Noto Sans SC | `--font-sans`（中文） | 312 KB | `wght` |
+| JetBrains Mono | `--font-mono` | 35 KB | `wght` |
+
+合计 **955 KB**，覆盖 **1131 个字符**（清单见 `src/styles/fonts-charset.txt`）。
+
+**子集怎么来的**：`npm run fonts` 扫描 `src/{content,components,pages,layouts,lib,data}` 里出现过的字，
+并并入上一次 `dist/` 的渲染文本，再按家族裁剪：拉丁家族只收非中日韩字符，中文家族收全集。
+源字体（约 41 MB，来自 `google/fonts`）放在 gitignore 的 `.fonts-src/`，不进仓库；
+脚本缺源字体时会打印精确下载地址与依赖命令。
+
+> **两条刻意的设计**：
+> 1. `@font-face` **不写 `unicode-range`** —— 分片加载是字体 CDN 为一族几十个分片文件设计的；
+>    本站每族只有一个自托管文件，加了只会让未列出的码位被判为「不匹配」而回落系统字体，纯风险无收益。
+> 2. `fonts:check` 是**提示级、恒退 0** —— 内容走后台 → 推送 → CI，而重新裁剪子集需要源字体和 python 工具链，
+>    内容编辑跑不动；为一个新字卡住发布不值得，缺字的表现也是回落系统字体而非豆腐块。真缺字时人工跑 `npm run fonts` 补。
+
 ## 文档
 
 | 文档 | 内容 |
@@ -138,8 +169,10 @@ npm run dev
 | `scripts/docs-tokens.mjs` | 文档 / 令牌一致性门禁（`npm run docs:tokens`）：反查文档引用的令牌是否都有定义 |
 | `scripts/smoke.mjs` | HTTP 冒烟断言（`npm run smoke`，56 条） |
 | `scripts/verify-frontend-config.mjs` | 前端粒度管理验证套件（`npm run verify:config`，46 项 + 回归守卫） |
+| `scripts/fonts.mjs` | 字体子集生成（`npm run fonts`）：按站点实际用字裁剪 `.fonts-src/` 源字体，输出 `public/fonts/*.woff2` + `fonts-charset.txt` |
+| `scripts/fonts-check.mjs` | 字体子集覆盖度检查（`npm run fonts:check`）：提示级，缺字退 0 |
 | `docs/FRONTEND_CONFIG.md` | 前端粒度管理：动态构建含义、前后端分离边界、接口、粒度、边界与异常 |
-| `.github/workflows/ci.yml` | CI：`build → audit → taste → smoke`，并单独构建 `admin/` |
+| `.github/workflows/ci.yml` | CI：`build → audit → taste → contrast → docs:tokens → smoke`（附 `fonts:check` 提示），并单独构建 `admin/` |
 
 ## 前端粒度管理
 
