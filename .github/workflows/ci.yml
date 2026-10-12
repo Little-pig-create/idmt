@@ -27,6 +27,11 @@ jobs:
   verify:
     name: 构建 · 审计 · 冒烟
     runs-on: ubuntu-latest
+    # upload-pages-artifact 要签 Pages 部署令牌，缺这两项会 403
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
 
@@ -77,6 +82,9 @@ jobs:
 
       - name: 上传 Pages 产物
         uses: actions/upload-pages-artifact@v3
+        with:
+          # 该动作默认取 _site，Astro 的静态输出目录是 dist
+          path: dist
 
   # 只有 main 分支的 push 才发布；PR 与其他分支跑完门禁即止。
   # Pages 的构建来源必须是「GitHub Actions」（仓库 Settings → Pages → Source），
