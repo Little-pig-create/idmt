@@ -8,6 +8,7 @@ import EventItem from '../../components/content/EventItem.astro';
 import DetailFigure from '../../components/ui/DetailFigure.astro';
 import JsonLd from '../../components/seo/JsonLd.astro';
 import { site, sectionEyebrow } from '../../data/site';
+import { u } from '../../lib/paths';
 
 export async function getStaticPaths() {
   const topics = await getCollection('topics', ({ data }) => !data.draft);
@@ -68,7 +69,7 @@ const involved = people
       name: item.data.title,
       description: item.data.summary,
       keywords: kws.join(', '),
-      url: new URL(`/topics/${item.id}`, site.url).toString(),
+      url: new URL(u(`/topics/${item.id}`), site.url).toString(),
       isPartOf: { '@type': 'WebSite', name: site.name, url: site.url },
       inLanguage: 'zh-CN',
     }}
@@ -127,7 +128,7 @@ const involved = people
                 <ul class="mt-6">
                   {news.map((n) => (
                     <li class="border-b border-line py-4">
-                      <a href={`/news/${n.id}`} class="link-title block text-ui">{n.data.title}</a>
+                      <a href={u(`/news/${n.id}`)} class="link-title block text-ui">{n.data.title}</a>
                       <p class="numeric mt-1 text-meta text-ink-tertiary">
                         {n.data.date.toISOString().slice(0, 10)}
                       </p>
@@ -166,7 +167,7 @@ const involved = people
                 <ul class="mt-6">
                   {projects.map((p) => (
                     <li class="border-b border-line py-4">
-                      <a href={`/projects/${p.id}`} class="link-title block text-ui">
+                      <a href={u(`/projects/${p.id}`)} class="link-title block text-ui">
                         {p.data.title}
                       </a>
                       <p class="mt-1 text-meta text-ink-tertiary">
@@ -183,7 +184,7 @@ const involved = people
             <div>
               {
                 prev && (
-                  <a href={`/topics/${prev.id}`} class="group block">
+                  <a href={u(`/topics/${prev.id}`)} class="group block">
                     <span class="eyebrow">上一个专题</span>
                     <span class="link-title mt-2 block text-ui">{prev.data.title}</span>
                   </a>
@@ -193,7 +194,7 @@ const involved = people
             <div class="sm:text-right">
               {
                 next && (
-                  <a href={`/topics/${next.id}`} class="group block">
+                  <a href={u(`/topics/${next.id}`)} class="group block">
                     <span class="eyebrow">下一个专题</span>
                     <span class="link-title mt-2 block text-ui">{next.data.title}</span>
                   </a>
@@ -207,7 +208,7 @@ const involved = people
           {
             lead && (
               <AsideBox title="专题负责人">
-                <a href={`/people/${lead.id}`} class="link-title block text-ui">
+                <a href={u(`/people/${lead.id}`)} class="link-title block text-ui">
                   {lead.data.name}
                 </a>
                 <p class="mt-1 text-meta text-ink-tertiary">{lead.data.title}</p>
@@ -221,7 +222,7 @@ const involved = people
                 <ul class="space-y-2 text-ui">
                   {involved.map((p) => (
                     <li>
-                      <a href={`/people/${p.id}`} class="link">{p.data.name}</a>
+                      <a href={u(`/people/${p.id}`)} class="link">{p.data.name}</a>
                       <span class="ml-2 text-meta text-ink-tertiary">{p.data.title}</span>
                     </li>
                   ))}
@@ -236,7 +237,7 @@ const involved = people
                 <ul class="space-y-2 text-ui">
                   {research.map((r) => (
                     <li>
-                      <a href={`/research/${r.id}`} class="link">{r.data.title}</a>
+                      <a href={u(`/research/${r.id}`)} class="link">{r.data.title}</a>
                     </li>
                   ))}
                 </ul>

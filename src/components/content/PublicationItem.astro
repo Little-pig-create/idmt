@@ -1,6 +1,7 @@
 ---
 import { publicationTypeLabels } from '../../data/site';
 import { formatVenue } from '../../lib/citation';
+import { u } from '../../lib/paths';
 
 interface Props {
   title: string;
@@ -36,7 +37,7 @@ const venueText = formatVenue(venue);
 
   <h3 class="mt-1.5 text-[1.0625rem] leading-snug font-normal">
     {href ? (
-      <a href={href} class="link-title">{title}</a>
+      <a href={u(href)} class="link-title">{title}</a>
     ) : (
       <span class="text-ink">{title}</span>
     )}
@@ -56,7 +57,7 @@ const venueText = formatVenue(venue);
       {
         pdf && (
           <a
-            href={pdf}
+            href={u(pdf)}
             class="numeric inline-flex min-h-8 items-center rounded-sm border border-line-strong px-2 text-[0.6875rem] text-ink-secondary transition-colors duration-150 hover:border-accent hover:text-accent"
           >
             PDF

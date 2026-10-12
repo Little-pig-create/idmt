@@ -7,6 +7,7 @@ import DetailFigure from '../../components/ui/DetailFigure.astro';
 import { publicationTypeLabels, site } from '../../data/site';
 import { toBibtex } from '../../lib/bibtex';
 import { toGbt7714, formatVenue } from '../../lib/citation';
+import { u } from '../../lib/paths';
 
 export async function getStaticPaths() {
   const publications = await getCollection('publications', ({ data }) => !data.draft);
@@ -95,7 +96,7 @@ const related = allPubs
       isPartOf: { '@type': 'Periodical', name: data.venue },
       ...(data.doi ? { identifier: data.doi.startsWith('http') ? data.doi : `https://doi.org/${data.doi}` } : {}),
       keywords: data.tags.join(', '),
-      url: new URL(`/publications/${item.id}`, site.url).toString(),
+      url: new URL(u(`/publications/${item.id}`), site.url).toString(),
       inLanguage: 'zh-CN',
       publisher: { '@type': 'Organization', name: site.name, url: site.url },
     }}
@@ -122,7 +123,7 @@ const related = allPubs
                   <>
                     {i > 0 && <span class="text-ink-tertiary">, </span>}
                     {personId ? (
-                      <a href={`/people/${personId}`} class="text-ink link-title">
+                      <a href={u(`/people/${personId}`)} class="text-ink link-title">
                         {author}
                       </a>
                     ) : (
@@ -240,7 +241,7 @@ const related = allPubs
               <ul class="space-y-3">
                 {related.map((r) => (
                   <li class="border-l-2 border-line pl-3">
-                    <a href={`/publications/${r.id}`} class="block">
+                    <a href={u(`/publications/${r.id}`)} class="block">
                       <p class="text-ui font-medium text-ink hover:text-accent">{r.title}</p>
                       <p class="numeric mt-0.5 text-meta text-ink-tertiary">
                         {r.venue}, {r.year}

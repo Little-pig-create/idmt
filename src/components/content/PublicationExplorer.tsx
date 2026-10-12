@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { publicationTypeLabels } from '../../data/site';
 import { formatVenue } from '../../lib/citation';
+import { u } from '../../lib/paths';
 
 export interface PublicationRecord {
   id: string;
@@ -239,7 +240,7 @@ export default function PublicationExplorer({ items, pageSize = 20 }: Props) {
                 </p>
 
                 <h3 className="mt-1.5 text-[1.0625rem] font-normal leading-snug">
-                  <a href={`/publications/${item.id}`} className="link-title">{item.title}</a>
+                  <a href={u(`/publications/${item.id}`)} className="link-title">{item.title}</a>
                 </h3>
 
                 <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -259,7 +260,7 @@ export default function PublicationExplorer({ items, pageSize = 20 }: Props) {
                   <span className="flex items-center gap-2 sm:opacity-0 sm:transition-opacity sm:duration-150 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
                     {item.pdf && (
                       <a
-                        href={item.pdf}
+                        href={u(item.pdf)}
                         className="numeric inline-flex min-h-11 items-center rounded-sm border border-line-strong px-2 text-[0.6875rem] text-ink-secondary transition-colors duration-150 hover:border-accent hover:text-accent"
                       >
                         PDF

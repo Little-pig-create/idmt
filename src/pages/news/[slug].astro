@@ -5,6 +5,7 @@ import PageHero from '../../components/ui/PageHero.astro';
 import JsonLd from '../../components/seo/JsonLd.astro';
 import DetailFigure from '../../components/ui/DetailFigure.astro';
 import { site, sectionEyebrow } from '../../data/site';
+import { u } from '../../lib/paths';
 
 export async function getStaticPaths() {
   const news = await getCollection('news', ({ data }) => !data.draft);
@@ -32,7 +33,7 @@ const { Content } = await render(item);
       description: item.data.summary,
       datePublished: item.data.date.toISOString(),
       keywords: item.data.tags.join(', '),
-      url: new URL(`/news/${item.id}`, site.url).toString(),
+      url: new URL(u(`/news/${item.id}`), site.url).toString(),
       publisher: { '@type': 'Organization', name: site.name, url: site.url },
       author: { '@type': 'Person', name: item.data.author ?? site.name },
       inLanguage: 'zh-CN',
@@ -79,7 +80,7 @@ const { Content } = await render(item);
         <div>
           {
             prev && (
-              <a href={`/news/${prev.id}`} class="group block">
+              <a href={u(`/news/${prev.id}`)} class="group block">
                 <span class="eyebrow">上一篇</span>
                 <span class="link-title mt-2 block text-ui">{prev.data.title}</span>
               </a>
@@ -89,7 +90,7 @@ const { Content } = await render(item);
         <div class="sm:text-right">
           {
             next && (
-              <a href={`/news/${next.id}`} class="group block">
+              <a href={u(`/news/${next.id}`)} class="group block">
                 <span class="eyebrow">下一篇</span>
                 <span class="link-title mt-2 block text-ui">{next.data.title}</span>
               </a>

@@ -81,7 +81,7 @@ const licenses = [...new Set(items.map((d) => d.license))];
                         <dt class="eyebrow mb-1.5">获取方式</dt>
                         <dd class="text-ui text-ink">
                           {ds.href ? (
-                            <a href={ds.href} rel="noopener" class="link break-all">
+                            <a href={u(ds.href)} rel="noopener" class="link break-all">
                               {ds.access}
                             </a>
                           ) : (

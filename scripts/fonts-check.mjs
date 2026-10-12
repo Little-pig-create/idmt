@@ -14,6 +14,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { readSiteConfig } from './config.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const DIST = path.join(ROOT, 'dist');
@@ -63,6 +64,24 @@ for (const file of walk(DIST)) {
     const where = missing.get(ch);
     if (where.length < 3) where.push(path.relative(DIST, file));
   }
+}
+
+/*
+ * FONTS-002：@font-face 的 URL 前缀必须等于当前部署 base。
+ * Astro 不重写 CSS 里的 url()，改了 base 没重跑 npm run fonts 的话，
+ * 字体在项目站上会全部 404 并静默回退到系统字体 —— 覆盖度检查查不出这件事。
+ * 这一条是硬失败：它不需要源字体，只比对两个已入库的文件。
+ */
+const BASE = readSiteConfig(ROOT).base;
+const fontCss = fs.readFileSync(path.join(ROOT, 'src', 'styles', 'fonts.css'), 'utf8');
+const stale = [...fontCss.matchAll(/url\("(.*?)\/fonts\/([^"]+\.woff2)"\)/g)]
+  .filter(([, prefix]) => prefix !== BASE)
+  .map(([, prefix, file]) => `${file}：url 前缀「${prefix || '（空）'}」≠ base「${BASE || '（空）'}」`);
+if (stale.length > 0) {
+  console.log('字体 URL 前缀与部署 base 不一致 · FONTS-002');
+  for (const line of stale) console.log(`  ✗ ${line}`);
+  console.log('  修复：npm run fonts（fonts.css 由它生成，勿手改）');
+  process.exit(1);
 }
 
 console.log(`字体子集覆盖度 · FONTS-001`);

@@ -9,6 +9,7 @@ import EventItem from '../components/content/EventItem.astro';
 import NoticeList from '../components/content/NoticeList.astro';
 import Carousel from '../components/ui/Carousel.astro';
 import { site } from '../data/site';
+import { u } from '../lib/paths';
 
 const fmtDate = (d: Date) =>
   `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
@@ -142,7 +143,7 @@ const stats = [
       <div class="grid gap-6 lg:grid-cols-3 lg:gap-8">
         {
           leadNews && (
-            <a href={`/news/${leadNews.id}`} class="portal-card group lg:col-span-2">
+            <a href={u(`/news/${leadNews.id}`)} class="portal-card group lg:col-span-2">
               <div class="figure-frame aspect-[16/9]">
                 <CoverImage
                   cover={leadNews.data.cover}
@@ -179,7 +180,7 @@ const stats = [
           {
             briefNews.map((item) => (
               <a
-                href={`/news/${item.id}`}
+                href={u(`/news/${item.id}`)}
                 class="group border-t border-line py-5 first:pt-0 last:pb-0"
               >
                 <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -233,7 +234,7 @@ const stats = [
           {
             projects.map((project) => (
               <li>
-                <a href={`/projects/${project.id}`} class="brief-item group">
+                <a href={u(`/projects/${project.id}`)} class="brief-item group">
                   <p class="brief-item-title">{project.data.title}</p>
                   <p class="mt-1 text-meta text-ink-tertiary">
                     {project.data.funder}
@@ -285,7 +286,7 @@ const stats = [
                 </span>
 
                 <h3 class="mt-3 text-[1.25rem] leading-snug">
-                  <a href={`/research/${area.id}`} class="link-title stretched-link">
+                  <a href={u(`/research/${area.id}`)} class="link-title stretched-link">
                     {area.data.title}
                   </a>
                 </h3>
@@ -299,7 +300,7 @@ const stats = [
                     <p class="mt-5 border-t border-line pt-3 text-meta text-ink-tertiary">
                       负责人{' '}
                       {lead ? (
-                        <a href={`/people/${lead.id}`} class="link stretched-link-above">
+                        <a href={u(`/people/${lead.id}`)} class="link stretched-link-above">
                           {area.data.lead}
                         </a>
                       ) : (
@@ -401,7 +402,7 @@ const stats = [
       <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {
           topics.map((topic) => (
-            <a href={`/topics/${topic.id}`} class="portal-card group">
+            <a href={u(`/topics/${topic.id}`)} class="portal-card group">
               <div class="figure-frame aspect-[16/9]">
                 <CoverImage
                   cover={topic.data.image}
@@ -435,8 +436,8 @@ const stats = [
           </p>
         </div>
         <div class="flex flex-wrap gap-3 lg:justify-end">
-          <a href="/join" class="btn btn-primary" data-cfg-el="joinPrimary" data-cfg-route="/" data-cfg-label>招生与招聘</a>
-          <a href="/contact" class="btn btn-secondary" data-cfg-el="joinSecondary" data-cfg-route="/" data-cfg-label>联系我们</a>
+          <a href={u('/join')} class="btn btn-primary" data-cfg-el="joinPrimary" data-cfg-route="/" data-cfg-label>招生与招聘</a>
+          <a href={u('/contact')} class="btn btn-secondary" data-cfg-el="joinSecondary" data-cfg-route="/" data-cfg-label>联系我们</a>
         </div>
       </div>
     </div>

@@ -1,8 +1,9 @@
 ---
 import { nav } from '../../data/nav';
 import { site } from '../../data/site';
+import { routeOf, u } from '../../lib/paths';
 
-const pathname = Astro.url.pathname;
+const pathname = routeOf(Astro.url.pathname);
 const isActive = (href: string) =>
   href === '/' ? pathname === '/' : pathname.startsWith(href);
 
@@ -30,11 +31,11 @@ const quickLinks = [
         <span aria-hidden="true" class="utility-sep">|</span>
         <span class="utility-tag text-ink-tertiary" title="英文版建设中">EN</span>
         <span aria-hidden="true" class="utility-sep">|</span>
-        <a href="/search" class="utility-link" data-cfg-el="searchTrigger" data-cfg-route="*" data-cfg-label>
+        <a href={u('/search')} class="utility-link" data-cfg-el="searchTrigger" data-cfg-route="*" data-cfg-label>
           全站搜索
         </a>
         <span aria-hidden="true" class="utility-sep">|</span>
-        <a href="/admin" class="utility-link" data-cfg-el="adminEntry" data-cfg-route="*" data-cfg-label>
+        <a href={u('/admin')} class="utility-link" data-cfg-el="adminEntry" data-cfg-route="*" data-cfg-label>
           内容发布后台
         </a>
       </nav>
@@ -44,7 +45,7 @@ const quickLinks = [
   {/* ============ 报头 ============ */}
   <div class="masthead">
     <div class="container-page flex items-center justify-between gap-6">
-      <a href="/" class="brand" aria-label={`${site.name} 首页`}>
+      <a href={u('/')} class="brand" aria-label={`${site.name} 首页`}>
         <span class="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 40 40" width="40" height="40" focusable="false">
             <rect x="0" y="0" width="40" height="40" rx="6" fill="var(--color-fig-a)"></rect>
@@ -62,7 +63,7 @@ const quickLinks = [
       </a>
 
       <div class="masthead-side">
-        <form role="search" method="get" action="/search" class="masthead-search" data-cfg="search-form" data-cfg-el="searchForm" data-cfg-route="*">
+        <form role="search" method="get" action={u('/search')} class="masthead-search" data-cfg="search-form" data-cfg-el="searchForm" data-cfg-route="*">
           <label for="masthead-q" class="sr-only">搜索本站内容</label>
           <input
             id="masthead-q"
@@ -83,7 +84,7 @@ const quickLinks = [
         <nav aria-label="快捷入口" class="masthead-links">
           {
             quickLinks.map((l) => (
-              <a href={l.href} class="masthead-link" data-cfg-el={l.id} data-cfg-route="*" data-cfg-label>{l.label}</a>
+              <a href={u(l.href)} class="masthead-link" data-cfg-el={l.id} data-cfg-route="*" data-cfg-label>{l.label}</a>
             ))
           }
         </nav>
@@ -100,7 +101,7 @@ const quickLinks = [
     <div class="container-page flex items-center gap-1">
       <nav aria-label="主导航" class="hidden items-center gap-0.5 lg:flex">
         <a
-          href="/"
+          href={u('/')}
           data-cfg-nav="/"
           aria-current={isActive('/') ? 'page' : undefined}
           class:list={[
@@ -132,7 +133,7 @@ const quickLinks = [
                 </button>
               ) : (
                 <a
-                  href={entry.href}
+                  href={u(entry.href)}
                   aria-current={isActive(entry.href) ? 'page' : undefined}
                   class:list={['nav-item', isActive(entry.href) ? 'nav-item-active' : '']}
                 >
@@ -188,7 +189,7 @@ const quickLinks = [
                         {group.items.map((item) => (
                           <li data-cfg-nav-item={item.href.split('#')[0]}>
                             <a
-                              href={item.href}
+                              href={u(item.href)}
                               class="block rounded-md px-2 py-2 transition-colors duration-150 hover:bg-accent-soft"
                             >
                               <span class="block text-ui font-medium text-ink">{item.label}</span>
@@ -233,7 +234,7 @@ const quickLinks = [
     </button>
   </div>
   <nav class="overflow-y-auto p-4" aria-label="移动端主导航">
-    <a href="/" data-cfg-nav="/" class="drawer-link">首页</a>
+    <a href={u('/')} data-cfg-nav="/" class="drawer-link">首页</a>
     {
       nav.map((entry) =>
         entry.groups ? (
@@ -251,7 +252,7 @@ const quickLinks = [
                   <ul>
                     {group.items.map((item) => (
                       <li data-cfg-nav-item={item.href.split('#')[0]}>
-                        <a href={item.href} class="block rounded-md px-2 py-2.5 text-ui text-ink-secondary hover:bg-accent-soft hover:text-ink">
+                        <a href={u(item.href)} class="block rounded-md px-2 py-2.5 text-ui text-ink-secondary hover:bg-accent-soft hover:text-ink">
                           {item.label}
                         </a>
                       </li>
@@ -262,7 +263,7 @@ const quickLinks = [
             </div>
           </details>
         ) : (
-          <a href={entry.href} data-cfg-nav={entry.href} class="drawer-link">{entry.label}</a>
+          <a href={u(entry.href)} data-cfg-nav={entry.href} class="drawer-link">{entry.label}</a>
         )
       )
     }
@@ -679,6 +680,8 @@ const quickLinks = [
 </style>
 
 <script>
+  /** 部署前缀：Astro 不重写客户端脚本里手写的根绝对路径 */
+  const BASE = import.meta.env.BASE_URL;
   // ============================================================
   // 报头交互 —— View Transitions 安全版
   //
@@ -749,7 +752,7 @@ const quickLinks = [
   async function loadIndex(): Promise<SearchDoc[]> {
     if (searchIndex) return searchIndex;
     try {
-      const res = await fetch('/search-index.json');
+      const res = await fetch(BASE + 'search-index.json');
       searchIndex = res.ok ? await res.json() : [];
     } catch {
       searchIndex = [];
@@ -771,9 +774,9 @@ const quickLinks = [
         <div class="px-3 py-8 text-center">
           <p class="text-ui text-ink">没有找到与「${escapeHtml(query)}」匹配的内容</p>
           <p class="mt-2 text-meta text-ink-tertiary">建议尝试更短的关键词，或浏览
-            <a class="link" href="/publications">学术成果</a>、
-            <a class="link" href="/people">研究团队</a>、
-            <a class="link" href="/news">新闻动态</a>
+            <a class="link" href="${BASE}publications">学术成果</a>、
+            <a class="link" href="${BASE}people">研究团队</a>、
+            <a class="link" href="${BASE}news">新闻动态</a>
           </p>
         </div>`;
       return;
@@ -782,7 +785,7 @@ const quickLinks = [
       .slice(0, 12)
       .map(
         (d) => `
-        <a href="${d.url}" class="block rounded-md px-3 py-3 transition-colors duration-150 hover:bg-accent-soft">
+        <a href="${BASE}${d.url.slice(1)}" class="block rounded-md px-3 py-3 transition-colors duration-150 hover:bg-accent-soft">
           <div class="flex items-center gap-2">
             <span class="tag">${escapeHtml(d.kind)}</span>
             <span class="text-meta text-ink-tertiary">${escapeHtml(d.summary)}</span>
@@ -910,7 +913,7 @@ const quickLinks = [
         if ((e as KeyboardEvent).key === 'Enter') {
           e.preventDefault();
           const q = sel<HTMLInputElement>('[data-search-input]')?.value.trim();
-          if (q) window.location.href = `/search?q=${encodeURIComponent(q)}`;
+          if (q) window.location.href = `${BASE}search?q=${encodeURIComponent(q)}`;
         }
       });
     }

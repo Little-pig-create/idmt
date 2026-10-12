@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/ui/PageHero.astro';
 import AsideBox from '../components/ui/AsideBox.astro';
 import { site } from '../data/site';
+import { u } from '../lib/paths';
 
 const structure = [
   { name: '学术委员会', desc: '负责研究方向审议、课题立项与成果评价。' },
@@ -146,10 +147,10 @@ const toc = [
 
           <AsideBox title="相关入口">
             <ul class="space-y-2 text-ui">
-              <li><a href="/research" class="link">研究方向</a></li>
-              <li><a href="/people" class="link">研究团队</a></li>
-              <li><a href="/projects" class="link">科研项目</a></li>
-              <li><a href="/contact" class="link">联系我们</a></li>
+              <li><a href={u('/research')} class="link">研究方向</a></li>
+              <li><a href={u('/people')} class="link">研究团队</a></li>
+              <li><a href={u('/projects')} class="link">科研项目</a></li>
+              <li><a href={u('/contact')} class="link">联系我们</a></li>
             </ul>
           </AsideBox>
         </aside>

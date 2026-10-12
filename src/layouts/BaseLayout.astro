@@ -10,6 +10,7 @@ import '../styles/global.css';
 // 不能用 import.meta.url + readFileSync：组件被打包进 dist/.prerender/chunks/ 后，
 // 相对路径会指向产物目录而不是源码目录，构建期直接 ENOENT。
 import tokensCss from '../styles/tokens.css?raw';
+import { u } from '../lib/paths';
 
 interface Props {
   title: string;
@@ -37,7 +38,7 @@ const canvasColor =
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
     <meta name="theme-color" content={canvasColor} />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href={u('/favicon.svg')} type="image/svg+xml" />
 
     <SeoHead title={title} description={description} type={type} publishedAt={publishedAt} citation={citation} />
 

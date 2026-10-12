@@ -5,6 +5,7 @@ import PageHero from '../../components/ui/PageHero.astro';
 import SectionHeading from '../../components/ui/SectionHeading.astro';
 import CoverImage from '../../components/ui/CoverImage.astro';
 import EmptyState from '../../components/ui/EmptyState.astro';
+import { u } from '../../lib/paths';
 
 const all = (await getCollection('topics', ({ data }) => !data.draft)).sort(
   (a, b) => a.data.order - b.data.order
@@ -60,7 +61,7 @@ for (const t of all) {
             <SectionHeading eyebrow="All topics" title="全部专题" />
             <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {all.map((topic) => (
-                <a href={`/topics/${topic.id}`} class="portal-card group">
+                <a href={u(`/topics/${topic.id}`)} class="portal-card group">
                   <div class="figure-frame aspect-[16/9]">
                     <CoverImage
                       cover={topic.data.image}

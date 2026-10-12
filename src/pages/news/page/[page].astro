@@ -8,6 +8,7 @@ import NewsList from '../../../components/content/NewsList.astro';
 import NoticeList from '../../../components/content/NoticeList.astro';
 import Pagination from '../../../components/ui/Pagination.astro';
 import { paginateArray, PAGE_SIZE } from '../../../lib/pagination';
+import { u } from '../../../lib/paths';
 
 export async function getStaticPaths() {
   const all = await getCollection('news', ({ data }) => !data.draft);
@@ -70,16 +71,16 @@ const noticeItems = notices.map((n) => ({
         <aside class="lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start">
           <AsideBox title="通知公告">
             <NoticeList items={noticeItems} compact />
-            <a href="/notices" class="mt-3 inline-block text-ui text-accent hover:underline">
+            <a href={u('/notices')} class="mt-3 inline-block text-ui text-accent hover:underline">
               全部公告 →
             </a>
           </AsideBox>
 
           <AsideBox title="相关入口">
             <ul class="space-y-2 text-ui">
-              <li><a href="/events" class="link">学术活动</a></li>
-              <li><a href="/publications" class="link">学术成果</a></li>
-              <li><a href="/research" class="link">研究方向</a></li>
+              <li><a href={u('/events')} class="link">学术活动</a></li>
+              <li><a href={u('/publications')} class="link">学术成果</a></li>
+              <li><a href={u('/research')} class="link">研究方向</a></li>
             </ul>
           </AsideBox>
         </aside>

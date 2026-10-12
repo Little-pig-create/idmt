@@ -1,4 +1,5 @@
 ---
+import { u } from '../../lib/paths';
 interface Props {
   currentPage: number;
   totalPages: number;
@@ -29,7 +30,7 @@ const hasNext = currentPage < totalPages;
     <nav aria-label="分页" class="mt-12 flex items-center justify-between border-t border-line pt-6">
       <div>
         {hasPrev && (
-          <a href={href(currentPage - 1)} rel="prev" class="btn btn-secondary">
+          <a href={u(href(currentPage - 1))} rel="prev" class="btn btn-secondary">
             上一页
           </a>
         )}
@@ -39,7 +40,7 @@ const hasNext = currentPage < totalPages;
         {pages[0] > 1 && (
           <>
             <li>
-              <a href={href(1)} class="numeric flex min-h-11 min-w-11 items-center justify-center rounded-md text-ui text-ink-secondary hover:bg-surface-subtle">
+              <a href={u(href(1))} class="numeric flex min-h-11 min-w-11 items-center justify-center rounded-md text-ui text-ink-secondary hover:bg-surface-subtle">
                 1
               </a>
             </li>
@@ -50,7 +51,7 @@ const hasNext = currentPage < totalPages;
         {pages.map((p) => (
           <li>
             <a
-              href={href(p)}
+              href={u(href(p))}
               aria-current={p === currentPage ? 'page' : undefined}
               class:list={[
                 'numeric flex min-h-11 min-w-11 items-center justify-center rounded-md text-ui transition-colors duration-150',
@@ -70,7 +71,7 @@ const hasNext = currentPage < totalPages;
               <li aria-hidden="true" class="px-1 text-ink-tertiary">…</li>
             )}
             <li>
-              <a href={href(totalPages)} class="numeric flex min-h-11 min-w-11 items-center justify-center rounded-md text-ui text-ink-secondary hover:bg-surface-subtle">
+              <a href={u(href(totalPages))} class="numeric flex min-h-11 min-w-11 items-center justify-center rounded-md text-ui text-ink-secondary hover:bg-surface-subtle">
                 {totalPages}
               </a>
             </li>
@@ -80,7 +81,7 @@ const hasNext = currentPage < totalPages;
 
       <div>
         {hasNext && (
-          <a href={href(currentPage + 1)} rel="next" class="btn btn-secondary">
+          <a href={u(href(currentPage + 1))} rel="next" class="btn btn-secondary">
             下一页
           </a>
         )}

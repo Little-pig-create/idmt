@@ -41,9 +41,15 @@ function setLabel(el: HTMLElement, value: string): void {
   else el.textContent = value;
 }
 
-/** 当前页路由（去掉尾部斜杠，与配置键的写法一致） */
+/**
+ * 当前页路由（去掉尾部斜杠与部署前缀，与配置键的写法一致）。
+ * 配置键是根绝对路径（`/about`），项目站部署在 `/idmt/` 下时
+ * `location.pathname` 带前缀，不归一会所有按路由的配置静默失效。
+ */
 function currentRoute(): string {
-  const p = window.location.pathname.replace(/\/+$/, '');
+  const base = (import.meta.env.BASE_URL ?? '/').replace(/\/+$/, '');
+  let p = window.location.pathname.replace(/\/+$/, '');
+  if (base && p.startsWith(base)) p = p.slice(base.length);
   return p === '' ? '/' : p;
 }
 

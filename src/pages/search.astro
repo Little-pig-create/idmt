@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/ui/PageHero.astro';
+import { u } from '../lib/paths';
 ---
 
 <BaseLayout title="全站搜索" description="搜索数字管理研究院的学术成果、研究人员、新闻与学术活动。">
@@ -13,7 +14,7 @@ import PageHero from '../components/ui/PageHero.astro';
 
   <section class="section">
     <div class="container-page">
-      <form role="search" method="get" action="/search" class="max-w-2xl" data-search-form>
+      <form role="search" method="get" action={u('/search')} class="max-w-2xl" data-search-form>
         <label for="q" class="eyebrow mb-2 block">搜索关键词</label>
         <div class="flex gap-3">
           <input
@@ -35,9 +36,9 @@ import PageHero from '../components/ui/PageHero.astro';
         <noscript>
           <p class="text-ui text-ink-secondary">
             全站搜索需要启用 JavaScript。你也可以直接浏览
-            <a href="/publications" class="link">学术成果</a>、
-            <a href="/people" class="link">研究团队</a>、
-            <a href="/news" class="link">新闻动态</a>。
+            <a href={u('/publications')} class="link">学术成果</a>、
+            <a href={u('/people')} class="link">研究团队</a>、
+            <a href={u('/news')} class="link">新闻动态</a>。
           </p>
         </noscript>
       </div>
@@ -46,6 +47,8 @@ import PageHero from '../components/ui/PageHero.astro';
 </BaseLayout>
 
 <script>
+  /** 部署前缀：Astro 不重写客户端脚本里手写的根绝对路径 */
+  const BASE = import.meta.env.BASE_URL;
   type SearchDoc = { title: string; url: string; kind: string; summary: string; body?: string; tags: string[] };
 
   // View Transitions 安全：DOM 节点在每次换页后重新查询并写入这三个变量，
@@ -78,11 +81,11 @@ import PageHero from '../components/ui/PageHero.astro';
         <p class="text-ui text-ink">输入关键词开始搜索</p>
         <p class="mt-2 text-meta text-ink-tertiary">可以搜索成果标题、作者、期刊、研究方向与活动名称</p>
         <ul class="mt-6 flex flex-wrap gap-2">
-          <li><a href="/publications" class="tag tag-quiet">学术成果</a></li>
-          <li><a href="/people" class="tag tag-quiet">研究团队</a></li>
-          <li><a href="/news" class="tag tag-quiet">新闻动态</a></li>
-          <li><a href="/events" class="tag tag-quiet">学术活动</a></li>
-          <li><a href="/research" class="tag tag-quiet">研究方向</a></li>
+          <li><a href="${BASE}publications" class="tag tag-quiet">学术成果</a></li>
+          <li><a href="${BASE}people" class="tag tag-quiet">研究团队</a></li>
+          <li><a href="${BASE}news" class="tag tag-quiet">新闻动态</a></li>
+          <li><a href="${BASE}events" class="tag tag-quiet">学术活动</a></li>
+          <li><a href="${BASE}research" class="tag tag-quiet">研究方向</a></li>
         </ul>
       </div>`;
   }
@@ -92,7 +95,7 @@ import PageHero from '../components/ui/PageHero.astro';
     const suggestionHtml = suggestions
       .map(
         (s) =>
-          `<li><a href="/search?q=${encodeURIComponent(s)}" class="tag tag-quiet transition-colors duration-150 hover:bg-accent-soft hover:text-accent-ink">${escapeHtml(s)}</a></li>`
+          `<li><a href="${BASE}search?q=${encodeURIComponent(s)}" class="tag tag-quiet transition-colors duration-150 hover:bg-accent-soft hover:text-accent-ink">${escapeHtml(s)}</a></li>`
       )
       .join('');
     output.innerHTML = `
@@ -103,8 +106,8 @@ import PageHero from '../components/ui/PageHero.astro';
         </p>
         ${suggestions.length ? `<ul class="mt-5 flex flex-wrap gap-2">${suggestionHtml}</ul>` : ''}
         <div class="mt-6 flex flex-wrap gap-3">
-          <a href="/publications" class="btn btn-secondary">浏览全部成果</a>
-          <a href="/people" class="btn btn-secondary">浏览研究团队</a>
+          <a href="${BASE}publications" class="btn btn-secondary">浏览全部成果</a>
+          <a href="${BASE}people" class="btn btn-secondary">浏览研究团队</a>
         </div>
       </div>`;
   }
@@ -127,7 +130,7 @@ import PageHero from '../components/ui/PageHero.astro';
               .map(
                 (d) => `
               <li>
-                <a href="${d.url}" class="block py-4 transition-colors duration-150 hover:bg-surface">
+                <a href="${BASE}${d.url.slice(1)}" class="block py-4 transition-colors duration-150 hover:bg-surface">
                   <p class="text-[1.0625rem] font-medium text-ink">${highlight(d.title, terms)}</p>
                   <p class="mt-1 text-ui text-ink-secondary">${highlight(d.summary, terms)}</p>
                 </a>
@@ -166,7 +169,7 @@ import PageHero from '../components/ui/PageHero.astro';
 
     let docs: SearchDoc[] = [];
     try {
-      const res = await fetch('/search-index.json');
+      const res = await fetch(BASE + 'search-index.json');
       docs = res.ok ? await res.json() : [];
     } catch {
       output.innerHTML =
@@ -206,7 +209,7 @@ import PageHero from '../components/ui/PageHero.astro';
   }
 
   function syncUrl(q: string) {
-    const url = q ? `/search?q=${encodeURIComponent(q)}` : '/search';
+    const url = q ? `${BASE}search?q=${encodeURIComponent(q)}` : `${BASE}search`;
     window.history.replaceState(null, '', url);
     return url;
   }

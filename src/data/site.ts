@@ -5,7 +5,7 @@ export const site = {
   tagline: '研究数字技术如何重塑管理',
   description:
     '数字管理研究院聚焦数字治理与公共管理、数据要素与数字经济、智能决策与优化、数字政府与公共服务四个方向，开展面向真实治理场景的实证与建模研究。',
-  url: 'https://dmi.example.edu.cn',
+  url: 'https://little-pig-create.github.io/idmt',
   address: '示例市示例区学院路 1 号 数字管理研究院',
   postcode: '100000',
   phone: '+86 010-0000-0000',

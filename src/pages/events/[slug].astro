@@ -6,6 +6,7 @@ import AsideBox from '../../components/ui/AsideBox.astro';
 import JsonLd from '../../components/seo/JsonLd.astro';
 import DetailFigure from '../../components/ui/DetailFigure.astro';
 import { eventTypeLabels, site } from '../../data/site';
+import { u } from '../../lib/paths';
 
 export async function getStaticPaths() {
   const events = await getCollection('events', ({ data }) => !data.draft);
@@ -69,7 +70,7 @@ const related = (sameType.length >= 3
       ...(item.data.speakers.length > 0
         ? { performer: item.data.speakers.map((s) => ({ '@type': 'Person', name: s })) }
         : {}),
-      url: new URL(`/events/${item.id}`, site.url).toString(),
+      url: new URL(u(`/events/${item.id}`), site.url).toString(),
       inLanguage: 'zh-CN',
     }}
   />
@@ -119,7 +120,7 @@ const related = (sameType.length >= 3
             <div>
               {
                 earlier && (
-                  <a href={`/events/${earlier.id}`} class="group block">
+                  <a href={u(`/events/${earlier.id}`)} class="group block">
                     <span class="eyebrow">上一场</span>
                     <span class="link-title mt-2 block text-ui">{earlier.data.title}</span>
                   </a>
@@ -129,7 +130,7 @@ const related = (sameType.length >= 3
             <div class="sm:text-right">
               {
                 later && (
-                  <a href={`/events/${later.id}`} class="group block">
+                  <a href={u(`/events/${later.id}`)} class="group block">
                     <span class="eyebrow">下一场</span>
                     <span class="link-title mt-2 block text-ui">{later.data.title}</span>
                   </a>
@@ -184,7 +185,7 @@ const related = (sameType.length >= 3
                 <ul class="space-y-3">
                   {related.map((e) => (
                     <li>
-                      <a href={`/events/${e.id}`} class="link-title block text-ui">
+                      <a href={u(`/events/${e.id}`)} class="link-title block text-ui">
                         {e.data.title}
                       </a>
                       <p class="mt-1 numeric text-meta text-ink-tertiary">

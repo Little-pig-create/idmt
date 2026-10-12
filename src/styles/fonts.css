@@ -1,4 +1,4 @@
-/* 自托管字体子集。由 `npm run fonts` 依据站点实际字符集生成，勿手改。
+/* 自托管字体子集。由 `npm run fonts` 生成，勿手改（改 base 后须重跑）。
    不写 unicode-range：子集是单文件、无分片懒加载需求，
    写了反而会把未列入区段的字符（如 “ ” … © ·→）挡在字体之外。
    缺字时浏览器按 tokens.css 的字体栈逐字回退到系统字体。 */
@@ -8,7 +8,7 @@
   font-style: normal;
   font-weight: 100 700;
   font-display: swap;
-  src: url("/fonts/IBMPlexSans.woff2") format("woff2");
+  src: url("/idmt/fonts/IBMPlexSans.woff2") format("woff2");
 }
 
 @font-face {
@@ -16,7 +16,7 @@
   font-style: normal;
   font-weight: 100 800;
   font-display: swap;
-  src: url("/fonts/JetBrainsMono.woff2") format("woff2");
+  src: url("/idmt/fonts/JetBrainsMono.woff2") format("woff2");
 }
 
 @font-face {
@@ -24,7 +24,7 @@
   font-style: normal;
   font-weight: 200 900;
   font-display: swap;
-  src: url("/fonts/SourceSerif4.woff2") format("woff2");
+  src: url("/idmt/fonts/SourceSerif4.woff2") format("woff2");
 }
 
 @font-face {
@@ -32,7 +32,7 @@
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
-  src: url("/fonts/NotoSansSC.woff2") format("woff2");
+  src: url("/idmt/fonts/NotoSansSC.woff2") format("woff2");
 }
 
 @font-face {
@@ -40,5 +40,5 @@
   font-style: normal;
   font-weight: 200 900;
   font-display: swap;
-  src: url("/fonts/NotoSerifSC.woff2") format("woff2");
+  src: url("/idmt/fonts/NotoSerifSC.woff2") format("woff2");
 }

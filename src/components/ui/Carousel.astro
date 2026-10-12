@@ -11,6 +11,7 @@
  */
 
 import CoverImage from './CoverImage.astro';
+import { u } from '../../lib/paths';
 
 interface Slide {
   /** 同时作为回落 AbstractFigure 的种子与详情页链接的 id */
@@ -64,7 +65,7 @@ const total = slides.length;
             aria-label={`${i + 1} / ${total}`}
             hidden={i !== 0}
           >
-            <a href={slide.href} class="portal-card group">
+            <a href={u(slide.href)} class="portal-card group">
               <div class="figure-frame aspect-[16/9]">
                 <CoverImage
                   cover={slide.cover}

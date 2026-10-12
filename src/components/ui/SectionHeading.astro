@@ -1,4 +1,5 @@
 ---
+import { u } from '../../lib/paths';
 /**
  * 门户式区块标题栏
  * 左侧主色竖线 + 中文标题 + 英文标签 + 右侧「更多 +」，下方可接一句说明。
@@ -37,7 +38,7 @@ const Tag = level === 3 ? 'h3' : 'h2';
     {eyebrow && <span class="section-bar-en">{eyebrow}</span>}
     {
       moreHref && (
-        <a href={moreHref} class="section-bar-more">
+        <a href={u(moreHref)} class="section-bar-more">
           {moreLabel}
           <span aria-hidden="true">+</span>
         </a>

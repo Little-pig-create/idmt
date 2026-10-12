@@ -7,6 +7,7 @@ import EmptyState from '../../components/ui/EmptyState.astro';
 import PortraitFigure from '../../components/ui/PortraitFigure.astro';
 import JsonLd from '../../components/seo/JsonLd.astro';
 import { site, sectionEyebrow } from '../../data/site';
+import { u } from '../../lib/paths';
 
 export async function getStaticPaths() {
   const people = await getCollection('people', ({ data }) => !data.draft);
@@ -56,7 +57,7 @@ const contacts = [
       name: person.data.name,
       alternateName: person.data.nameEn,
       jobTitle: person.data.title,
-      url: new URL(`/people/${person.id}`, site.url).toString(),
+      url: new URL(u(`/people/${person.id}`), site.url).toString(),
       worksFor: { '@type': 'Organization', name: site.name, url: site.url },
       knowsAbout: person.data.researchAreas,
       ...(person.data.email ? { email: `mailto:${person.data.email}` } : {}),
@@ -129,7 +130,7 @@ const contacts = [
                   return (
                     <li>
                       {href ? (
-                        <a href={href} class="tag">{area}</a>
+                        <a href={u(href)} class="tag">{area}</a>
                       ) : (
                         <span class="tag">{area}</span>
                       )}
@@ -147,7 +148,7 @@ const contacts = [
                 <ul class="space-y-3">
                   {involvedProjects.map((p) => (
                     <li>
-                      <a href={`/projects/${p.id}`} class="link-title block text-ui">
+                      <a href={u(`/projects/${p.id}`)} class="link-title block text-ui">
                         {p.data.title}
                       </a>
                       <p class="mt-1 flex flex-wrap items-center gap-2 text-meta text-ink-tertiary">

@@ -6,6 +6,7 @@ import SectionHeading from '../../components/ui/SectionHeading.astro';
 import AsideBox from '../../components/ui/AsideBox.astro';
 import PersonCard from '../../components/content/PersonCard.astro';
 import { roleLabels } from '../../data/site';
+import { u } from '../../lib/paths';
 
 const people = (await getCollection('people', ({ data }) => !data.draft)).sort(
   (a, b) => a.data.order - b.data.order
@@ -104,7 +105,7 @@ const areas = [...areaCounts.entries()].sort((a, b) => b[1] - a[1]);
             <p class="text-ui leading-relaxed text-ink-secondary">
               研究院每年招收硕士研究生，并提供研究助理岗位与博士后职位。
             </p>
-            <a href="/join" class="btn btn-secondary mt-4 w-full">招生与招聘</a>
+            <a href={u('/join')} class="btn btn-secondary mt-4 w-full">招生与招聘</a>
           </AsideBox>
         </aside>
       </div>

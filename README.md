@@ -163,11 +163,12 @@ npm run dev
 | `docs/PAGE_SPECIFICATION.md` | 页面级唯一规格：路由、区块顺序、状态、响应式、无障碍 |
 | `docs/PORTAL_FRAMEWORK.md` | 架构与选型：信息架构、技术栈决策记录、目录结构、实施路线 |
 | `docs/DESIGN_SYSTEM.md` | 设计令牌、排版规范、组件规范、交付前自检 |
-| `scripts/audit.mjs` | 静态 a11y + SEO + 内部链接 + 体积预算 + 产物洁净度（HYG-001）审计（`npm run audit`） |
+| `scripts/audit.mjs` | 静态 a11y + SEO + 内部链接 + 体积预算 + 产物洁净度（HYG-001）+ 部署前缀（LINK-003）+ CSS `url()` 可达（CSS-001）审计（`npm run audit`） |
 | `scripts/taste.mjs` | 设计品位门禁（`npm run taste`）：只做能正则可靠判定的项，不假装能查视觉 |
 | `scripts/contrast.mjs` | 色彩对比度门禁（`npm run contrast`）：解析 tokens.css，22 组真实在用的文字组合一律 ≥ 4.5:1 |
 | `scripts/docs-tokens.mjs` | 文档 / 令牌一致性门禁（`npm run docs:tokens`）：反查文档引用的令牌是否都有定义 |
-| `scripts/smoke.mjs` | HTTP 冒烟断言（`npm run smoke`，56 条） |
+| `scripts/config.mjs` | 从 `astro.config.mjs` 反解 `site` / `base`，供审计、冒烟、字体脚本共用 |
+| `scripts/smoke.mjs` | HTTP 冒烟断言（`npm run smoke`，56 条，自动带部署前缀） |
 | `scripts/verify-frontend-config.mjs` | 前端粒度管理验证套件（`npm run verify:config`，46 项 + 回归守卫） |
 | `scripts/fonts.mjs` | 字体子集生成（`npm run fonts`）：按站点实际用字裁剪 `.fonts-src/` 源字体，输出 `public/fonts/*.woff2` + `fonts-charset.txt` |
 | `scripts/fonts-check.mjs` | 字体子集覆盖度检查（`npm run fonts:check`）：提示级，缺字退 0 |
@@ -214,6 +215,34 @@ npm run dev
 
 > **卷 / 期 / 页码**（`volume` / `issue` / `pages`）是可选字段：缺失时引用生成器按类型逐级降级
 > （`22(6)` → `22` → `(6)` → 无），不会留下空占位符。**补数据才能得到完整引用条目。**
+
+## 部署
+
+| 项 | 值 |
+|---|---|
+| 托管 | GitHub Pages，构建来源为 GitHub Actions（`verify` 全绿 → `upload-pages-artifact` → `deploy-pages`） |
+| 线上地址 | `https://little-pig-create.github.io/idmt/` |
+| 部署前缀 | `astro.config.mjs` 的 `base`，**唯一真相**；脚本经 `scripts/config.mjs` 从它反解，不再各抄一份 |
+| 触发 | 只有 `main` 的 push 发布；PR 与其他分支只跑门禁 |
+
+**路径约定**（项目站最容易踩的地方）：Astro 的 `base` 只重写**它自己生成**的链接
+（打包资源、`canonical`、sitemap），对源码里手写的根绝对路径一概不动。所以：
+
+- 模板与数据一律存**根绝对路径**（`/news`），输出 HTML 前经 `src/lib/paths.ts` 的 `u()` 加前缀；
+- 组件的 `href` prop 由**叶子组件**在发射 `<a>` 时加前缀，调用方不提前加 —— 两边都加会得到 `/idmt/idmt/…`；
+- 路由匹配一律 `routeOf()` 归一（`Header.astro` 的 active 判定、`frontend-config-runtime` 的按路由配置），
+  否则设了 base 之后 `pathname === '/'` 不成立，首页 `<h1>` 会静默消失；
+- 客户端脚本里用 `import.meta.env.BASE_URL`（Vite 构建期替换）。
+
+漏网有三门门禁兜着：`LINK-003`（内部链接缺前缀）、`CSS-001`（CSS `url()` 指向不存在的产物）、
+`FONTS-002`（字体 URL 前缀 ≠ 当前 base）。
+
+**换自定义域名时**：删掉 `base`、把 `astro.config.mjs` 的 `site` 与 `src/data/site.ts` 的 `url`
+换成新域名、加 `public/CNAME`，然后重跑 `npm run fonts`（fonts.css 里的字体 URL 跟着 base 走）。
+
+> `admin/` 内容后台是有状态的 Node 服务，Pages 承载不了；它只在本地或另找主机运行，
+> 产物里也不含后台代码。前台指向它的 `/idmt/admin` 链接在 Pages 上会 404，
+> 上线后用前端粒度管理的「后台入口可见性」开关关掉，或把该链接改成后台的真实地址。
 
 ## 安全提示
 

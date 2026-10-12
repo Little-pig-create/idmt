@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://dmi.example.edu.cn/sitemap-index.xml

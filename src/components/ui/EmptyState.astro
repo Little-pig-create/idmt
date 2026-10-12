@@ -1,4 +1,5 @@
 ---
+import { u } from '../../lib/paths';
 interface Props {
   title: string;
   description?: string;
@@ -35,7 +36,7 @@ const { title, description, actionHref, actionLabel, suggestions = [] } = Astro.
       <ul class="mt-5 flex flex-wrap justify-center gap-2">
         {suggestions.map((s) => (
           <li>
-            <a href={s.href} class="tag tag-quiet transition-colors duration-150 hover:bg-accent-soft hover:text-accent-ink">
+            <a href={u(s.href)} class="tag tag-quiet transition-colors duration-150 hover:bg-accent-soft hover:text-accent-ink">
               {s.label}
             </a>
           </li>
@@ -46,7 +47,7 @@ const { title, description, actionHref, actionLabel, suggestions = [] } = Astro.
 
   {
     actionHref && actionLabel && (
-      <a href={actionHref} class="btn btn-secondary mt-6">
+      <a href={u(actionHref)} class="btn btn-secondary mt-6">
         {actionLabel}
       </a>
     )

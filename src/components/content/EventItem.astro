@@ -1,5 +1,6 @@
 ---
 import { eventTypeLabels } from '../../data/site';
+import { u } from '../../lib/paths';
 
 interface Props {
   title: string;
@@ -34,7 +35,7 @@ const isPast = startDate.getTime() < Date.now();
     </div>
 
     <h3 class="mt-2 text-[1.0625rem] leading-snug">
-      {href ? <a href={href} class="link-title">{title}</a> : <span class="text-ink">{title}</span>}
+      {href ? <a href={u(href)} class="link-title">{title}</a> : <span class="text-ink">{title}</span>}
     </h3>
 
     <p class="mt-2 text-ui leading-relaxed text-ink-secondary">{summary}</p>

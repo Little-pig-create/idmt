@@ -13,19 +13,21 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { readSiteConfig } from './config.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const SRC_FONTS = path.join(ROOT, '.fonts-src');
 const OUT_DIR = path.join(ROOT, 'public', 'fonts');
 const CHARSET_OUT = path.join(ROOT, 'src', 'styles', 'fonts-charset.txt');
+const FONT_CSS_OUT = path.join(ROOT, 'src', 'styles', 'fonts.css');
 
 /** 需要子集化的字族：拉丁字族只吃非 CJK 字符，中文字族吃全量。 */
 const FAMILIES = [
-  { file: 'IBMPlexSans', cjk: false },
-  { file: 'JetBrainsMono', cjk: false },
-  { file: 'SourceSerif4', cjk: false },
-  { file: 'NotoSansSC', cjk: true },
-  { file: 'NotoSerifSC', cjk: true },
+  { file: 'IBMPlexSans', family: 'IBM Plex Sans', weight: '100 700', cjk: false },
+  { file: 'JetBrainsMono', family: 'JetBrains Mono', weight: '100 800', cjk: false },
+  { file: 'SourceSerif4', family: 'Source Serif 4', weight: '200 900', cjk: false },
+  { file: 'NotoSansSC', family: 'Noto Sans SC', weight: '100 900', cjk: true },
+  { file: 'NotoSerifSC', family: 'Noto Serif SC', weight: '200 900', cjk: true },
 ];
 
 const isCJK = (cp) =>
@@ -139,7 +141,35 @@ function main() {
   }
 
   const total = FAMILIES.reduce((n, f) => n + fs.statSync(path.join(OUT_DIR, `${f.file}.woff2`)).size, 0);
-  console.log(`\n✅ 子集完成，合计 ${(total / 1024).toFixed(1)} KB`);
+  writeFontCss(readSiteConfig(ROOT).base);
+  console.log(`\n✅ 子集完成，合计 ${(total / 1024).toFixed(1)} KB；已重写 src/styles/fonts.css`);
+}
+
+/**
+ * 生成 @font-face。URL 必须带部署前缀：Astro 的 base 不重写 CSS 里的 url()，
+ * 项目站上 `/fonts/x.woff2` 会指到仓库之外，字体静默失效。
+ */
+function writeFontCss(base) {
+  const faces = FAMILIES.map((f) =>
+    [
+      '@font-face {',
+      `  font-family: "${f.family}";`,
+      '  font-style: normal;',
+      `  font-weight: ${f.weight};`,
+      '  font-display: swap;',
+      `  src: url("${base}/fonts/${f.file}.woff2") format("woff2");`,
+      '}',
+    ].join('\n')
+  ).join('\n\n');
+  fs.writeFileSync(
+    FONT_CSS_OUT,
+    '/* 自托管字体子集。由 `npm run fonts` 生成，勿手改（改 base 后须重跑）。\n' +
+      '   不写 unicode-range：子集是单文件、无分片懒加载需求，\n' +
+      '   写了反而会把未列入区段的字符（如 “ ” … © ·→）挡在字体之外。\n' +
+      '   缺字时浏览器按 tokens.css 的字体栈逐字回退到系统字体。 */\n\n' +
+      faces + '\n',
+    'utf8'
+  );
 }
 
 function printDownloadHint() {

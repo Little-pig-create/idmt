@@ -15,6 +15,10 @@ on:
 # 任意一个非零退出即视为失败。本地等价命令：
 #   npm run build && npm run audit && npm run taste && npm run contrast && npm run docs:tokens && npm run smoke
 #
+# verify 全绿后，main 的 push 才进 deploy job，把 dist/ 发到 GitHub Pages。
+# 部署前缀（Astro base = /idmt）决定线上地址是 little-pig-create.github.io/idmt/；
+# 源码里的根绝对路径必须经 src/lib/paths.ts 的 u() 加前缀，audit 的 LINK-003 会盯住漏网的。
+#
 # 另有一项**提示级**检查，不参与上面的失败判定：
 #   fonts:check —— 比对 dist 渲染字符与字体子集字符表，报出未覆盖的用字。
 #   重生成子集要 41 MB 源字体 + python 工具链，不是改内容的人能做的，
@@ -55,11 +59,14 @@ jobs:
 
       - name: 冒烟测试（HTTP 断言）
         run: |
+          # 预览服务挂在部署前缀下（项目站是 /<repo>/），根路径会 404；
+          # 前缀从 astro.config.mjs 反解，避免 CI 里再抄一份。
+          BASE=$(node -e "import('./scripts/config.mjs').then(m => process.stdout.write(m.readSiteConfig(process.cwd()).base))")
           npm run preview &
           PREVIEW_PID=$!
           # 等服务就绪，不用额外的 wait-on 依赖
           for i in $(seq 1 30); do
-            if curl -sf http://localhost:4321/ > /dev/null; then
+            if curl -sf "http://localhost:4321${BASE}/" > /dev/null; then
               echo "预览服务已就绪"
               break
             fi
@@ -67,6 +74,31 @@ jobs:
           done
           npm run smoke
           kill $PREVIEW_PID
+
+      - name: 上传 Pages 产物
+        uses: actions/upload-pages-artifact@v3
+
+  # 只有 main 分支的 push 才发布；PR 与其他分支跑完门禁即止。
+  # Pages 的构建来源必须是「GitHub Actions」（仓库 Settings → Pages → Source），
+  # 否则 deploy-pages 会 404。
+  deploy:
+    name: 发布到 GitHub Pages
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 部署
+        id: deployment
+        uses: actions/deploy-pages@v4
 
   admin:
     name: 内容发布后台构建

@@ -7,7 +7,19 @@
  *
  * CI 中通常是先 build → 起预览 → 跑本脚本 → 关停。
  */
+import path from 'node:path';
+import { readSiteConfig } from './config.mjs';
+
 const TARGET = process.env.SMOKE_URL ?? 'http://localhost:4321';
+
+/**
+ * 断言用的完整 URL。
+ * 项目站挂在 /<repo>/ 下，根绝对路径的断言会全部打到站点之外；
+ * SMOKE_URL 自带路径时以它为准，否则取 astro.config.mjs 的 base。
+ */
+const target = new URL(TARGET);
+const prefix = target.pathname.replace(/\/+$/, '') || readSiteConfig(path.resolve(import.meta.dirname, '..')).base;
+const targetUrl = (p) => `${target.origin}${prefix}${p}`;
 
 const routes = [
   { path: '/', contains: '数字管理研究院' },
@@ -87,7 +99,7 @@ const routes = [
 
 let failed = 0;
 for (const r of routes) {
-  const url = TARGET + r.path;
+  const url = targetUrl(r.path);
   const res = await fetch(url);
   const body = await res.text();
   const ok = res.ok;

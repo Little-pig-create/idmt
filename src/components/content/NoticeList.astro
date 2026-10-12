@@ -1,4 +1,5 @@
 ---
+import { u } from '../../lib/paths';
 /**
  * 通知公告列表（门户式右栏与公告页共用）
  * 日期右对齐等宽，悬停时圆点与标题同时变主色。
@@ -27,7 +28,7 @@ const fmt = (d: Date) =>
   {
     items.map((item) => (
       <li>
-        <a href={item.href} class="notice-item">
+        <a href={u(item.href)} class="notice-item">
           <span class="notice-title">
             {item.pinned && <span class="notice-pin">置顶</span>}
             {item.category && <span class="notice-cat">{item.category}</span>}

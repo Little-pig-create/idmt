@@ -1,5 +1,6 @@
 ---
 import NewsCard from './NewsCard.astro';
+import { u } from '../../lib/paths';
 
 interface Props {
   items: any[];
@@ -25,7 +26,7 @@ const rest = featured ? items.filter((i) => i.id !== featured.id) : items;
         </time>
       </div>
       <h2 class="mt-3 text-h2 leading-snug">
-        <a href={`/news/${featured.id}`} class="link-title">{featured.data.title}</a>
+        <a href={u(`/news/${featured.id}`)} class="link-title">{featured.data.title}</a>
       </h2>
       <p class="mt-3 max-w-2xl text-body leading-relaxed text-ink-secondary">{featured.data.summary}</p>
     </article>

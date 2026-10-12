@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
 import { site } from '../data/site';
+import { base } from '../lib/paths';
 
 function xmlEscape(value: string): string {
   return value
@@ -25,7 +26,8 @@ interface FeedItem {
  * 这是学术门户的标配（学术成果条目通常用单独导出，不进 RSS）。
  */
 export const GET: APIRoute = async ({ site: siteFromContext }) => {
-  const origin = (siteFromContext ?? new URL('https://dmi.example.edu.cn')).origin;
+  // Astro 传给端点的 site 上下文只有站点根，不含部署前缀；绝对 URL 要自己补。
+  const origin = (siteFromContext ?? new URL(site.url)).origin + base;
 
   const news = await getCollection('news', ({ data }) => !data.draft);
   const notices = await getCollection('notices', ({ data }) => !data.draft);

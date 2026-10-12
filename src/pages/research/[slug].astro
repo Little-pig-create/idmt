@@ -6,6 +6,7 @@ import PublicationItem from '../../components/content/PublicationItem.astro';
 import PersonCard from '../../components/content/PersonCard.astro';
 import DetailFigure from '../../components/ui/DetailFigure.astro';
 import { sectionEyebrow, researchStatusLabels } from '../../data/site';
+import { u } from '../../lib/paths';
 
 export async function getStaticPaths() {
   const areas = await getCollection('research', ({ data }) => !data.draft);
@@ -95,7 +96,7 @@ const projects = (await getCollection('projects', ({ data }) => !data.draft)).fi
                 <ul class="space-y-3">
                   {projects.map((p) => (
                     <li>
-                      <a href={`/projects/${p.id}`} class="link-title block text-ui">{p.data.title}</a>
+                      <a href={u(`/projects/${p.id}`)} class="link-title block text-ui">{p.data.title}</a>
                       <p class="mt-1 text-meta text-ink-tertiary">{p.data.period}</p>
                     </li>
                   ))}

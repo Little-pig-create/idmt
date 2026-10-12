@@ -1,4 +1,5 @@
 ---
+import { u } from '../../lib/paths';
 interface Props {
   title: string;
   date: Date;
@@ -24,7 +25,7 @@ const display = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2,
   </div>
 
   <h3 class="mt-2 text-[1.0625rem] leading-snug">
-    <a href={href} class="link-title">{title}</a>
+    <a href={u(href)} class="link-title">{title}</a>
   </h3>
 
   <p class="mt-2 max-w-2xl text-ui leading-relaxed text-ink-secondary">{summary}</p>

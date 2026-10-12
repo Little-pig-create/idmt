@@ -6,6 +6,7 @@ import SectionHeading from '../../components/ui/SectionHeading.astro';
 import AsideBox from '../../components/ui/AsideBox.astro';
 import EmptyState from '../../components/ui/EmptyState.astro';
 import { projectStatusLabels } from '../../data/site';
+import { u } from '../../lib/paths';
 
 const all = await getCollection('projects', ({ data }) => !data.draft);
 
@@ -62,7 +63,7 @@ const members = [...memberCounts.entries()].sort((a, b) => b[1] - a[1]);
                         </div>
 
                         <h3 class="mt-3 text-[1.125rem] leading-snug">
-                          <a href={`/projects/${project.id}`} class="link-title">{project.data.title}</a>
+                          <a href={u(`/projects/${project.id}`)} class="link-title">{project.data.title}</a>
                         </h3>
                         <p class="mt-2 max-w-3xl text-ui leading-relaxed text-ink-secondary">
                           {project.data.summary}
@@ -101,7 +102,7 @@ const members = [...memberCounts.entries()].sort((a, b) => b[1] - a[1]);
                               <span class="numeric text-meta text-ink-tertiary">{project.data.period}</span>
                             </div>
                             <h3 class="mt-3 text-[1.0625rem] leading-snug">
-                              <a href={`/projects/${project.id}`} class="link-title">{project.data.title}</a>
+                              <a href={u(`/projects/${project.id}`)} class="link-title">{project.data.title}</a>
                             </h3>
                             <p class="mt-2 max-w-3xl text-ui leading-relaxed text-ink-secondary">
                               {project.data.summary}
@@ -144,10 +145,10 @@ const members = [...memberCounts.entries()].sort((a, b) => b[1] - a[1]);
 
               <AsideBox title="相关入口">
                 <ul class="space-y-2 text-ui">
-                  <li><a href="/research" class="link">研究方向</a></li>
-                  <li><a href="/people" class="link">研究团队</a></li>
-                  <li><a href="/publications" class="link">学术成果</a></li>
-                  <li><a href="/datasets" class="link">数据集与资源</a></li>
+                  <li><a href={u('/research')} class="link">研究方向</a></li>
+                  <li><a href={u('/people')} class="link">研究团队</a></li>
+                  <li><a href={u('/publications')} class="link">学术成果</a></li>
+                  <li><a href={u('/datasets')} class="link">数据集与资源</a></li>
                 </ul>
               </AsideBox>
             </aside>

@@ -10,9 +10,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
+import { readSiteConfig } from './config.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.resolve(__dirname, '..', 'dist');
+/** 部署前缀（项目站为 '/<repo>'）；产物始终在 dist 根，前缀只存在于 URL 里 */
+const BASE = readSiteConfig(path.resolve(__dirname, '..')).base;
+/** 去掉 URL 的部署前缀，得到 dist 内的根绝对路径 */
+const stripBase = (url) => (BASE && url.startsWith(BASE + '/') ? url.slice(BASE.length) : url);
 
 if (!fs.existsSync(DIST)) {
   console.error('找不到 dist/，请先运行 npm run build');
@@ -108,6 +113,8 @@ function parseInternal(href) {
   }
   if (!h.startsWith('/')) return null;
   h = h.replace(/\/{2,}/g, '/');
+  // 前缀检查交给 LINK-003，这里只负责归一
+  h = stripBase(h);
   if (h.length > 1) h = h.replace(/\/$/, '');
   return { route: h || '/', anchor };
 }
@@ -230,7 +237,7 @@ for (const file of files) {
   for (const m of html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)) {
     const url = m[1];
     if (url.startsWith('http')) continue;
-    const local = path.join(DIST, url.replace(/^\//, ''));
+    const local = path.join(DIST, stripBase(url).replace(/^\//, ''));
     const size = safeSize(local);
     if (size == null) add(file, 'warn', 'PERF-001', `引用的脚本不存在：${url}`);
     else if (!seenAssets.has(local)) {
@@ -242,7 +249,7 @@ for (const file of files) {
   for (const m of html.matchAll(/<link[^>]+rel=["']stylesheet["'][^>]*href=["']([^"']+)["']/gi)) {
     const url = m[1];
     if (url.startsWith('http')) continue;
-    const local = path.join(DIST, url.replace(/^\//, ''));
+    const local = path.join(DIST, stripBase(url).replace(/^\//, ''));
     const size = safeSize(local);
     if (size != null && !seenAssets.has(local)) {
       seenAssets.add(local);
@@ -256,6 +263,10 @@ for (const file of files) {
     const parsed = parseInternal(href);
     if (!parsed) continue;
     stats.internalLinks += 1;
+    if (BASE && !/^https?:/i.test(href) && !href.startsWith(BASE + '/') && href !== BASE) {
+      add(file, 'error', 'LINK-003', `内部链接缺部署前缀（base=${BASE}）：${href}`);
+      continue;
+    }
     const target = routeMap.get(parsed.route);
     if (!target) {
       if (!ROUTES_OUTSIDE_BUILD.has(parsed.route)) add(file, 'error', 'LINK-001', `内部死链：${href}`);
@@ -271,6 +282,24 @@ for (const file of files) {
   if (htmlBytes > 120 * 1024) add(file, 'warn', 'PERF-002', `HTML 过大：${(htmlBytes / 1024).toFixed(1)} KB（未压缩；建议 < 120 KB）`);
   stats.htmlBytes += htmlBytes;
   if (htmlBytes > stats.maxHtml.bytes) stats.maxHtml = { file: path.relative(DIST, file), bytes: htmlBytes };
+}
+
+/* ---------- CSS url() 可达性 ---------- */
+// Astro 的 base 不重写 CSS 里的 url()：字体一类的根绝对路径必须自带部署前缀。
+// 这类失效不出现在 <a href> 里，LINK-001/003 查不到，只能单独扫。
+const missingCssUrl = (cssText, where) => {
+  for (const m of cssText.matchAll(/url\(\s*['"]?(\/[^'")]+)/g)) {
+    const local = path.join(DIST, stripBase(m[1]).replace(/^\//, ''));
+    if (!fs.existsSync(local)) add(where, 'error', 'CSS-001', `url() 指向不存在的产物：${m[1]}`);
+  }
+};
+for (const f of walkAll(DIST)) {
+  if (!f.endsWith('.css')) continue;
+  missingCssUrl(fs.readFileSync(f, 'utf8'), f);
+}
+for (const f of files) {
+  const html = fs.readFileSync(f, 'utf8');
+  for (const m of html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)) missingCssUrl(m[1], f);
 }
 
 /* ---------- 站点整体资源预算 ---------- */

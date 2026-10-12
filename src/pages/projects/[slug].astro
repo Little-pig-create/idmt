@@ -7,6 +7,7 @@ import PublicationItem from '../../components/content/PublicationItem.astro';
 import JsonLd from '../../components/seo/JsonLd.astro';
 import DetailFigure from '../../components/ui/DetailFigure.astro';
 import { site, sectionEyebrow, projectStatusLabels } from '../../data/site';
+import { u } from '../../lib/paths';
 
 export async function getStaticPaths() {
   const all = await getCollection('projects', ({ data }) => !data.draft);
@@ -70,7 +71,7 @@ const relatedResearch = research
       creator: memberPeople.map((p) => ({ '@type': 'Person', name: p.data.name })),
       funder: { '@type': 'Organization', name: item.data.funder },
       temporalCoverage: item.data.period,
-      url: new URL(`/projects/${item.id}`, site.url).toString(),
+      url: new URL(u(`/projects/${item.id}`), site.url).toString(),
       publisher: { '@type': 'Organization', name: site.name, url: site.url },
       inLanguage: 'zh-CN',
     }}
@@ -141,7 +142,7 @@ const relatedResearch = research
             <div>
               {
                 prev && (
-                  <a href={`/projects/${prev.id}`} class="group block">
+                  <a href={u(`/projects/${prev.id}`)} class="group block">
                     <span class="eyebrow">上一个项目</span>
                     <span class="link-title mt-2 block text-ui">{prev.data.title}</span>
                   </a>
@@ -151,7 +152,7 @@ const relatedResearch = research
             <div class="sm:text-right">
               {
                 next && (
-                  <a href={`/projects/${next.id}`} class="group block">
+                  <a href={u(`/projects/${next.id}`)} class="group block">
                     <span class="eyebrow">下一个项目</span>
                     <span class="link-title mt-2 block text-ui">{next.data.title}</span>
                   </a>
@@ -185,7 +186,7 @@ const relatedResearch = research
                 <ul class="space-y-2 text-ui">
                   {memberPeople.map((p) => (
                     <li>
-                      <a href={`/people/${p.id}`} class="link">
+                      <a href={u(`/people/${p.id}`)} class="link">
                         {p.data.name}
                       </a>
                       <span class="ml-2 text-meta text-ink-tertiary">{p.data.title}</span>
@@ -207,7 +208,7 @@ const relatedResearch = research
                 <ul class="space-y-2 text-ui">
                   {relatedResearch.map((r) => (
                     <li>
-                      <a href={`/research/${r.id}`} class="link">{r.data.title}</a>
+                      <a href={u(`/research/${r.id}`)} class="link">{r.data.title}</a>
                     </li>
                   ))}
                 </ul>
