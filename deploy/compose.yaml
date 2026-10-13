@@ -1,0 +1,104 @@
+services:
+  # ============ 对外唯一入口：静态站 + 分流 ============
+  proxy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    command: ["caddy", "run", "--config", "/etc/caddy/site/Caddyfile", "--adapter", "caddyfile"]
+    volumes:
+      # 挂目录而不是挂单文件：把 ./Caddyfile 直接 bind 成文件时容器锁的是旧 inode，
+      # 宿主编辑器一保存就换新 inode，容器里读到的仍是旧内容 —— reload 静默用旧配置。
+      # 实测踩过：immutable 缓存规则改了三次都不生效，docker cp 进去立刻就好了。
+      - ./site:/etc/caddy/site:ro
+      # 挂父目录：Caddy 每次请求现解析路径，翻 current 软链即发布，不必重启
+      - ${DMI_ROOT:-/srv/dmi}:/srv/dmi:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    # Caddyfile 里的 {$SITE_ADDR} 等占位符读的是容器环境变量，必须在这里传进来
+    environment:
+      SITE_ADDR: ${SITE_ADDR:-dmi.example.edu.cn}
+      ADMIN_ADDR: ${ADMIN_ADDR:-admin.dmi.example.edu.cn}
+      SITE_ROOT: /srv/dmi/current
+    depends_on: [admin]
+    networks: [web]
+
+  # ============ 内容后台：SPA + /api/** ============
+  # 只在内部网络可达，公网必须经 proxy 的鉴权规则进来
+  admin:
+    image: ${DMI_IMAGE:-dmi/admin:node22}
+    restart: unless-stopped
+    command: ["node", "admin/server.mjs"]
+    environment:
+      ADMIN_HOST: 0.0.0.0
+      ADMIN_PORT: "4322"
+      # 注意：这只是界面权限开关，不是鉴权（server.mjs:371 自称的安全边界是回环监听）
+      ADMIN_ROLE: ${ADMIN_ROLE:-admin}
+    volumes:
+      # 三处可写面：条目、上传素材、粒度管理配置
+      - ${DMI_REPO:-/srv/dmi/repo}/src/content:/app/src/content
+      - ${DMI_REPO:-/srv/dmi/repo}/public/images:/app/public/images
+      - ${DMI_REPO:-/srv/dmi/repo}/src/data/site-config.json:/app/src/data/site-config.json
+    networks: [web, internal]
+    read_only: true
+    tmpfs: ["/tmp"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4322/api/stats').then(r=>process.exit(r.ok?0:1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ============ 一次性发布器 ============
+  # 不参与 up：docker compose --profile tools run --rm publisher
+  # 六道门禁必须在发布路径上游，否则后台改内容会绕过品味锁
+  publisher:
+    image: ${DMI_IMAGE:-dmi/admin:node22}
+    profiles: [tools]
+    user: root                       # 要往 /srv/dmi/releases 写产物
+    command:
+      - sh
+      - -ec
+      - |
+        # 源码用 tar 复制进镜像的 /app（而不是把仓库 bind 到 /app 上）。
+        # bind 的写法实测有两个坑：① 仓库那层会把镜像里装好的 node_modules 整个盖掉，
+        # 于是依赖只能再挂一个命名卷垫回来，而卷的内容跟着镜像走、改了 package-lock 不会自动同步；
+        # ② 发布完宿主 checkout 里会多出 root 所有的 dist/ .astro/ 甚至一个空的 node_modules/，
+        # 之后在同一份 checkout 上跑 npm ci 直接 EACCES。
+        # 排除依赖与产物目录，复制的就是纯源码（约 5 MB），镜像里的依赖层保持原样。
+        tar -C /repo \
+          --exclude=./node_modules --exclude=./dist --exclude=./.astro \
+          --exclude=./admin/node_modules --exclude=./admin/dist --exclude=./.fonts-src \
+          -cf - . | tar -C /app -xf -
+        cd /app
+        npm run build
+        npm run audit
+        npm run taste
+        npm run contrast
+        npm run docs:tokens
+        npm run fonts:check
+        REL="$$(date -u +%Y%m%dT%H%M%SZ)"
+        mkdir -p "/srv/releases/$$REL"
+        cp -a dist/. "/srv/releases/$$REL/"
+        # 相对软链：绝对路径在 proxy 容器里指向 /srv/releases（那边挂的是 /srv/dmi），会悬空
+        ln -sfn "releases/$$REL" /srv/current.new
+        mv -Tf /srv/current.new /srv/current
+        echo "已发布：/srv/releases/$$REL"
+    volumes:
+      - ${DMI_REPO:-/srv/dmi/repo}:/repo:ro
+      - ${DMI_ROOT:-/srv/dmi}:/srv
+    networks: [internal]
+    mem_limit: 1536m
+
+networks:
+  web: {}
+  # admin 运行期不需要外网；纯内部网络让它既进不来也出不去
+  internal:
+    internal: true
+
+volumes:
+  caddy_data: {}
+  caddy_config: {}

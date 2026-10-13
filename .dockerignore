@@ -1,0 +1,19 @@
+# 构建上下文瘦身：这些都不进镜像
+# （仓库原先没有 .dockerignore，docker build 会把 194 MB node_modules 和 41 MB 字体源一起塞进上下文）
+node_modules
+admin/node_modules
+dist
+admin/dist
+admin/tmp
+admin/.data
+.astro
+.git
+.gitignore
+.fonts-src
+*.log
+.env
+.env.local
+deploy/.env
+deploy/compose.local.yaml
+# 后台口令哈希不进镜像（compose 那份 bind 挂载才用它）
+deploy/site/admin.users

@@ -1,0 +1,79 @@
+# DMI 站点反向代理
+#
+# 地址与 TLS 由环境变量注入，同一份文件既能本地跑也能生产跑：
+#   生产：SITE_ADDR=dmi.example.edu.cn  ADMIN_ADDR=admin.dmi.example.edu.cn
+#         （不带 http:// 前缀 → Caddy 自动签发并续期 Let's Encrypt）
+#   本地：SITE_ADDR=http://:8443         ADMIN_ADDR=http://:8444
+#         （显式 http:// 前缀 → 明文，不碰证书，浏览器直接可测）
+#
+# 后台为什么单独占一个地址：admin/vite.config.ts 没设 base，构建出的 SPA 引用的
+# 是绝对路径 /assets/*。挂在 /admin 子路径下时那些请求会打到站点根，全部 404。
+# 要么给它独立域名（本文件的做法，零改造），要么给 vite 加 base: '/admin/'。
+
+{$SITE_ADDR:dmi.example.edu.cn} {
+	encode zstd gzip
+	root * {$SITE_ROOT:/srv/dmi/current}
+
+	# ---- 安全头 ----
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	# ---- 前台运行时配置：公开、只读 ----
+	# src/lib/frontend-config.ts:114 请求的就是这一条，页面加载后异步取，失败即回落默认
+	@frontendConfig {
+		method GET
+		path /api/frontend-config
+	}
+	handle @frontendConfig {
+		reverse_proxy admin:4322
+	}
+
+	# 其余 /api/** 一律拒掉：写接口、素材上传、POST /api/build 都不属于公网面
+	handle /api/* {
+		respond "Not Found" 404
+	}
+
+	# ---- 缓存策略 ----
+	# 两条 Cache-Control 不能都写成站点级 header：header 规则不互斥，
+	# 兜底的 `/*` 排在带路径 matcher 之后就会把 immutable 盖掉（实测会被压成 300）。
+	# 放进互斥的 handle 块里，第一个命中的 handle 独占整条响应链。
+	handle /_astro/* {
+		header Cache-Control "public, max-age=31536000, immutable"
+		file_server {
+			index index.html
+		}
+	}
+	handle {
+		header Cache-Control "public, max-age=300"
+		file_server {
+			index index.html
+		}
+	}
+
+	# Astro 产出 404.html（Pages 原生会用它兜底），Caddy 默认不接：
+	# 没有这个块时打错的路径返回 Caddy 的裸文本错误页，样式与站点完全不同。
+	handle_errors {
+		@notfound expression {http.error.status_code} == 404
+		rewrite @notfound /404.html
+		header Cache-Control "public, max-age=60"
+		file_server
+	}
+}
+
+{$ADMIN_ADDR:admin.dmi.example.edu.cn} {
+	# 后台自身零鉴权（admin/server.mjs:360 无账号/登录/会话，:364 自称边界是回环监听），
+	# 所以这道 basic_auth 就是唯一的门。口令哈希用 caddy hash-password 生成。
+	basic_auth {
+		# 账号文件用 import 而不是 {$ENV} 占位符：
+		# docker compose 会连带解析 env_file 里的值，bcrypt 的 `$2y$12$GZMk…`
+		# 会被当成变量替换成 `$2y$12…`（实测踩过，哈希被吃掉一段，怎么输口令都是 401）。
+		# Caddy 只替换 `{$…}` 形式，import 进来的裸 `$` 原样保留。
+		import admin.users
+	}
+
+	reverse_proxy admin:4322
+}

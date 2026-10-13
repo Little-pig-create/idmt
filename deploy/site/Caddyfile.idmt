@@ -1,0 +1,79 @@
+# DMI 站点反向代理 · **带部署前缀（base: '/idmt'）** 的变体
+#
+# 与 Caddyfile 的唯一区别：整站包在 `handle_path /idmt/*` 里。
+# 存在的原因是 Astro 的产物**不嵌套前缀目录**（dist 根就是 index.html、_astro/…），
+# 但 HTML 里每条链接都写着 /idmt/… —— 直接按根发布时首页能出、样式与导航全 404
+# （实测：`/` 200，而首页自己的 `href="/idmt/_astro/BaseLayout.BdqiWiBH.css"` 404，
+#   同一文件在 `/_astro/…` 下 200）。剥掉前缀后 file_server 看到的才是 dist 根。
+#
+# 只在「自建服务器 + 仍沿用 /idmt 前缀」这一种组合下需要它；
+# 换到域名根路径请删掉 astro.config 的 base、用同目录的 Caddyfile。
+
+{$SITE_ADDR:dmi.example.edu.cn} {
+	encode zstd gzip
+	root * {$SITE_ROOT:/srv/dmi/current}
+
+	# ---- 安全头 ----
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	# 裸根路径送到站点入口
+	redir / {$SITE_PREFIX:/idmt}/ 308
+
+	handle_path {$SITE_PREFIX:/idmt}/* {
+		# ---- 前台运行时配置：公开、只读 ----
+		# 剥完前缀后路径就是 /api/frontend-config，与无前缀版共用同一条规则
+		@frontendConfig {
+			method GET
+			path /api/frontend-config
+		}
+		handle @frontendConfig {
+			reverse_proxy admin:4322
+		}
+
+		# 其余 /api/** 一律拒掉：写接口、素材上传、POST /api/build 都不属于公网面
+		handle /api/* {
+			respond "Not Found" 404
+		}
+
+		# ---- 缓存策略（两条规则必须互斥，理由见 Caddyfile 的注释）----
+		handle /_astro/* {
+			header Cache-Control "public, max-age=31536000, immutable"
+			file_server {
+				index index.html
+			}
+		}
+		handle {
+			header Cache-Control "public, max-age=300"
+			file_server {
+				index index.html
+			}
+		}
+
+	}
+
+	# Astro 产出 404.html。handle_errors 不是有序 handler，不能放进 handle_path，
+	# 放在站点级即可：/idmt/nope 被剥成 /nope → 404 → 这里补上站点自己的 404 页。
+	handle_errors {
+		@notfound expression {http.error.status_code} == 404
+		rewrite @notfound /404.html
+		header Cache-Control "public, max-age=60"
+		file_server
+	}
+}
+
+{$ADMIN_ADDR:admin.dmi.example.edu.cn} {
+	# 后台自身零鉴权（admin/server.mjs:360 无账号/登录/会话，:364 自称边界是回环监听），
+	# 所以这道 basic_auth 就是唯一的门。
+	basic_auth {
+		# 账号文件用 import 而不是 {$ENV} 占位符：docker compose 会解析值里的 `$`，
+		# bcrypt 哈希会被当成变量替换掉（实测哈希被吞一段，怎么输口令都是 401）。
+		import admin.users
+	}
+
+	reverse_proxy admin:4322
+}

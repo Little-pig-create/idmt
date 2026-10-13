@@ -1,0 +1,9 @@
+# Caddy basic_auth 账号文件。复制成同目录的 admin.users 并 chmod 600（已在 .gitignore 里）。
+#
+#   用户名 <bcrypt 哈希>
+#
+# 生成哈希：
+#   docker run --rm caddy:2.10 caddy hash-password --plaintext '你的口令'
+#
+# 一行可以写多个账号。不要把哈希放进 deploy/.env —— docker compose 会解析值里的 `$`，
+# 详见 site/Caddyfile 里 basic_auth 那段注释。

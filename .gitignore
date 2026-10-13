@@ -14,3 +14,7 @@ admin/.tmp-*
 # 字体子集的源字体（约 41 MB），由 npm run fonts 按需读取，不入库
 .fonts-src/
 
+# 自托管部署的实机配置：主机路径、对外地址、后台口令哈希，一律不入库
+deploy/.env
+deploy/site/admin.users
+
