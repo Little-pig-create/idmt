@@ -294,7 +294,8 @@
 | 首次可能有一闪 | 默认内容先渲染，配置到达后替换。已用「默认不解藏 + 3s 超时兜底」压到最低 |
 | 站点不再零 JS | 新增约 4.5 KB（gzip）配置运行时；`audit` 预算 JS ≤ 30 KB，当前 13.1 KB，仍充裕 |
 
-**未配置时行为与改动前逐字节一致**（`scripts/config-regression-guard.py` 守护，51/51 页），
+**未配置时行为与改动前逐字节一致**（`scripts/config-regression-guard.py` 守护，覆盖当次构建的全部页面；
+该守护比对 Windows 侧 `D:\_dmi-baseline`，内容迁移之后基线需重新生成），
 因此既有页面不受影响。
 
 **前后端分离**：配置存储在 `src/data/site-config.json`，由后台读写；
@@ -551,20 +552,20 @@ npm run build && npm run audit && npm run taste && npm run contrast && npm run d
 
 | 检查 | 命令 | 当前 |
 |---|---|---|
-| 构建通过、51 页产出 | `npm run build` | ✅ |
+| 构建通过、26 页产出 | `npm run build` | ✅ |
 | `<html lang>`、`h1` 唯一、标题 ≤60 字符 | `audit` | ✅ |
 | meta description / canonical / og:title 齐备 | `audit` | ✅ |
 | Skip Link、`<main>` 存在 | `audit` | ✅ |
 | 标题层级不跳级 | `audit` | ✅（修过 5 处 h1→h3） |
 | 图片 `alt`、链接/按钮可访问名称、表单控件 label | `audit` | ✅ |
-| JSON-LD 可解析 + 类型分布正确 | `audit` | ✅ 83 块 |
-| 内部链接路由与锚点（3537 条） | `audit` | ✅ LINK-001 / LINK-002 零告警 |
+| JSON-LD 可解析 + 类型分布正确 | `audit` | ✅ 33 块 |
+| 内部链接路由与锚点（1676 条） | `audit` | ✅ LINK-001 / LINK-002 零告警 |
 | 产物洁净度（无内容注释） | `audit` | ✅ HYG-001 |
-| 资源体积预算（gzip：JS ≤ 30 KB / CSS ≤ 20 KB） | `audit` | ✅ JS 8.6 / CSS 9.1 KB |
+| 资源体积预算（gzip：JS ≤ 30 KB / CSS ≤ 20 KB） | `audit` | ✅ JS 13.2 / CSS 9.4 KB |
 | 设计品位（破折号 / 眉标签 / 圆角 / 编号标签等 8 条） | `taste` | ✅ |
 | 文字对比度 22 组 ≥ 4.5:1 | `contrast` | ✅ |
 | 文档引用的令牌都有定义 | `docs:tokens` | ✅ |
-| 56 条路由 HTTP 200 + 内容片段 + Content-Type | `smoke` | ✅ 56/56 |
+| 44 条路由 HTTP 断言 + 内容片段 + Content-Type | `smoke` | ✅ 44/44（其中 8 条断言已下架内容返回 404） |
 
 ### 13.2 人工 / 浏览器实测（⏳ 需在 CI 或有 GUI 环境补跑）
 

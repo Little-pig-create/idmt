@@ -1,4 +1,4 @@
-# 数字管理研究院 · 学术门户
+# 数字管理技术研究院（IDMT）· 学术门户
 
 学术门户网站与内容发布后台。站点为**零 JS 静态输出**（Astro 7），后台为独立的 **React 19 + MUI** 应用。
 
@@ -6,20 +6,24 @@
 
 | 项 | 值 |
 |---|---|
-| 构建页面 | **51**（10 篇成果详情 · 6 篇新闻详情 · 5 场活动详情 · 4 位成员主页 · 4 个方向详情 · 4 个项目详情 · 3 个专题详情 · 1 个专题索引） |
-| 内容条目 | **45**（成果 10 · 通知 7 · 新闻 6 · 活动 5 · 人员 4 · 方向 4 · 项目 4 · 专题 3 · 数据集 2） |
-| 内部链接 | **3537 条**（`npm run audit` 逐条校验路由与锚点，LINK-001 死链 / LINK-002 坏锚点） |
+| 构建页面 | **26**（4 个方向详情 · 3 位成员主页 · 2 篇新闻详情 · 2 场活动详情 · 各栏目索引与固定页） |
+| 内容条目 | **11 条已发布**（方向 4 · 人员 3 · 新闻 2 · 活动 2）；另 45 条建站示例内容一律 `draft: true` 下架，文件保留，一条 sed 可还原 |
+| 内部链接 | **1676 条**（`npm run audit` 逐条校验路由与锚点，LINK-001 死链 / LINK-002 坏锚点） |
 | `npm run audit` | ✅ 零告警（a11y + SEO + JSON-LD + 体积预算 + 内部链接 + 产物洁净度 HYG-001） |
 | `npm run taste` | ✅ 零问题（设计品位：破折号清零 / 眉标签克制 / 圆角尺度单一等 8 条） |
 | `npm run contrast` | ✅ 22/22 文字组合 ≥ 4.5:1（WCAG 2.2 AA，从严统一阈值） |
-| `npm run smoke` | ✅ 56/56（含学术检索元数据与引用格式断言） |
-| 资源体积（gzip） | **JS 8.6 KB · CSS 9.1 KB** —— 均远低于预算（JS ≤ 30 KB、CSS ≤ 20 KB） |
-| 资源体积（未压缩） | HTML 均值 39 KB/页（最大 88.7 KB，首页）· JS 23 KB · CSS 45 KB · `dist` 1.93 MB |
-| 结构化数据 | `ResearchOrganization`×51 · `ScholarlyArticle`×10 · `NewsArticle`×6 · `Event`×5 · `Person`×4 · `CreativeWork`×4 · `CollectionPage`×3 |
-| 学术检索元数据 | 成果详情页输出 Highwire Press `citation_*`（Google Scholar 抓取依据） |
+| `npm run smoke` | ✅ 44/44（含 8 条「已下架内容必须返回 404」断言） |
+| 资源体积（gzip） | **JS 13.2 KB · CSS 9.4 KB** —— 均远低于预算（JS ≤ 30 KB、CSS ≤ 20 KB） |
+| 资源体积（未压缩） | HTML 均值 34 KB/页（最大 53.7 KB，首页）· JS 35 KB · CSS 48 KB · `dist` 2.4 MB |
+| 结构化数据 | `ResearchOrganization`×26 · `Person`×3 · `Event`×2 · `NewsArticle`×2 |
+| 学术检索元数据 | 成果详情页输出 Highwire Press `citation_*`（Google Scholar 抓取依据）；**当前无已发布成果承载**，相关断言见下 |
 
-> **体积预算以 gzip 后为准**（`npm run audit` 会同时打印两项）。未压缩的 CSS 45 KB 看着大，
-> gzip 后仅 9.1 KB，且全站共用一个样式表、只下载一次。
+> **内容机制的 7 类断言已挂起**（`citation_*` 字段、GB/T 7714 与 `[J][C][M][R]` 标识码、
+> 刊名书名号、摘要块、数据集 `[DS]`）：它们的测试对象就是那批虚构成果，随下架一并进入
+> `smoke.mjs` 的 `deferred` 列表（运行时打印为跳过）。真实成果入库时必须移回 `routes`。
+
+> **体积预算以 gzip 后为准**（`npm run audit` 会同时打印两项）。未压缩的 CSS 48 KB 看着大，
+> gzip 后仅 9.4 KB，且全站共用一个样式表、只下载一次。
 > 详见 `docs/PORTAL_FRAMEWORK.md` §11，其中也记录了两条**已被实测排除**的误判（轮播、`@source` 范围），避免重复排查。
 
 **未覆盖**（本沙箱无法可靠验证，需在 CI / 有 GUI 环境补跑）：Lighthouse 评分、axe 真实无障碍扫描、四档视口视觉回归。
@@ -168,7 +172,7 @@ npm run dev
 | `scripts/contrast.mjs` | 色彩对比度门禁（`npm run contrast`）：解析 tokens.css，22 组真实在用的文字组合一律 ≥ 4.5:1 |
 | `scripts/docs-tokens.mjs` | 文档 / 令牌一致性门禁（`npm run docs:tokens`）：反查文档引用的令牌是否都有定义 |
 | `scripts/config.mjs` | 从 `astro.config.mjs` 反解 `site` / `base`，供审计、冒烟、字体脚本共用 |
-| `scripts/smoke.mjs` | HTTP 冒烟断言（`npm run smoke`，56 条，自动带部署前缀） |
+| `scripts/smoke.mjs` | HTTP 冒烟断言（`npm run smoke`，44 条，自动带部署前缀） |
 | `scripts/verify-frontend-config.mjs` | 前端粒度管理验证套件（`npm run verify:config`，46 项 + 回归守卫） |
 | `scripts/fonts.mjs` | 字体子集生成（`npm run fonts`）：按站点实际用字裁剪 `.fonts-src/` 源字体，输出 `public/fonts/*.woff2` + `fonts-charset.txt` |
 | `scripts/fonts-check.mjs` | 字体子集覆盖度检查（`npm run fonts:check`）：提示级，缺字退 0 |
@@ -193,7 +197,9 @@ npm run dev
 配置**不预编译进前台静态产物**，前台产物里也不含后台代码。
 
 > **未配置时前台行为与改动前逐字节一致** —— 由 `scripts/config-regression-guard.py` 守护
-> （L1 可见文本 + L2 结构骨架，51/51 页）。
+> （L1 可见文本 + L2 结构骨架，覆盖当次构建的全部页面）。
+> 该脚本比对 Windows 侧 `D:\_dmi-baseline` 基线，**内容迁移之后基线需重新生成**，否则会把
+> 换掉的条目报成差异。
 >
 > ⚠️ 「动态构建」在本项目指 **runtime config resolution**，非 SSR。
 > 代价是**被禁用页面的内容仍在静态 HTML 里**（客户端只负责替换为提示页），
@@ -251,6 +257,22 @@ npm run dev
 > 产物里也不含后台代码。前台指向它的 `/idmt/admin` 链接在 Pages 上会 404，
 > 上线后用前端粒度管理的「后台入口可见性」开关关掉，或把该链接改成后台的真实地址。
 
+### 自建服务器（Docker Compose）
+
+Pages 做不到的一件事是让后台常驻。站点 + 后台一起上服务器用 `deploy/`，三个服务：
+`proxy`（Caddy：静态站出网 + `/api/**` 分流 + 后台 `basic_auth` + 自动 TLS）、
+`admin`（`node admin/server.mjs`，`read_only` + `cap_drop ALL` + 纯内部网络）、
+`publisher`（一次性：`build` → 六道门禁 → 产物落 `releases/<UTC 时间戳>/` → 原子翻 `current` 软链，
+回滚就是把链翻回上一版，不用重启、秒级）。站点产物不进镜像，`dist/` 实测 2.4 MB，Caddy 直接挂。
+
+本机已按这套跑通并实测：44/44 冒烟全绿、`/_astro/*` 的 immutable 生效、
+公网侧写接口一律 404 而 `GET /api/frontend-config` 放行、后台 401/200 鉴权、翻软链回滚立即生效。
+命令、备份清单、`base` 换根路径的步骤，以及四个必踩的坑（单文件 bind 锁 inode、
+`header` 规则不互斥、compose 会插值 `$` 把 bcrypt 哈希吃掉、`current` 必须是相对软链）
+写在 **[deploy/README.md](deploy/README.md)**。
+
 ## 安全提示
 
-`admin/server.mjs` 只监听 `127.0.0.1`，且**没有鉴权**，定位是本地内容工具。若要部署到服务器，必须置于内网或反向代理的鉴权之后，不要直接暴露到公网。
+`admin/server.mjs` 只监听 `127.0.0.1`，且**进程本身没有鉴权**，定位是本地内容工具。
+上服务器时它由 Caddy 的 `basic_auth` 挡在 `/admin` 前（见 `deploy/`），后台 origin 不直接出网；
+绕过反代直连该端口仍然是无鉴权写入，不要把 `server.mjs` 单独暴露到公网。
