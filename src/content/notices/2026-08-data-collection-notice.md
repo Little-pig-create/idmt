@@ -1,4 +1,5 @@
 ---
+draft: true
 title: 公共数据授权运营试点调研数据采集说明
 date: 2026-08-20
 category: 科研

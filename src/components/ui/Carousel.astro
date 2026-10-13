@@ -3,7 +3,7 @@
  * 首页焦点轮播
  *
  * 设计约束：
- * - 配图走 CoverImage：slide 传了 cover 就用真实图片，否则回落 AbstractFigure（确定性 SVG）；
+ * - 配图走 CoverImage：slide 传了 cover 才有图块，没传就不占位（标题相应放大一档）；
  * - 标题一律用 h2：全站唯一 h1 在报头（首页）或 PageHero（内页），轮播里出现 h1 会破坏 SEO 审计；
  * - 无 JS 时降级为「第一张静态卡片」：其余 slide 带 hidden 属性，控件默认 display:none；
  * - 脚本遵守 docs/PAGE_SPECIFICATION.md §2.6：查询写在 init 内、astro:page-load 驱动、
@@ -14,9 +14,9 @@ import CoverImage from './CoverImage.astro';
 import { u } from '../../lib/paths';
 
 interface Slide {
-  /** 同时作为回落 AbstractFigure 的种子与详情页链接的 id */
+  /** 条目 id，供上层做 key 与去重 */
   id: string;
-  /** 真实封面图 URL；留空则回落抽象图形 */
+  /** 真实封面图 URL；留空则不占图位 */
   cover?: string;
   /** 封面图替代文本 */
   coverAlt?: string;
@@ -66,15 +66,11 @@ const total = slides.length;
             hidden={i !== 0}
           >
             <a href={u(slide.href)} class="portal-card group">
-              <div class="figure-frame aspect-[16/9]">
-                <CoverImage
-                  cover={slide.cover}
-                  alt={slide.coverAlt ?? slide.title}
-                  seed={slide.id}
-                  ratio={16 / 9}
-                  loading={i === 0 ? 'eager' : 'lazy'}
-                />
-              </div>
+              <CoverImage
+                cover={slide.cover}
+                alt={slide.coverAlt ?? slide.title}
+                loading={i === 0 ? 'eager' : 'lazy'}
+              />
               <div class="p-5 lg:p-6">
                 <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
                   <span class="tag">{slide.badge}</span>
@@ -86,7 +82,15 @@ const total = slides.length;
                     {slide.dateText}
                   </time>
                 </div>
-                <h2 class="mt-3 font-[family-name:var(--font-serif-cjk)] text-[1.375rem] leading-snug text-ink lg:text-[1.75rem]">
+                {/* 无配图时把省下的图位还给标题：字号升一档，层级改由排印承担 */}
+                <h2
+                  class:list={[
+                    'mt-3 font-[family-name:var(--font-serif-cjk)] leading-snug text-ink',
+                    slide.cover
+                      ? 'text-[1.375rem] lg:text-[1.75rem]'
+                      : 'text-[1.5rem] lg:text-[2rem]',
+                  ]}
+                >
                   <span class="link-title">{slide.title}</span>
                 </h2>
                 <p class="mt-3 max-w-2xl line-clamp-2 text-ui leading-relaxed text-ink-secondary">

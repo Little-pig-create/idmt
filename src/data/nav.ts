@@ -21,9 +21,9 @@ export const nav: NavEntry[] = [
       {
         title: '研究院概况',
         items: [
-          { label: '研究院简介', href: '/about', desc: '定位、使命与研究布局' },
-          { label: '组织架构', href: '/about#structure', desc: '学术委员会与研究中心' },
-          { label: '发展历程', href: '/about#history', desc: '自 2019 年以来的关键节点' },
+          { label: '研究院简介', href: '/about', desc: '机构定位与研究愿景' },
+          { label: '组织架构', href: '/about#structure', desc: '理事会、专家学术委员会与研究中心' },
+          { label: '公开活动记录', href: '/about#history', desc: '有公开报道可稽的节点' },
         ],
       },
     ],
@@ -35,10 +35,10 @@ export const nav: NavEntry[] = [
       {
         title: '研究方向',
         items: [
-          { label: '数字治理与公共管理', href: '/research/digital-governance', desc: '制度适配与基层治理' },
-          { label: '数据要素与数字经济', href: '/research/data-economy', desc: '产权界定与流通机制' },
-          { label: '智能决策与优化', href: '/research/intelligent-decision', desc: '鲁棒优化与可解释性' },
-          { label: '数字政府与公共服务', href: '/research/digital-government', desc: '流程再造与服务设计' },
+          { label: '人工智能与无人系统', href: '/research/ai-unmanned-systems', desc: '无人系统组网与产业大模型' },
+          { label: '数字新基建与智慧城市', href: '/research/digital-infrastructure-smart-city', desc: '智能楼宇、未来社区与交通数字化' },
+          { label: '云计算与数据智能', href: '/research/cloud-data-intelligence', desc: '数据平台与碳排放核算' },
+          { label: '高端制造与工业数字化', href: '/research/industrial-digitalization', desc: '工业仿真与增材制造' },
         ],
       },
       {

@@ -1,4 +1,5 @@
 ---
+draft: true
 title: 数字政府服务设计工作坊
 startDate: 2026-11-06
 endDate: 2026-11-07

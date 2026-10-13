@@ -27,16 +27,6 @@ export const friendLinks: FriendLink[] = [
     href: 'https://www.cnki.net/',
     desc: '中文期刊与学位论文数据库',
   },
-  {
-    label: '中国公共管理案例库',
-    href: 'https://www.ncpssd.cn/',
-    desc: '公共管理教学与研究案例',
-  },
-  {
-    label: '数据要素研究联盟',
-    href: '/research/data-economy',
-    desc: '院内数据要素方向协作网络',
-  },
 ];
 
 /** 院级常用系统入口 */

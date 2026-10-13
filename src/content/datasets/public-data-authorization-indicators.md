@@ -1,4 +1,5 @@
 ---
+draft: true
 name: 公共数据授权运营试点指标集
 description: 试点地区公共数据授权运营的公开运行指标，按季度更新。
 license: CC BY 4.0

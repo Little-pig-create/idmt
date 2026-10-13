@@ -1,24 +1,27 @@
 export const site = {
-  name: '数字管理研究院',
-  nameEn: 'Institute for Digital Management',
-  shortName: 'DMI',
-  tagline: '研究数字技术如何重塑管理',
+  name: '数字管理技术研究院',
+  nameEn: 'Institute of Digital Management Technology',
+  shortName: 'IDMT',
+  tagline: '完成从基础研究到产业化的最后一公里',
   description:
-    '数字管理研究院聚焦数字治理与公共管理、数据要素与数字经济、智能决策与优化、数字政府与公共服务四个方向，开展面向真实治理场景的实证与建模研究。',
+    '浙江树人学院数字管理技术研究院（IDMT）聚焦人工智能与无人系统、数字新基建与智慧城市、云计算与数据智能、高端制造与工业数字化四个专业领域，开展面向未来产业的关键核心技术研究与成果转化。',
   url: 'https://little-pig-create.github.io/idmt',
-  address: '示例市示例区学院路 1 号 数字管理研究院',
-  postcode: '100000',
-  phone: '+86 010-0000-0000',
-  email: 'office@dmi.example.edu.cn',
-  filing: '示例备 00000000 号',
-  founded: '2019',
+  address: '浙江树人学院 杭州拱宸桥校区 / 绍兴杨汛桥校区',
+  /**
+   * 邮编、电话、邮箱与备案号必须由院方给出后再填。留空时页面不渲染该行，
+   * 而不是显示一个编造的号码：假电话比空电话更糟，它会真的接到找上门的人。
+   */
+  postcode: '',
+  phone: '',
+  email: '',
+  filing: '',
 };
 
 export const researchAreas = [
-  '数字治理与公共管理',
-  '数据要素与数字经济',
-  '智能决策与优化',
-  '数字政府与公共服务',
+  '人工智能与无人系统',
+  '数字新基建与智慧城市',
+  '云计算与数据智能',
+  '高端制造与工业数字化',
 ];
 
 export const publicationTypeLabels: Record<string, string> = {
@@ -38,6 +41,8 @@ export const eventTypeLabels: Record<string, string> = {
 
 export const roleLabels: Record<string, string> = {
   director: '院长',
+  'exec-director': '执行院长',
+  'vice-director': '副院长',
   professor: '教授',
   associate: '副教授',
   assistant: '助理教授',

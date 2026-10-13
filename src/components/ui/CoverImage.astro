@@ -1,27 +1,27 @@
 ---
 /**
- * 卡片配图：有真实封面用真实封面，没有则回落抽象图形
+ * 卡片配图：只有真实封面才占位
  *
- * 抽象：只负责「填满外层给的那个框」，不改变任何尺寸语义。
- * 外层通常是 `.figure-frame aspect-[16/9]` 之类的容器，
- * 因此真实图片必须显式 h-full w-full + object-cover，否则会撑破卡片。
+ * 无封面时**整块不渲染**，而不是回落一张生成图形。
+ * 站点实测 0 条目填了 `cover`，于是回落图形成了全站默认版面 ——
+ * 一块 16:9 的装饰噪声，顶掉了本该由标题承担的视觉分量。
+ * 学术机构站的新闻卡是日期 + 标题的排印，不是配图卡。
  *
- * 回落用的 AbstractFigure 是装饰性 SVG（aria-hidden），
- * 真实图片则带 alt，两者对辅助技术的表现一致：都不重复朗读标题。
+ * 抽象图形（`AbstractFigure`）只在把它当**栏目标识**的地方显式使用，
+ * 例如专题专栏卡；那种场合它编码的是「这是哪个专题」，不是冒充照片。
+ *
+ * 图框由本组件负责：调用方不再自己套 `.figure-frame`，
+ * 否则无封面时会留下一个空的 16:9 盒子。
  */
 
-import AbstractFigure from './AbstractFigure.astro';
-
 interface Props {
-  /** 真实图片 URL，例如 /images/foo.png；为空则回落抽象图形 */
+  /** 真实图片 URL，例如 /images/foo.png；为空则整块不渲染 */
   cover?: string;
   /** 图片替代文本 */
   alt?: string;
-  /** 回落时 AbstractFigure 的种子 */
-  seed: string;
-  /** 回落时 AbstractFigure 的宽高比 */
-  ratio?: number;
-  /** 是否懒加载（首屏第一张建议 eager） */
+  /** 图框比例类名 */
+  aspect?: string;
+  /** 首屏第一张建议 eager */
   loading?: 'lazy' | 'eager';
   class?: string;
 }
@@ -29,23 +29,22 @@ interface Props {
 const {
   cover,
   alt = '',
-  seed,
-  ratio = 16 / 9,
+  aspect = 'aspect-[16/9]',
   loading = 'lazy',
   class: className = '',
 } = Astro.props;
 ---
 
 {
-  cover ? (
-    <img
-      src={cover}
-      alt={alt}
-      loading={loading}
-      decoding="async"
-      class={`h-full w-full object-cover ${className}`.trim()}
-    />
-  ) : (
-    <AbstractFigure seed={seed} ratio={ratio} class={`h-full w-full ${className}`.trim()} />
+  cover && (
+    <div class={`figure-frame ${aspect} ${className}`.trim()}>
+      <img
+        src={cover}
+        alt={alt}
+        loading={loading}
+        decoding="async"
+        class="h-full w-full object-cover"
+      />
+    </div>
   )
 }

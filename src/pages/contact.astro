@@ -2,37 +2,19 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/ui/PageHero.astro';
 import { site } from '../data/site';
+import { u } from '../lib/paths';
 
-const contacts = [
-  {
-    label: '院务与行政',
-    desc: '合作洽谈、来访预约、材料索取',
-    email: site.email,
-    phone: site.phone,
-  },
-  {
-    label: '研究生招生',
-    desc: '招生咨询、导师联系、材料提交',
-    email: site.email,
-    phone: site.phone,
-  },
-  {
-    label: '媒体与宣传',
-    desc: '采访邀约、内容转载授权',
-    email: site.email,
-    phone: site.phone,
-  },
-];
+const ZJSRU = 'https://www.zjsru.edu.cn/';
 ---
 
 <BaseLayout
   title="联系我们"
-  description={`${site.name}的联系方式、地址与来访路线。`}
+  description={`${site.name}的办公地址与对外联系渠道。`}
 >
   <PageHero
     eyebrow="Contact"
     title="联系我们"
-    description="合作洽谈、招生咨询与媒体联络，请通过以下方式联系研究院。"
+    description="研究院依托浙江树人学院设立，对外事务经由学校与所在学院的公开渠道办理。"
     crumbs={[{ label: '加入我们', href: '/join' }, { label: '联系我们' }]}
   />
 
@@ -40,57 +22,59 @@ const contacts = [
     <div class="container-page">
       <div class="grid gap-14 lg:grid-cols-[1fr_1.2fr] lg:gap-16">
         <div class="container-prose prose-academic lg:mx-0">
-          <h2>地址</h2>
+          <h2 id="address">办公地址</h2>
           <address class="not-prose not-italic">
             <p class="text-body leading-relaxed text-ink">{site.address}</p>
-            <p class="numeric mt-2 text-ui text-ink-secondary">邮编 {site.postcode}</p>
+            {site.postcode && <p class="numeric mt-2 text-ui text-ink-secondary">邮编 {site.postcode}</p>}
           </address>
-
-          <h2>来访路线</h2>
           <p>
-            地铁：乘坐至「学院路站」，从 B 口出站后步行约 6 分钟。
-            <br />
-            公交：乘至「学院路北口」站，步行约 3 分钟。
-            <br />
-            驾车：院内不提供访客停车位，建议使用周边公共停车场。
+            两个校区的具体楼宇与门牌号尚未在本站核定，来访前请先经学校办公室确认接待地点。
           </p>
 
-          <h2>办公时间</h2>
+          <h2 id="channels">联系渠道</h2>
+          {
+            site.email || site.phone ? (
+              <p>
+                {site.phone && <>电话：<a href={`tel:${site.phone.replace(/\s/g, '')}`}>{site.phone}</a><br /></>}
+                {site.email && <>邮箱：<a href={`mailto:${site.email}`}>{site.email}</a></>}
+              </p>
+            ) : (
+              <p>
+                研究院尚未在本站公布独立的电话、邮箱与接待时间。院务、合作与媒体事务请通过
+                <a href={ZJSRU} rel="noopener" target="_blank">浙江树人学院官网</a>所列的学校办公室、
+                经济与管理学院渠道联系，说明事由后由学校转达。
+              </p>
+            )
+          }
           <p>
-            周一至周五 09:00-17:00（法定节假日除外）。来访请提前邮件预约，
-            以便安排对接人员。
-          </p>
-
-          <h2>地图</h2>
-          <p class="text-ink-secondary">
-            地图组件待接入（需确定使用的地图服务与合规方案后补充）。
+            招生、招聘与公告类信息一律以学校正式发文为准，本站只收录已经公开报道或学校发布过的内容，
+            具体见<a href={u('/notices')}>通知公告</a>与<a href={u('/join')}>加入我们</a>。
           </p>
         </div>
 
         <div>
           <ul class="space-y-4">
-            {
-              contacts.map((c) => (
-                <li class="card p-6">
-                  <h2 class="text-h3">{c.label}</h2>
-                  <p class="mt-2 text-ui text-ink-secondary">{c.desc}</p>
-                  <dl class="mt-4 space-y-2 border-t border-line pt-4 text-ui">
-                    <div class="flex flex-wrap gap-x-3">
-                      <dt class="text-ink-tertiary">邮箱</dt>
-                      <dd>
-                        <a href={`mailto:${c.email}`} class="link break-all">{c.email}</a>
-                      </dd>
-                    </div>
-                    <div class="flex flex-wrap gap-x-3">
-                      <dt class="text-ink-tertiary">电话</dt>
-                      <dd>
-                        <a href={`tel:${c.phone.replace(/\s/g, '')}`} class="numeric link">{c.phone}</a>
-                      </dd>
-                    </div>
-                  </dl>
-                </li>
-              ))
-            }
+            <li class="card p-6">
+              <h2 class="text-h3">院务与合作</h2>
+              <p class="mt-2 text-ui text-ink-secondary">合作洽谈、来访预约、资料索取。</p>
+              <p class="mt-4 border-t border-line pt-4 text-ui text-ink-secondary">
+                经浙江树人学院经济与管理学院办公室转达。
+              </p>
+            </li>
+            <li class="card p-6">
+              <h2 class="text-h3">研究生招生</h2>
+              <p class="mt-2 text-ui text-ink-secondary">专业目录、报名条件与时间安排。</p>
+              <p class="mt-4 border-t border-line pt-4 text-ui text-ink-secondary">
+                以学校研究生院当年招生简章为准，本站不代替官方通知。
+              </p>
+            </li>
+            <li class="card p-6">
+              <h2 class="text-h3">媒体与转载</h2>
+              <p class="mt-2 text-ui text-ink-secondary">采访邀约、内容使用与转载。</p>
+              <p class="mt-4 border-t border-line pt-4 text-ui text-ink-secondary">
+                本站内容为建设版本，正式对外口径以研究院与学校发布为准。
+              </p>
+            </li>
           </ul>
         </div>
       </div>

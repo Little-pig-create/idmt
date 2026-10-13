@@ -1,4 +1,5 @@
 ---
+draft: true
 title: 学术讲座：行政数据研究中的因果识别陷阱
 startDate: 2026-09-25
 location: 研究院 201 会议室

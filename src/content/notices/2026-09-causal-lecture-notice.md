@@ -1,4 +1,5 @@
 ---
+draft: true
 title: 学术讲座：行政数据研究中的因果识别陷阱（9 月 25 日）
 date: 2026-09-08
 category: 会议

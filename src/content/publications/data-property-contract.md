@@ -1,4 +1,5 @@
 ---
+draft: true
 title: 数据产权分置的可操作化：行业数据空间的契约设计
 authors:
   - 林思远

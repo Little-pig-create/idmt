@@ -1,4 +1,5 @@
 ---
+draft: true
 title: 数字治理青年学者论坛（第二届）
 startDate: 2026-05-16
 location: 研究院 302 报告厅

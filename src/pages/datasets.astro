@@ -6,6 +6,7 @@ import SectionHeading from '../components/ui/SectionHeading.astro';
 import AsideBox from '../components/ui/AsideBox.astro';
 import EmptyState from '../components/ui/EmptyState.astro';
 import { site } from '../data/site';
+import { u } from '../lib/paths';
 import { toDatasetCitation } from '../lib/citation';
 
 /**
@@ -38,7 +39,7 @@ const licenses = [...new Set(items.map((d) => d.license))];
 
 <BaseLayout
   title="数据集与资源"
-  description="数字管理研究院开放的研究数据集、工具与引用说明。"
+  description="数字管理技术研究院开放的研究数据集、工具与引用说明。"
 >
   <PageHero
     eyebrow="Resources"
@@ -172,7 +173,7 @@ const licenses = [...new Set(items.map((d) => d.license))];
                   数据获取与研究用途说明请通过邮件联系院务办公室。
                 </p>
                 <p class="mt-3">
-                  <a href={`mailto:${site.email}`} class="link break-all">{site.email}</a>
+                  <a href={u('/contact')} class="link">查看院务办公室联系渠道</a>
                 </p>
               </AsideBox>
             </aside>

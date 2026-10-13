@@ -1,0 +1,52 @@
+---
+/**
+ * 专题标识块：真实配图优先，否则用确定性几何图形
+ *
+ * 这是站内**唯一**保留 `AbstractFigure` 的地方，理由是这个图形编码的是
+ * 「这是哪个专题」—— 栏目标识，不是新闻照片的替身。读者不会把它误读成
+ * 「这张照片拍了什么」，所以它成立。
+ * 卡片（专题列表、首页专题区）与专题详情页共用，图框由本组件负责。
+ */
+import AbstractFigure from './AbstractFigure.astro';
+
+interface Props {
+  /** 真实配图 URL；为空则用几何标识 */
+  image?: string;
+  /** 图片替代文本 */
+  alt: string;
+  /** 几何标识的种子，专题数据里的固定字段 */
+  seed: string;
+  /** 图框比例类名 */
+  aspect?: string;
+  /** 与 aspect 对应的宽高比数值 */
+  ratio?: number;
+  loading?: 'lazy' | 'eager';
+  class?: string;
+}
+
+const {
+  image,
+  alt,
+  seed,
+  aspect = 'aspect-[16/9]',
+  ratio = 16 / 9,
+  loading = 'lazy',
+  class: className = '',
+} = Astro.props;
+---
+
+<div class={`figure-frame ${aspect} ${className}`.trim()}>
+  {
+    image ? (
+      <img
+        src={image}
+        alt={alt}
+        loading={loading}
+        decoding="async"
+        class="h-full w-full object-cover"
+      />
+    ) : (
+      <AbstractFigure seed={seed} ratio={ratio} class="h-full w-full" />
+    )
+  }
+</div>

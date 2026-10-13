@@ -2,41 +2,22 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/ui/PageHero.astro';
-import { site } from '../data/site';
+import { researchAreas, site } from '../data/site';
 import { u } from '../lib/paths';
 
 const people = (await getCollection('people', ({ data }) => !data.draft)).sort(
   (a, b) => a.data.order - b.data.order
 );
-
-const requirements = [
-  '具备管理学、经济学、公共管理、统计学或计算机相关背景；',
-  '对实证研究或建模分析有明确兴趣，愿意花时间处理数据与文献；',
-  '提交个人陈述、本科成绩单与两封推荐信。',
-];
-
-const positions = [
-  {
-    title: '研究助理（在校生）',
-    duty: '协助数据整理、文献梳理与访谈记录整理。',
-    require: '每周可投入 8 小时以上，连续参与一个学期。',
-  },
-  {
-    title: '博士后研究员',
-    duty: '独立承担方向内课题，参与项目申报与论文写作。',
-    require: '已获博士学位，有公共管理或管理科学相关发表记录。',
-  },
-];
 ---
 
 <BaseLayout
-  title="招生招聘"
-  description="数字管理研究院研究生招生、研究助理与博士后招聘信息。"
+  title="加入我们"
+  description={`${site.name}的人才培养方向与学生科研实践机会。`}
 >
   <PageHero
     eyebrow="Join us"
-    title="招生与招聘"
-    description="研究院每年招收硕士研究生，并提供面向在校生的研究助理岗位与博士后职位。"
+    title="加入我们"
+    description="研究院依托浙江树人学院开展科研与人才培养，为在校学生参与科研实践创造条件。"
     crumbs={[{ label: '加入我们' }]}
   />
 
@@ -44,54 +25,52 @@ const positions = [
     <div class="container-page">
       <div class="grid gap-14 lg:grid-cols-[1.3fr_1fr] lg:gap-16">
         <div class="container-prose prose-academic lg:mx-0">
+          <h2 id="practice">学生科研实践</h2>
+          <p>
+            研究院坚持科教结合，把科研育人作为日常工作的一部分：学生在在读期间可以参与方向内的
+            数据整理、文献梳理、平台搭建与实验组织等具体工作，接触从问题提出到成果成型的完整过程。
+          </p>
+          <p>
+            有参与意向的在校生请联系所在学院的学业导师，或经由依托学院的教务办公室转达。
+            研究院不单设报名通道，也不通过邮件收取申请材料。
+          </p>
+
           <h2 id="admission">研究生招生</h2>
           <p>
-            研究院四个研究方向均招收硕士研究生。我们看重对问题的好奇心，胜过对工具的熟练度。
-            你不需要在入学前就会写代码，但需要愿意学。
+            硕士与博士研究生的招生资格、专业目录、报名条件与时间安排，
+            以<strong>浙江树人学院研究生院及各招生学院发布的当年招生简章</strong>为准。
+            研究院本身不独立发布招生章程，本页也不代替官方通知。
+          </p>
+          <p>
+            本站尚未收录经核实的招生条目。相关公告一旦确定，会先发布于
+            <a href={u('/notices')}>通知公告</a>，再同步到本页。
           </p>
 
-          <h3>申请要求</h3>
-          <ul>
-            {requirements.map((r) => <li>{r}</li>)}
-          </ul>
-
-          <h3>时间安排</h3>
+          <h2 id="positions">岗位招聘</h2>
           <p>
-            材料提交截止日期为 <strong>9 月 30 日</strong>，面试安排在 10 月中旬。
-            有意申请者可先通过邮件联系意向导师，说明研究兴趣。
+            研究院目前<strong>没有公开发布的招聘公告</strong>（含研究岗、博士后与行政岗）。
+            本页此前列出的岗位与申请要求属于建站示例内容，已随示例数据一并撤下。
           </p>
-
-          <h2 id="positions">招聘岗位</h2>
-          {positions.map((p) => (
-            <div>
-              <h3>{p.title}</h3>
-              <p>{p.duty}</p>
-              <p><strong>要求：</strong>{p.require}</p>
-            </div>
-          ))}
-
-          <h2 id="how">如何申请</h2>
           <p>
-            请将个人简历与研究兴趣说明发送至 <a href={`mailto:${site.email}`}>{site.email}</a>，
-            邮件标题请注明「申请方向 + 姓名」。
+            如有合作、访学或应聘意向，请通过
+            <a href={u('/contact')}>联系我们</a>页面所列的官方渠道与依托学院接洽。
           </p>
         </div>
 
         <aside class="space-y-8 lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start">
           <div class="border-t border-line pt-5">
-            <p class="eyebrow mb-3">招生方向</p>
+            <p class="eyebrow mb-3">可参与的研究方向</p>
             <ul class="space-y-3">
               {
-                people.length > 0 &&
-                  [...new Set(people.flatMap((p) => p.data.researchAreas))].map((area) => (
-                    <li class="text-ui text-ink-secondary">{area}</li>
-                  ))
+                researchAreas.map((area) => (
+                  <li class="text-ui text-ink-secondary">{area}</li>
+                ))
               }
             </ul>
           </div>
 
           <div class="border-t border-line pt-5">
-            <p class="eyebrow mb-3">联系导师</p>
+            <p class="eyebrow mb-3">管理团队</p>
             <ul class="space-y-3">
               {
                 people.map((person) => (
@@ -103,6 +82,18 @@ const positions = [
                   </li>
                 ))
               }
+            </ul>
+            <p class="mt-3 text-meta text-ink-tertiary">
+              以上为研究院公开报道的管理职务，不构成导师资格或招生方向的承诺。
+            </p>
+          </div>
+
+          <div class="border-t border-line pt-5">
+            <p class="eyebrow mb-3">相关入口</p>
+            <ul class="space-y-2 text-ui">
+              <li><a href={u('/notices')} class="link">通知公告</a></li>
+              <li><a href={u('/people')} class="link">研究团队</a></li>
+              <li><a href={u('/contact')} class="link">联系我们</a></li>
             </ul>
           </div>
         </aside>

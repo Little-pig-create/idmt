@@ -1,5 +1,5 @@
 /* ============================================================
-   数字管理研究院 · 设计令牌单一数据源
+   数字管理技术研究院 · 设计令牌单一数据源
    美学方向：Institutional Academia（学术机构风）
 
    中性层一律为**纯中性灰**（H0 / S0%），不带暖调偏移。
@@ -13,20 +13,27 @@
    ============================================================ */
 
 @theme {
-  /* ---------- 色彩：表面（纯中性） ---------- */
-  --color-canvas: #f7f7f7;
+  /* ---------- 色彩：表面（纯中性） ----------
+     浅色端是一条**阶梯**，相邻两档之间要有肉眼可辨的一级：
+     白（卡片）→ canvas（页面底）→ surface-subtle（浅底区块）→ line（发丝线）→ line-strong（强调描边）。
+     历史上前四档挤在 #ffffff / #f7f7f7 / #f1f1f1 / #e2e2e2（相邻亮度比 1.071 / 1.054 / 1.209），
+     看着不是"层级"而是"同一层灰度没对齐"；去掉装饰图块之后页面结构全靠这条线撑，
+     所以把间距拉开到 1.119 / 1.105 / 1.211（实测）。 */
+  --color-canvas: #f2f2f2;
   --color-surface: #ffffff;
-  --color-surface-subtle: #f1f1f1;
+  --color-surface-subtle: #e7e7e7;
   --color-surface-ink: #14202e;
 
   /* ---------- 色彩：文字（纯中性） ---------- */
   --color-ink: #1a1a1a;
   --color-ink-secondary: #565656;
   /* 10-12px 的日期 / 英文名 / 月标都用它，必须过正文级 AA（4.5:1）。
-     最不利背景是 accent-soft #eaf0f7（不是 surface-subtle —— 实测前者更暗一点）：
-     #686868 对它是 4.86:1，对 surface-subtle 4.93:1，对 canvas 5.20:1。
-     历史值 #6e6e66 在 accent-soft 上仅 4.48:1，已被 scripts/contrast.mjs 拦下。 */
-  --color-ink-tertiary: #686868;
+     全站最不利背景是 surface-subtle #e7e7e7：#636363 对它是 4.86:1，
+     对 accent-soft 4.80:1，对 canvas 5.37:1，对白 6.01:1。
+     历史值两轮校正：#6e6e66 在 accent-soft 上仅 4.48:1 被门禁拦下，
+     改 #686868 后新浅色阶梯加深了底色，最不利组合只剩 4.51:1 —— 贴线即隐患，
+     故再降到 #636363，留出约 0.3 的余量给后续改配色。 */
+  --color-ink-tertiary: #636363;
   --color-ink-invert: #ffffff;
 
   /* 深底（报头 / 页脚底条）上的文字与描边层级。
@@ -40,14 +47,19 @@
   --color-on-masthead-line: color-mix(in srgb, var(--color-ink-invert) 28%, transparent);
   --color-on-masthead-line-strong: color-mix(in srgb, var(--color-ink-invert) 70%, transparent);
 
-  /* ---------- 色彩：描边（纯中性） ---------- */
-  --color-line: #e2e2e2;
-  --color-line-strong: #c9c9c9;
+  /* ---------- 色彩：描边（纯中性） ----------
+     发丝线要"看得见但不抢眼"：对最常出现的两种底（canvas、surface）分别 1.34:1 / 1.50:1，
+     落在最浅的底（surface-subtle）上也有 1.21:1 —— 旧值 #e2e2e2 对 canvas 只有 1.21:1，
+     在白卡上 1.34:1，读起来像"这条线没画实"。 */
+  --color-line: #d3d3d3;
+  --color-line-strong: #bcbcbc;
 
   /* ---------- 色彩：主色（深靛） ---------- */
   --color-accent: #1d4e89;
   --color-accent-hover: #163c6b;
-  --color-accent-soft: #eaf0f7;
+  /* 强调底：与 surface-subtle 同处一个明度档（差 1.01:1，不构成层级），
+     靠色相区分而不是靠深浅 —— 旧值 #eaf0f7 彩度只有 ΔRGB 13，实测就是"一种灰"。 */
+  --color-accent-soft: #dbe7f5;
   --color-accent-ink: #0f2b4c;
 
   /* ---------- 色彩：语义状态 ----------
@@ -88,7 +100,7 @@
   --radius-lg: 10px;
 
   /* ---------- 阴影（极轻） ----------
-     色相跟随背景：画布已改为纯中性 #f7f7f7，阴影也用中性灰，
+     色相跟随背景：画布是纯中性 #f2f2f2，阴影也用中性灰，
      不用纯黑（纯黑影子在任何底色上都显脏）。
      注意 --shadow-sm 当前 0 处引用（卡片按设计就是无阴影，靠描边与留白分层）。
      历史上还有 --shadow-focus，与 global.css 的 :focus-visible outline 是两套并存的
@@ -103,7 +115,9 @@
   /* ---------- 门户式布局：报头与区块 ---------- */
   /* 报头深底（深靛），用于报头带与页脚底条 */
   --color-masthead: #0f2b4c;
-  --color-utility: #f1f1f1;
+  /* 工具条底色就是 surface-subtle，历史值是它的字面副本（两份 #f1f1f1），
+     改配色时只会漏改一处 —— 现在直接引用，单一数据源。 */
+  --color-utility: var(--color-surface-subtle);
 
   /* 遮罩（抽屉 / 弹层） */
   --color-scrim: color-mix(in srgb, var(--color-ink) 32%, transparent);

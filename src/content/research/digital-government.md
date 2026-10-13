@@ -9,7 +9,7 @@ keywords:
   - 数字鸿沟
 lead: 何雨桐
 status: ongoing
-draft: false
+draft: true
 ---
 
 政务服务的线上化往往被简化为技术工程，但真正的难点在于跨部门的协同与责任再分配。本方向把服务体验视为组织能力的投影。

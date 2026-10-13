@@ -28,7 +28,7 @@ const { title, description, type, publishedAt, citation } = Astro.props;
  * 从 tokens.css 取 --color-canvas，避免手抄一份、改配色时漏掉这里。
  */
 const canvasColor =
-  tokensCss.match(/--color-canvas:\s*(#[0-9a-fA-F]{3,8})/)?.[1] ?? '#f7f7f7';
+  tokensCss.match(/--color-canvas:\s*(#[0-9a-fA-F]{3,8})/)?.[1] ?? '#f2f2f2';
 ---
 
 <!doctype html>
@@ -72,12 +72,12 @@ const canvasColor =
       name: site.name,
       alternateName: site.nameEn,
       url: site.url,
-      email: site.email,
-      telephone: site.phone,
+      ...(site.email && { email: site.email }),
+      ...(site.phone && { telephone: site.phone }),
       address: {
         '@type': 'PostalAddress',
         streetAddress: site.address,
-        postalCode: site.postcode,
+        ...(site.postcode && { postalCode: site.postcode }),
         addressCountry: 'CN',
       },
       description: site.description,

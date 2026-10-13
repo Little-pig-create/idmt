@@ -49,7 +49,6 @@ const projects = (await getCollection('projects', ({ data }) => !data.draft)).fi
           <DetailFigure
             cover={area.data.cover}
             coverAlt={area.data.coverAlt}
-            seed={area.id}
             caption={area.data.coverAlt}
             loading="eager"
             class="mb-8"

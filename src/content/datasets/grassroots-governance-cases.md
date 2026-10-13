@@ -1,4 +1,5 @@
 ---
+draft: true
 name: 基层治理数字化案例库
 description: 四个观察点的过程追踪记录与访谈材料整理稿，含编码手册。
 license: CC BY-NC 4.0

@@ -2,39 +2,39 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/ui/PageHero.astro';
 import AsideBox from '../components/ui/AsideBox.astro';
-import { site } from '../data/site';
+import { site, researchAreas } from '../data/site';
 import { u } from '../lib/paths';
 
+/** 下设研究机构：取自研究院自述材料中的机构名录。 */
 const structure = [
-  { name: '学术委员会', desc: '负责研究方向审议、课题立项与成果评价。' },
-  { name: '数字治理研究中心', desc: '承接数字治理与公共管理方向的研究与委托课题。' },
-  { name: '数据要素研究中心', desc: '聚焦数据产权、流通机制与行业数据空间。' },
-  { name: '智能决策实验室', desc: '负责建模、数值实验与管理行为实验。' },
-  { name: '公共服务设计工作室', desc: '承担政务服务流程诊断与服务设计实践。' },
-  { name: '院务办公室', desc: '负责行政、对外合作与内容发布。' },
+  { name: '人工智能与无人系统研究中心', desc: '无人系统智能化设计、研发与技术转化。' },
+  { name: '智慧物联网技术研究中心', desc: '泛在物联网、交通数字化与城市侧信息化系统。' },
+  { name: '工业 4.0 与增材制造技术研究中心', desc: '工业仿真、3D 打印与增材制造技术。' },
+  { name: '数据挖掘与云计算研究中心', desc: '云计算、数据挖掘与数据平台建设。' },
+  { name: '新能源与碳中和研究所', desc: '能源管理、碳排放与节能减排技术服务。' },
+  { name: '《数字亚洲》SCI&SSCI 期刊', desc: '研究院主办学术期刊（暂定名）。' },
 ];
 
+/** 只列有公开报道可稽的节点；未收录的年份不代表没有活动。 */
 const history = [
-  { year: '2019', event: '研究院成立，首设数字治理与公共管理方向。' },
-  { year: '2021', event: '增设数据要素与数字经济方向，启动首个地方委托课题。' },
-  { year: '2023', event: '智能决策实验室建成，开设管理行为实验平台。' },
-  { year: '2024', event: '获批国家社会科学基金一般项目，首届青年学者论坛举办。' },
-  { year: '2026', event: '增设数字政府与公共服务方向，与地方数据管理部门建立长期合作。' },
+  { year: '2025.11', event: '承办中韩经济发展论坛数字经济分论坛（越湖论坛），并完成一批特聘教授聘任。' },
+  { year: '2026.07', event: '与韩国安全文化学会等机构共同承办 2026 亚太数字产业与安全文化国际学术会议。' },
 ];
 
 const toc = [
   { id: 'intro', label: '研究院简介' },
+  { id: 'principles', label: '研究愿景' },
   { id: 'structure', label: '组织架构' },
-  { id: 'history', label: '发展历程' },
+  { id: 'history', label: '公开活动记录' },
   { id: 'contact', label: '联系方式' },
 ];
 ---
 
-<BaseLayout title="研究院概况" description={`${site.name}的定位、组织架构与发展历程。`}>
+<BaseLayout title="研究院概况" description={`${site.name}的定位、研究愿景与组织架构。`}>
   <PageHero
     eyebrow="About"
     title="研究院概况"
-    description="数字管理研究院成立于 2019 年，是一所聚焦数字技术与管理实践交叉领域的研究机构。"
+    description="数字管理技术研究院（IDMT）是浙江树人学院设立的科研机构，聚焦数字技术前沿研究与成果转化。"
     crumbs={[{ label: '研究院概况' }]}
   />
 
@@ -44,26 +44,45 @@ const toc = [
         <div class="container-prose prose-academic lg:mx-0 lg:max-w-none">
           <h2 id="intro">研究院简介</h2>
           <p>
-            数字管理研究院成立于 {site.founded} 年，聚焦数字技术与管理实践的交叉地带。
-            我们不把技术当作外生冲击，而是把它视为制度环境的一部分。由此出发，追问数字化在真实组织中
-            改变了什么、又没能改变什么。
+            {site.name}（{site.nameEn}，简称 {site.shortName}）依托浙江树人学院设立，聚焦数字技术前沿研究，
+            面向未来产业与关键核心技术，探索从基础研究到产业化落地的衔接路径。
           </p>
           <p>
-            研究院目前设有四个研究方向，覆盖数字治理与公共管理、数据要素与数字经济、智能决策与优化、
-            数字政府与公共服务。研究工作以实证与建模为主，强调结论可被管理者理解和追责。
+            研究院的工作覆盖四个专业领域：{researchAreas.join('、')}。
+            研究内容既包含无人系统、增材制造、工业数字化等技术侧的设计与研发，也包含智慧城市、
+            未来社区、智慧医疗等场景下的平台建设与应用评估。
           </p>
           <blockquote>
-            我们更关心一个问题是否真实，而不是它是否时髦。
+            完成从基础研究到产业化的最后一公里。
           </blockquote>
           <p>
-            研究院与地方治理部门、数据管理部门保持长期合作，在真实场景中检验研究结论。
-            同时每年招收硕士研究生，并提供面向在校生的研究助理岗位。
+            研究院以承办国际学术会议、共建校际合作平台等方式开展对外交流，并为在校学生提供参与科研实践的机会。
           </p>
+
+          <h2 id="principles">研究愿景</h2>
+          <p>研究院的工作原则是四个坚持：</p>
+          <ul>
+            <li>
+              <strong>坚持面向未来。</strong>加强对数字融合发展趋势研判，瞄准前沿性、革命性、颠覆性技术发展，
+              培养未来科技创新领军人才。
+            </li>
+            <li>
+              <strong>坚持交叉融合。</strong>主动打破传统学科壁垒，促进理工结合、工工交叉、工文渗透、医工融合，
+              依据学科优势聚焦数字技术领域。
+            </li>
+            <li>
+              <strong>坚持科教结合。</strong>强化科研育人功能，把最新科研成果转化为教学内容，
+              为学生接触学科前沿、开展科研实践创造条件。
+            </li>
+            <li>
+              <strong>坚持开放创新。</strong>在开放中实现中外交流、汇聚各方资源、跨越院系鸿沟、促进交叉融合。
+            </li>
+          </ul>
 
           <h2 id="structure">组织架构</h2>
           <p>
-            研究院实行学术委员会指导下的院长负责制。学术委员会负责研究方向审议、课题立项与成果评价；
-            各研究中心与实验室承担具体研究工作；院务办公室负责行政、对外合作与内容发布。
+            研究院设理事会与专家学术委员会，理事会下设管理团队，负责研究方向的审议与日常运行；
+            具体研究工作由各研究中心与研究所承担。
           </p>
           <div class="mt-8 overflow-hidden rounded-md border border-line">
             <table class="w-full border-collapse text-ui">
@@ -87,7 +106,8 @@ const toc = [
             </table>
           </div>
 
-          <h2 id="history">发展历程</h2>
+          <h2 id="history">公开活动记录</h2>
+          <p>以下节点有公开报道可稽，未收录的年份不代表研究院没有开展活动。</p>
           <ol class="mt-6 space-y-0">
             {
               history.map((item) => (
@@ -103,11 +123,8 @@ const toc = [
           <p>
             地址：{site.address}
             <br />
-            邮编：{site.postcode}
-            <br />
-            电话：{site.phone}
-            <br />
-            邮箱：<a href={`mailto:${site.email}`}>{site.email}</a>
+            电话与邮箱等对外联系方式尚未在本站核定，请经由
+            <a href={u('/contact')}>联系我们</a>所列的学校公开渠道转达。
           </p>
         </div>
 
@@ -131,16 +148,16 @@ const toc = [
           <AsideBox title="关键数字">
             <ul>
               <li class="flex items-baseline justify-between gap-3 border-b border-line py-2 text-ui">
-                <span class="text-ink-secondary">成立年份</span>
-                <span class="numeric text-ink">{site.founded}</span>
-              </li>
-              <li class="flex items-baseline justify-between gap-3 border-b border-line py-2 text-ui">
-                <span class="text-ink-secondary">研究方向</span>
-                <span class="numeric text-ink">4</span>
+                <span class="text-ink-secondary">专业领域</span>
+                <span class="numeric text-ink">{researchAreas.length}</span>
               </li>
               <li class="flex items-baseline justify-between gap-3 border-b border-line py-2 text-ui">
                 <span class="text-ink-secondary">研究机构</span>
                 <span class="numeric text-ink">{structure.length}</span>
+              </li>
+              <li class="flex items-baseline justify-between gap-3 border-b border-line py-2 text-ui">
+                <span class="text-ink-secondary">依托单位</span>
+                <span class="text-ink">浙江树人学院</span>
               </li>
             </ul>
           </AsideBox>
@@ -149,7 +166,7 @@ const toc = [
             <ul class="space-y-2 text-ui">
               <li><a href={u('/research')} class="link">研究方向</a></li>
               <li><a href={u('/people')} class="link">研究团队</a></li>
-              <li><a href={u('/projects')} class="link">科研项目</a></li>
+              <li><a href={u('/events')} class="link">学术活动</a></li>
               <li><a href={u('/contact')} class="link">联系我们</a></li>
             </ul>
           </AsideBox>

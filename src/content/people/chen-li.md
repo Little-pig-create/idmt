@@ -1,4 +1,5 @@
 ---
+draft: true
 name: 陈立
 nameEn: Chen Li
 title: 教授 · 研究院院长

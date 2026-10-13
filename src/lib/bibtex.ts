@@ -66,6 +66,6 @@ export function toBibtex(p: BibtexPublication): string {
   else fields.push(`  publisher = {${escape(p.venue)}}`);
   if (doi) fields.push(`  doi = {${escape(doi)}}`);
   if (p.pdf) fields.push(`  url = {${escape(p.pdf)}}`);
-  if (entry === 'techreport') fields.push(`  institution = {数字管理研究院}`);
+  if (entry === 'techreport') fields.push(`  institution = {数字管理技术研究院}`);
   return `@${entry}{${key},\n${fields.join(',\n')}\n}`;
 }

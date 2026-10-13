@@ -5,7 +5,7 @@ import PageHero from '../../components/ui/PageHero.astro';
 import AsideBox from '../../components/ui/AsideBox.astro';
 import PublicationItem from '../../components/content/PublicationItem.astro';
 import EventItem from '../../components/content/EventItem.astro';
-import DetailFigure from '../../components/ui/DetailFigure.astro';
+import TopicMark from '../../components/ui/TopicMark.astro';
 import JsonLd from '../../components/seo/JsonLd.astro';
 import { site, sectionEyebrow } from '../../data/site';
 import { u } from '../../lib/paths';
@@ -86,9 +86,9 @@ const involved = people
     <div class="container-page">
       <div class="grid gap-12 lg:grid-cols-[1fr_300px] lg:gap-16">
         <div>
-          <DetailFigure
-            cover={item.data.image}
-            coverAlt={item.data.title}
+          <TopicMark
+            image={item.data.image}
+            alt={item.data.title}
             seed={item.data.seed}
             loading="eager"
             class="mb-8"

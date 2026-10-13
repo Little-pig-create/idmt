@@ -22,79 +22,76 @@ const prefix = target.pathname.replace(/\/+$/, '') || readSiteConfig(path.resolv
 const targetUrl = (p) => `${target.origin}${prefix}${p}`;
 
 const routes = [
-  { path: '/', contains: '数字管理研究院' },
-  { path: '/about', contains: '研究院' },
+  { path: '/', contains: '数字管理技术研究院' },
+  { path: '/about', contains: '浙江树人学院' },
+  { path: '/about', contains: '组织架构' },
   { path: '/research', contains: '研究方向' },
-  { path: '/research/digital-governance', contains: '数字治理' },
-  { path: '/people', contains: '研究人员' },
-  { path: '/people/chen-li', contains: '陈立' },
-  { path: '/publications', contains: '全部成果' },
-  { path: '/publications/data-property-contract', contains: 'BibTeX' },
-  { path: '/projects', contains: '科研项目' },
-  { path: '/projects/public-data-pricing', contains: '定价机制' },
-  { path: '/projects/institutional-fit-grassroots', contains: '制度适配' },
+  { path: '/research/ai-unmanned-systems', contains: '人工智能与无人系统' },
+  { path: '/research/digital-infrastructure-smart-city', contains: '数字新基建与智慧城市' },
+  { path: '/research/cloud-data-intelligence', contains: '云计算与数据智能' },
+  { path: '/research/industrial-digitalization', contains: '高端制造与工业数字化' },
+  { path: '/people', contains: '研究团队' },
+  { path: '/people/yan-hong', contains: '阎洪' },
+  { path: '/people/wu-jie', contains: '执行院长' },
+  { path: '/people/liu-ziyang', contains: '刘子阳' },
   { path: '/news', contains: '新闻动态' },
-  { path: '/notices', contains: '通知公告' },
+  { path: '/news/2025-11-yuehu-forum', contains: '越湖论坛' },
+  { path: '/news/2026-07-asia-conference', contains: '亚太数字产业与安全文化' },
   { path: '/events', contains: '学术活动' },
-  { path: '/events/2026-09-causal-lecture', contains: '因果识别' },
-  { path: '/events/2026-05-youth-forum', contains: '青年学者论坛' },
-  { path: '/topics', contains: '全部专题' },
-  { path: '/topics/grassroots-governance', contains: '基层治理数字化观察' },
-  { path: '/topics/data-authorization', contains: '公共数据授权运营' },
-  { path: '/datasets', contains: '数据集' },
+  { path: '/events/2025-yuehu-forum', contains: '京畿大学' },
+  { path: '/events/2026-asia-digital-safety-conference', contains: '杨汛桥校区' },
   { path: '/join', contains: '加入我们' },
   { path: '/contact', contains: '联系' },
   { path: '/search', contains: '搜索' },
-  // dev 下由 endpoint 返回 application/rss+xml；静态托管时主机按扩展名推断为 text/xml，两者 RSS 阅读器都认
+  // rss.xml 只能收录已发布条目：新内容进、假内容不出，两端都要断言
   { path: '/rss.xml', contains: '<rss', type: ['application/rss+xml', 'text/xml', 'application/xml'] },
+  { path: '/rss.xml', contains: '越湖论坛' },
   { path: '/sitemap-index.xml', contains: '<sitemapindex' },
   { path: '/search-index.json', contains: '[{' },
   // 回归防护：搜索索引必须指向详情页，而不是列表页
-  { path: '/search-index.json', contains: '"/projects/public-data-pricing"' },
-  { path: '/search-index.json', contains: '"/events/2026-09-causal-lecture"' },
-  { path: '/search-index.json', contains: '"/publications/' },
-  // 数据集集合化后必须进搜索索引（此前是硬编码数组，索引收不到）
-  { path: '/search-index.json', contains: '"/datasets#' },
-  { path: '/search-index.json', contains: '基层治理数字化案例库' },
+  { path: '/search-index.json', contains: '"/news/2025-11-yuehu-forum"' },
+  { path: '/search-index.json', contains: '"/events/2025-yuehu-forum"' },
+  { path: '/search-index.json', contains: '"/people/yan-hong"' },
   { path: '/robots.txt', contains: 'Sitemap' },
 
-  // ---------- 学术检索元数据（Highwire Press）----------
-  // 没有这些标签，成果页在 Google Scholar 一类学术检索链路里是隐形的。
-  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_title"' },
-  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_author" content="陈立"' },
-  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_author" content="何雨桐"' },
-  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_journal_title"' },
-  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_doi"' },
-  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_abstract"' },
-  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_language" content="zh"' },
-  // 卷 / 期 / 页码：GB/T 7714 引用条目必需，缺失时条目会不完整
-  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_volume"' },
-  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_issue"' },
-  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_firstpage"' },
-  { path: '/publications/local-data-bureau-diffusion', contains: 'name="citation_lastpage"' },
-  // 会议论文的载体字段名与期刊不同，写错抓取器会整条忽略
-  { path: '/publications/elderly-platform-design-workshop', contains: 'name="citation_conference_title"' },
+  // ---------- 空集合页必须落到诚实的空状态 ----------
+  // 这些集合的旧条目是虚构内容，已整批置 draft: true。
+  // 断言的是「页面存在 + 明示尚未录入」，而不是悄悄留一个空白页。
+  { path: '/publications', contains: '暂无收录成果' },
+  { path: '/projects', contains: '暂无项目信息' },
+  { path: '/datasets', contains: '暂无开放数据集' },
+  { path: '/topics', contains: '暂无专题' },
+  { path: '/notices', contains: '暂无公告' },
 
-  // ---------- 学术体例 ----------
-  // GB/T 7714 是中文期刊投稿与学位论文的强制引用格式
-  { path: '/publications/local-data-bureau-diffusion', contains: 'GB/T 7714' },
-  { path: '/publications/local-data-bureau-diffusion', contains: '[J]' },
-  // 卷期页码齐备时条目必须是完整的 `刊名, 年, 卷(期): 起止页.`
-  { path: '/publications/local-data-bureau-diffusion', contains: '公共管理学报, 2025, 22(6): 42-58.' },
-  // 各文献类型的标识码（期刊 J / 会议 C / 著作 M / 报告 R）
-  { path: '/publications/data-market-institutions-book', contains: '[M]' },
-  { path: '/publications/elderly-platform-design-workshop', contains: '[C]' },
-  { path: '/publications/open-data-trust-framework', contains: '[R]' },
-  // 中文刊名用书名号，不用斜体（中文无真斜体，浏览器会合成机械倾斜）
-  { path: '/publications/local-data-bureau-diffusion', contains: '《公共管理学报》' },
-  { path: '/publications/local-data-bureau-diffusion', contains: 'not-italic' },
-  // 拉丁刊名保留斜体
-  { path: '/publications/robust-allocation-ambiguity', contains: 'European Journal of Operational Research' },
-  // 摘要与关键词按学术体例标注
-  { path: '/publications/local-data-bureau-diffusion', contains: 'abstract-block' },
-  { path: '/publications/local-data-bureau-diffusion', contains: '关键词：' },
-  // 数据集引用用国标 [DS] 标识码
-  { path: '/datasets', contains: '[DS]' },
+  // ---------- 完整性守卫：虚构内容不得可达 ----------
+  // draft 开关的验收标准不是「列表页看不见」，而是直接访问详情 URL 也必须 404。
+  { path: '/people/chen-li', status: 404 },
+  { path: '/research/digital-government', status: 404 },
+  { path: '/research/data-economy', status: 404 },
+  { path: '/publications/local-data-bureau-diffusion', status: 404 },
+  { path: '/projects/public-data-pricing', status: 404 },
+  { path: '/events/2026-09-causal-lecture', status: 404 },
+  { path: '/topics/grassroots-governance', status: 404 },
+  { path: '/datasets/grassroots-governance-cases', status: 404 },
+  { path: '/news/2026-award', status: 404 },
+  // 旧站名的拼音残留页也不应存在
+  { path: '/search-index.json', doesNotContain: '基层治理数字化案例库' },
+];
+
+/**
+ * 内容机制断言：验证的是 Highwire Press 标签、GB/T 7714 条目格式、文献类型标识码
+ * （期刊 J / 会议 C / 著作 M / 报告 R）、书名号刊名 not-italic、摘要与关键词块、
+ * 数据集 [DS] 标识码 —— 这些机制本身是对的，但断言对象是虚构成果，已随内容一起下架。
+ * 真实成果入库后把这些条目移回 routes，覆盖即恢复。
+ */
+const deferred = [
+  'citation_title / citation_author / citation_journal_title / citation_doi / citation_abstract',
+  'citation_volume / citation_issue / citation_firstpage / citation_lastpage',
+  'citation_conference_title（会议论文载体字段）',
+  'GB/T 7714 条目与 [J] [C] [M] [R] 标识码',
+  '中文刊名书名号 + not-italic，拉丁刊名保留斜体',
+  'abstract-block 与「关键词：」',
+  '数据集 [DS] 标识码',
 ];
 
 let failed = 0;
@@ -102,16 +99,20 @@ for (const r of routes) {
   const url = targetUrl(r.path);
   const res = await fetch(url);
   const body = await res.text();
-  const ok = res.ok;
+  // status 断言用于「必须不可达」的条目（下架内容），默认仍要求 2xx
+  const statusOk = r.status ? res.status === r.status : res.ok;
   const contains = r.contains ? body.includes(r.contains) : true;
+  const absent = r.doesNotContain ? !body.includes(r.doesNotContain) : true;
   const typeOk = r.type
     ? Array.isArray(r.type)
       ? r.type.some((t) => (res.headers.get('content-type') || '').includes(t))
       : (res.headers.get('content-type') || '').includes(r.type)
     : true;
-  if (!ok || !contains || !typeOk) {
+  if (!statusOk || !contains || !absent || !typeOk) {
     failed += 1;
-    console.log(`✗ ${r.path}  status=${res.status} contains=${contains} type=${typeOk ? '—' : res.headers.get('content-type')}`);
+    console.log(
+      `✗ ${r.path}  status=${res.status}${r.status ? `(期望 ${r.status})` : ''} contains=${contains} absent=${absent} type=${typeOk ? '—' : res.headers.get('content-type')}`,
+    );
   } else {
     console.log(`✓ ${r.path}  ${res.status}  ${body.length}B`);
   }
@@ -122,4 +123,9 @@ if (failed > 0) {
   process.exit(1);
 } else {
   console.log(`\n✅ ${routes.length}/${routes.length} 全部通过`);
+}
+
+if (deferred.length) {
+  console.log(`\n⚠️  另有 ${deferred.length} 类内容机制断言挂起（断言对象随虚构内容一起下架，待真实成果入库后恢复）：`);
+  for (const d of deferred) console.log(`   · ${d}`);
 }

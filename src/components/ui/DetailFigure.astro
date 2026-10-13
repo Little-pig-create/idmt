@@ -2,27 +2,26 @@
 /**
  * 详情页统一图片位。
  *
- * 语义：**位置始终存在** —— 有真实配图就渲染真图，没有则回落 AbstractFigure。
- * 版面不随「有没有配图」而变，编辑器补图时不需要改模板。
+ * 语义：**没有真实配图就没有图片位**。
+ * 原先的设计是「位置始终存在，无图回落抽象图形」，理由是版面不随补图而变、
+ * 编辑器补图时不必改模板。实测前提不成立：全站 0 条目填了 `cover`，
+ * 那个"临时占位"就是永久版面，每个详情页顶部都摆一块与内容无关的几何图形。
+ * 版面稳定性交给 CSS 处理，不该靠占用读者视线来换。
  *
- * 与卡片上的 CoverImage 的关系：CoverImage 只负责「填满外层给的框」，
- * 本组件负责详情页那一套固定外壳（figure + figure-frame + 可选图注 + not-prose）。
+ * 与卡片上的 CoverImage 的关系：图框由 CoverImage 负责，
+ * 本组件只再加详情页那一层的 `<figure>` 外壳、图注与 `not-prose`。
  * 别在详情页里再手写一遍这层壳，否则图注样式与 not-prose 处理会各写各的。
  */
 import CoverImage from './CoverImage.astro';
 
 interface Props {
-  /** 真实配图 URL；为空则回落抽象图形 */
+  /** 真实配图 URL；为空则整块不渲染 */
   cover?: string;
   /** 配图替代文本 */
   coverAlt?: string;
-  /** 回落抽象图形的种子，通常传条目 id */
-  seed: string;
-  /** 宽高比数值，须与 aspect 对应（AbstractFigure 用它算高度） */
-  ratio?: number;
-  /** 与 ratio 对应的 Tailwind aspect 类 */
+  /** 图框比例类名 */
   aspect?: string;
-  /** 图注。有值时展示在图片下方 */
+  /** 图注。须与真实配图同时出现，无图时不单独渲染 */
   caption?: string;
   /** 首屏第一张建议 eager */
   loading?: 'lazy' | 'eager';
@@ -32,8 +31,6 @@ interface Props {
 const {
   cover,
   coverAlt,
-  seed,
-  ratio = 16 / 9,
   aspect = 'aspect-[16/9]',
   caption,
   loading = 'lazy',
@@ -41,9 +38,11 @@ const {
 } = Astro.props;
 ---
 
-<figure class={`not-prose ${className}`.trim()}>
-  <div class={`figure-frame ${aspect}`}>
-    <CoverImage cover={cover} alt={coverAlt ?? ''} seed={seed} ratio={ratio} loading={loading} />
-  </div>
-  {caption && <figcaption class="mt-2 text-meta text-ink-tertiary">{caption}</figcaption>}
-</figure>
+{
+  cover && (
+    <figure class={`not-prose ${className}`.trim()}>
+      <CoverImage cover={cover} alt={coverAlt ?? ''} aspect={aspect} loading={loading} />
+      {caption && <figcaption class="mt-2 text-meta text-ink-tertiary">{caption}</figcaption>}
+    </figure>
+  )
+}

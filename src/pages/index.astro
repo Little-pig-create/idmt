@@ -8,7 +8,8 @@ import PersonCard from '../components/content/PersonCard.astro';
 import EventItem from '../components/content/EventItem.astro';
 import NoticeList from '../components/content/NoticeList.astro';
 import Carousel from '../components/ui/Carousel.astro';
-import { site } from '../data/site';
+import TopicMark from '../components/ui/TopicMark.astro';
+import { site, researchAreas } from '../data/site';
 import { u } from '../lib/paths';
 
 const fmtDate = (d: Date) =>
@@ -22,6 +23,18 @@ const publications = (await getCollection('publications', ({ data }) => !data.dr
   (a, b) => b.data.year - a.data.year
 );
 const latestPublications = publications.slice(0, 5);
+
+/**
+ * 方向卡上的成果数：与研究方向详情页同一套关联口径
+ * （`research/[slug].astro:24` 的 keywords ∩ 成果 tags），两处必须一致，
+ * 否则首页说「3 项」、点进去列 2 项。
+ */
+const publicationCountByArea = new Map(
+  research.map((area) => [
+    area.id,
+    publications.filter((p) => p.data.tags.some((t) => area.data.keywords.includes(t))).length,
+  ])
+);
 
 const people = (await getCollection('people', ({ data }) => !data.draft)).sort(
   (a, b) => a.data.order - b.data.order
@@ -86,10 +99,10 @@ const ongoingCount = projects.length;
 const completedCount = (await getCollection('projects', ({ data }) => !data.draft)).length - ongoingCount;
 
 const stats = [
-  { value: site.founded, label: '成立年份' },
   { value: String(research.length), label: '研究方向' },
   { value: String(publications.length), label: '学术成果' },
   { value: String(people.length), label: '研究人员' },
+  { value: String(events.length), label: '学术活动' },
 ];
 ---
 
@@ -101,7 +114,7 @@ const stats = [
         {site.tagline}
       </p>
       <p class="max-w-2xl text-ui leading-relaxed text-ink-secondary">
-        聚焦数字治理与公共管理、数据要素与数字经济、智能决策与优化、数字政府与公共服务四个方向。
+        聚焦{researchAreas.join('、')}四个专业领域。
       </p>
     </div>
   </div>
@@ -144,14 +157,11 @@ const stats = [
         {
           leadNews && (
             <a href={u(`/news/${leadNews.id}`)} class="portal-card group lg:col-span-2">
-              <div class="figure-frame aspect-[16/9]">
-                <CoverImage
-                  cover={leadNews.data.cover}
-                  alt={leadNews.data.coverAlt ?? leadNews.data.title}
-                  seed={leadNews.id}
-                  ratio={16 / 9}
-                />
-              </div>
+              <CoverImage
+                cover={leadNews.data.cover}
+                alt={leadNews.data.coverAlt ?? leadNews.data.title}
+                loading="eager"
+              />
               <div class="p-5 lg:p-6">
                 <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <time
@@ -165,10 +175,18 @@ const stats = [
                   ))}
                   {leadNews.data.featured && <span class="tag">精选</span>}
                 </div>
-                <h3 class="mt-2.5 text-[1.375rem] leading-snug lg:text-[1.5rem]">
+                {/* 头条层级原先靠配图建立；无图时改由衬线字号与行距承担 */}
+                <h3
+                  class:list={[
+                    'mt-2.5 font-[family-name:var(--font-serif-cjk)] leading-snug text-ink',
+                    leadNews.data.cover
+                      ? 'text-[1.375rem] lg:text-[1.5rem]'
+                      : 'text-[1.5rem] lg:text-[1.875rem]',
+                  ]}
+                >
                   <span class="link-title">{leadNews.data.title}</span>
                 </h3>
-                <p class="mt-3 line-clamp-2 text-ui leading-relaxed text-ink-secondary">
+                <p class="mt-3 max-w-2xl line-clamp-2 text-ui leading-relaxed text-ink-secondary">
                   {leadNews.data.summary}
                 </p>
               </div>
@@ -230,6 +248,7 @@ const stats = [
 
       <div>
         <SectionHeading title="科研项目" moreHref="/projects" moreLabel="更多" />
+        {projects.length === 0 && <p class="text-ui text-ink-secondary">暂无公开的项目信息。</p>}
         <ul class="brief-list">
           {
             projects.map((project) => (
@@ -263,29 +282,28 @@ const stats = [
       <SectionHeading
         eyebrow="Research"
         title="研究方向"
-        description="四个方向共享同一套问题意识：技术进入管理场景后，制度、组织与人如何回应。"
+        description="四个专业领域覆盖从关键核心技术研发到成果转化的衔接路径。"
         moreHref="/research"
         moreLabel="更多"
       />
 
       {/*
-        排版式四栏，不配图：四个方向各挂一张抽象图形，会与「要闻 / 专题」的图卡连成一片；
-        四张同风格图形并排本身就是重复。改用发丝线分隔的栏式排版
-        （容器 bg-line + gap-px 画出 1px 分隔线），并把此前只在详情页出现的「负责人」提到首页。
+        目录式两栏，不配图也不编号：
+        - 编号（01/02/03/04）原先按 `order` 补零呈现，但那四个字段是并列分类，不是阅读顺序，
+          编号在暗示一个不存在的序列。docs/DESIGN_SYSTEM.md §9.F 把「方向 01」列为禁例，
+          只是 TASTE-002 的匹配器只扫眉标签元素，没扫到卡片上的这个 span。
+        - 原先四栏各挂一张抽象图形，会与「要闻 / 专题」的图卡连成一片；四张同风格图形并排
+          本身就是重复。改用发丝线分隔的栏式排版（容器 bg-line + gap-px 画出 1px 分隔线）。
+        - 卡片补上真实关联数据（该方向的公开成果数），把「方向」与「成果」两块之间的关系写明。
       */}
-      <div
-        class="grid gap-px overflow-hidden rounded-md border border-line bg-line sm:grid-cols-2 lg:grid-cols-4"
-      >
+      <div class="grid gap-px overflow-hidden rounded-md border border-line bg-line sm:grid-cols-2">
         {
           research.map((area) => {
             const lead = people.find((p) => p.data.name === area.data.lead);
+            const pubCount = publicationCountByArea.get(area.id) ?? 0;
             return (
-              <div class="group relative flex flex-col bg-surface p-6 transition-colors hover:bg-canvas lg:p-7">
-                <span class="numeric text-meta text-ink-tertiary">
-                  {String(area.data.order).padStart(2, '0')}
-                </span>
-
-                <h3 class="mt-3 text-[1.25rem] leading-snug">
+              <div class="group relative flex flex-col bg-surface p-6 transition-colors hover:bg-canvas lg:p-8">
+                <h3 class="font-[family-name:var(--font-serif-cjk)] text-[1.3125rem] leading-snug text-ink lg:text-[1.4375rem]">
                   <a href={u(`/research/${area.id}`)} class="link-title stretched-link">
                     {area.data.title}
                   </a>
@@ -295,20 +313,23 @@ const stats = [
                   {area.data.summary}
                 </p>
 
-                {
-                  area.data.lead && (
-                    <p class="mt-5 border-t border-line pt-3 text-meta text-ink-tertiary">
-                      负责人{' '}
-                      {lead ? (
-                        <a href={u(`/people/${lead.id}`)} class="link stretched-link-above">
-                          {area.data.lead}
-                        </a>
-                      ) : (
-                        <span class="text-ink-secondary">{area.data.lead}</span>
-                      )}
-                    </p>
-                  )
-                }
+                <p class="mt-5 flex flex-wrap gap-x-8 gap-y-1 border-t border-line pt-3 text-meta text-ink-tertiary">
+                  {
+                    area.data.lead && (
+                      <span>
+                        负责人{' '}
+                        {lead ? (
+                          <a href={u(`/people/${lead.id}`)} class="link stretched-link-above">
+                            {area.data.lead}
+                          </a>
+                        ) : (
+                          <span class="text-ink-secondary">{area.data.lead}</span>
+                        )}
+                      </span>
+                    )
+                  }
+                  {pubCount > 0 && <span>公开成果 {pubCount} 项</span>}
+                </p>
               </div>
             );
           })
@@ -403,14 +424,11 @@ const stats = [
         {
           topics.map((topic) => (
             <a href={u(`/topics/${topic.id}`)} class="portal-card group">
-              <div class="figure-frame aspect-[16/9]">
-                <CoverImage
-                  cover={topic.data.image}
-                  alt={topic.data.title}
-                  seed={topic.data.seed}
-                  ratio={16 / 9}
-                />
-              </div>
+              <TopicMark
+                image={topic.data.image}
+                alt={topic.data.title}
+                seed={topic.data.seed}
+              />
               <div class="p-5">
                 {topic.data.badge && <span class="tag tag-quiet">{topic.data.badge}</span>}
                 <h3 class="mt-2 text-[1.0625rem] leading-snug">

@@ -7,7 +7,7 @@ tags:
   - 学术成果
 author: 研究院办公室
 featured: true
-draft: false
+draft: true
 ---
 
 在近日公布的年度管理科学优秀成果奖评选中，研究院两项研究成果获奖。

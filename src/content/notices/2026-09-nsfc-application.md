@@ -1,4 +1,5 @@
 ---
+draft: true
 title: 关于组织申报 2027 年度国家自然科学基金项目的通知
 date: 2026-09-10
 category: 科研

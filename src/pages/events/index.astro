@@ -6,7 +6,7 @@ import SectionHeading from '../../components/ui/SectionHeading.astro';
 import AsideBox from '../../components/ui/AsideBox.astro';
 import EventItem from '../../components/content/EventItem.astro';
 import EmptyState from '../../components/ui/EmptyState.astro';
-import { eventTypeLabels, site } from '../../data/site';
+import { eventTypeLabels } from '../../data/site';
 import { u } from '../../lib/paths';
 
 const all = await getCollection('events', ({ data }) => !data.draft);
@@ -30,7 +30,7 @@ const locations = [...new Set(all.map((e) => e.data.location))];
 
 <BaseLayout
   title="学术活动"
-  description="数字管理研究院举办的讲座、研讨会、学术会议与工作坊。"
+  description="数字管理技术研究院举办的讲座、研讨会、学术会议与工作坊。"
 >
   <PageHero
     eyebrow="Events"
@@ -115,7 +115,7 @@ const locations = [...new Set(all.map((e) => e.data.location))];
               多数活动无需登记，座位先到先得。如需确认日程或申请来访，请联系院务办公室。
             </p>
             <p class="mt-3">
-              <a href={`mailto:${site.email}`} class="link break-all">{site.email}</a>
+              <a href={u('/contact')} class="link">查看院务办公室联系渠道</a>
             </p>
           </AsideBox>
 

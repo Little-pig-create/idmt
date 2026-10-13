@@ -1,4 +1,4 @@
-# 数字管理研究院 · 学术门户设计系统
+# 数字管理技术研究院 · 学术门户设计系统
 
 > 配套文档：`PORTAL_FRAMEWORK.md`
 > 美学方向：**Institutional Academia（学术机构风）**
@@ -28,26 +28,34 @@
 
 | Token | 值 | 对比度（对 canvas） | 用途 |
 |---|---|---|---|
-| `--color-canvas` | `#F7F7F7` | 基准 | 页面背景（纯中性，非纯白） |
-| `--color-surface` | `#FFFFFF` | — | 卡片、正文纸面 |
-| `--color-surface-subtle` | `#F1F1F1` | — | 次级区块、表头 |
+| `--color-canvas` | `#F2F2F2` | 基准 | 页面背景（纯中性，非纯白） |
+| `--color-surface` | `#FFFFFF` | 1.12:1（对白） | 卡片、正文纸面 |
+| `--color-surface-subtle` | `#E7E7E7` | — | 次级区块、表头 |
 | `--color-surface-ink` | `#14202E` | — | 深色面板底 |
-| `--color-ink` | `#1A1A1A` | 16.25:1 | 主文字 |
-| `--color-ink-secondary` | `#565656` | 6.85:1 | 正文辅助、元信息 |
-| `--color-ink-tertiary` | `#686868` | 5.20:1 | 时间戳、脚注、英文名（10-12px 小字） |
+| `--color-ink` | `#1A1A1A` | 15.55:1 | 主文字 |
+| `--color-ink-secondary` | `#565656` | 6.56:1 | 正文辅助、元信息 |
+| `--color-ink-tertiary` | `#636363` | 5.37:1 | 时间戳、脚注、英文名（10-12px 小字） |
 | `--color-ink-invert` | `#FFFFFF` | 14.28:1（对 masthead） | 深底上的文字 |
-| `--color-line` | `#E2E2E2` | — | 发丝分隔线、卡片描边 |
-| `--color-line-strong` | `#C9C9C9` | — | 输入框、聚焦前描边 |
-| `--color-accent` | `#1D4E89` | 7.83:1 | 链接、主操作、当前项（深靛） |
+| `--color-line` | `#D3D3D3` | 1.34:1（仅测量） | 发丝分隔线、卡片描边 |
+| `--color-line-strong` | `#BCBCBC` | 1.70:1（仅测量） | 输入框、聚焦前描边 |
+| `--color-accent` | `#1D4E89` | 7.49:1 | 链接、主操作、当前项（深靛） |
 | `--color-accent-hover` | `#163C6B` | — | 悬停/按压 |
-| `--color-accent-soft` | `#EAF0F7` | — | 选中背景、标签底 |
-| `--color-accent-ink` | `#0F2B4C` | 12.45:1（对 accent-soft） | 主色区深底 |
+| `--color-accent-soft` | `#DBE7F5` | — | 选中背景、标签底 |
+| `--color-accent-ink` | `#0F2B4C` | 11.40:1（对 accent-soft） | 主色区深底 |
 | `--color-masthead` | `#0F2B4C` | — | 报头带与页脚底条 |
-| `--color-utility` | `#F1F1F1` | — | 顶部工具条 |
+| `--color-utility` | `var(--color-surface-subtle)` | — | 顶部工具条（与浅底区块同色，不另立数值） |
+
+**浅色端是一条阶梯，不是一堆灰**：白 → canvas → surface-subtle → line → line-strong，
+相邻两档的亮度比实测 1.12 / 1.10 / 1.21 / 1.27。历史值挤在 1.07 / 1.05 / 1.21，
+四档看起来像"同一层没对齐"；而本站刻意不用阴影分层（卡片靠描边与留白），
+去掉装饰性图块之后页面结构全靠这条阶梯，间距必须肉眼可辨。
+`--color-accent-soft` 与 `surface-subtle` 同处一个明度档（差 1.01:1），
+**靠色相而不是靠深浅区分** —— 旧值 `#EAF0F7` 彩度只有 ΔRGB 13，实际读起来就是另一种灰。
 
 > `--color-ink-tertiary` 是**全站最紧的一条**：它被用了 76 次，绝大多数是 10-12px 的日期 / 英文名 / 月标。
-> **最不利背景是 `--color-accent-soft` `#EAF0F7`（不是 surface-subtle —— 前者更暗一点）**，实测 4.86:1。
-> 历史值 `#6E6E66` 在该背景上仅 4.48:1，已被 `npm run contrast` 拦下。
+> **最不利背景是 `--color-surface-subtle` `#E7E7E7`（4.86:1）**，`accent-soft` 4.80:1 紧随其后。
+> 历史值两轮校正：`#6E6E66` 在旧 accent-soft 上仅 4.48:1 被门禁拦下，改 `#686868`；
+> 浅色阶梯加深底色后该值对最不利背景只剩 4.51:1，贴线即隐患，故再降到 `#636363`，留 0.3 余量。
 
 **深底上的文字层级**（由 `--color-ink-invert` 派生，全部半透明合成后实测）：
 
@@ -170,7 +178,7 @@
 
 > 内容卡片默认**无阴影**，靠发丝描边与留白建立层次；仅浮层使用阴影。
 >
-> 阴影色相**跟随背景**：画布已改为纯中性 `#F7F7F7`，阴影也用中性灰 `rgba(58,58,58,·)`，
+> 阴影色相**跟随背景**：画布已改为纯中性 `#F7F7F7`（现值 `#F2F2F2`），阴影也用中性灰 `rgba(58,58,58,·)`，
 > 不用冷调近黑 `rgba(26,26,26,·)`（纯黑影子在任何底色上都显脏）。
 > 历史上曾是暖调 `rgba(60,57,48,·)`（配合暖画布），画布中性化后一并校正。
 >

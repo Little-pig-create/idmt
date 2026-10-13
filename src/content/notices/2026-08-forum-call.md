@@ -1,4 +1,5 @@
 ---
+draft: true
 title: 第二届数字治理青年学者论坛征文通知
 date: 2026-08-12
 category: 会议

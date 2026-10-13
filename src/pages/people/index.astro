@@ -27,11 +27,11 @@ for (const p of people) {
 const areas = [...areaCounts.entries()].sort((a, b) => b[1] - a[1]);
 ---
 
-<BaseLayout title="研究团队" description="数字管理研究院的研究人员与在读学生。">
+<BaseLayout title="研究团队" description="数字管理技术研究院的管理团队、研究人员与特聘专家。">
   <PageHero
     eyebrow="People"
     title="研究团队"
-    description="研究院现有研究人员与在读学生，覆盖管理学、经济学、公共管理与统计学背景。"
+    description="研究院现任院长、执行院长、副院长与各研究中心特聘专家。"
     crumbs={[{ label: '研究', href: '/research' }, { label: '研究团队' }]}
   />
 
@@ -103,9 +103,9 @@ const areas = [...areaCounts.entries()].sort((a, b) => b[1] - a[1]);
 
           <AsideBox title="加入我们">
             <p class="text-ui leading-relaxed text-ink-secondary">
-              研究院每年招收硕士研究生，并提供研究助理岗位与博士后职位。
+              研究院依托学校开展人才培养，为在校学生参与方向内科研实践创造条件。
             </p>
-            <a href={u('/join')} class="btn btn-secondary mt-4 w-full">招生与招聘</a>
+            <a href={u('/join')} class="btn btn-secondary mt-4 w-full">了解学生科研实践</a>
           </AsideBox>
         </aside>
       </div>

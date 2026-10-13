@@ -1,4 +1,5 @@
 ---
+draft: true
 title: 研究院年度报告（2025-2026）发布
 date: 2026-09-01
 category: 其他

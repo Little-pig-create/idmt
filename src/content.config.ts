@@ -72,7 +72,7 @@ const people = defineCollection({
     name: z.string(),
     nameEn: z.string().optional(),
     title: z.string(),
-    role: z.enum(['director', 'professor', 'associate', 'assistant', 'postdoc', 'phd']),
+    role: z.enum(['director', 'exec-director', 'vice-director', 'professor', 'associate', 'assistant', 'postdoc', 'phd']),
     researchAreas: z.array(z.string()).default([]),
     email: z.string().optional(),
     homepage: z.string().optional(),

@@ -24,24 +24,30 @@ const fmt = (d: Date) =>
   `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 ---
 
-<ul class:list={['notice-list', compact && 'notice-list-compact']}>
-  {
-    items.map((item) => (
-      <li>
-        <a href={u(item.href)} class="notice-item">
-          <span class="notice-title">
-            {item.pinned && <span class="notice-pin">置顶</span>}
-            {item.category && <span class="notice-cat">{item.category}</span>}
-            {item.title}
-          </span>
-          <time datetime={item.date.toISOString().slice(0, 10)} class="notice-date">
-            {fmt(item.date)}
-          </time>
-        </a>
-      </li>
-    ))
-  }
-</ul>
+{
+  items.length === 0 ? (
+    <p class="text-ui text-ink-secondary">暂无公告。</p>
+  ) : (
+    <ul class:list={['notice-list', compact && 'notice-list-compact']}>
+      {
+        items.map((item) => (
+          <li>
+            <a href={u(item.href)} class="notice-item">
+              <span class="notice-title">
+                {item.pinned && <span class="notice-pin">置顶</span>}
+                {item.category && <span class="notice-cat">{item.category}</span>}
+                {item.title}
+              </span>
+              <time datetime={item.date.toISOString().slice(0, 10)} class="notice-date">
+                {fmt(item.date)}
+              </time>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  )
+}
 
 <style>
   .notice-list-compact .notice-item {

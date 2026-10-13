@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHero from '../../components/ui/PageHero.astro';
 import SectionHeading from '../../components/ui/SectionHeading.astro';
-import CoverImage from '../../components/ui/CoverImage.astro';
+import TopicMark from '../../components/ui/TopicMark.astro';
 import EmptyState from '../../components/ui/EmptyState.astro';
 import { u } from '../../lib/paths';
 
@@ -62,14 +62,11 @@ for (const t of all) {
             <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {all.map((topic) => (
                 <a href={u(`/topics/${topic.id}`)} class="portal-card group">
-                  <div class="figure-frame aspect-[16/9]">
-                    <CoverImage
-                      cover={topic.data.image}
-                      alt={topic.data.title}
-                      seed={topic.data.seed}
-                      ratio={16 / 9}
-                    />
-                  </div>
+                  <TopicMark
+                    image={topic.data.image}
+                    alt={topic.data.title}
+                    seed={topic.data.seed}
+                  />
                   <div class="p-5">
                     {topic.data.badge && <span class="tag tag-quiet">{topic.data.badge}</span>}
                     <h3 class="mt-2 text-[1.0625rem] leading-snug">

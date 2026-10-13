@@ -1,4 +1,5 @@
 ---
+draft: true
 title: 2026 年度博士后研究人员招聘启事
 date: 2026-08-28
 category: 人事

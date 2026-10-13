@@ -172,7 +172,7 @@ export default function App() {
           <Typography
             sx={{ fontFamily: monoFont, fontSize: '0.6875rem', color: 'text.secondary', letterSpacing: '0.1em' }}
           >
-            数字管理研究院
+            数字管理技术研究院
           </Typography>
 
           <Box sx={{ flex: 1 }} />

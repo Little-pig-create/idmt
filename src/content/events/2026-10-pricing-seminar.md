@@ -1,4 +1,5 @@
 ---
+draft: true
 title: 公共数据授权运营的定价机制研讨会
 startDate: 2026-10-15
 location: 研究院 302 报告厅
