@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LockKeyhole, ArrowRight, ShieldCheck } from 'lucide-react';
 
+const LOGO = `${import.meta.env.BASE_URL}brand/logo-idmt-reversed.webp`;
+
 export default function Login({ onSuccess }: { onSuccess: () => void }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -39,7 +41,7 @@ export default function Login({ onSuccess }: { onSuccess: () => void }) {
         <div className="relative">
           <div>
             <img
-              src="/brand/logo-idmt-reversed.webp"
+              src={LOGO}
               alt="数字管理技术研究院"
               className="h-12 w-auto"
             />
@@ -93,9 +95,7 @@ export default function Login({ onSuccess }: { onSuccess: () => void }) {
             <ArrowRight className="size-4" />
           </Button>
 
-          <p className="mt-6 text-center text-[11px] text-[#6b7a90]">
-            首次使用默认密码 <code className="rounded bg-white px-1.5 py-0.5 font-mono text-[10.5px]">idmt-admin</code>
-          </p>
+          <p className="mt-6 text-center text-[11px] text-[#6b7a90]">忘记密码请联系系统管理员重置。</p>
         </form>
       </div>
     </div>

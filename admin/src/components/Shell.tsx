@@ -54,7 +54,7 @@ function SidebarContent({ route, onNavigate, onLogout }: Omit<Props, 'children'>
     <div className="flex h-full flex-col bg-[#050b16]">
       <div className="px-4 py-5">
         <img
-          src="/brand/logo-idmt-reversed.webp"
+          src={LOGO}
           alt="数字管理技术研究院"
           className="h-7 w-auto"
         />
@@ -103,6 +103,8 @@ function SidebarContent({ route, onNavigate, onLogout }: Omit<Props, 'children'>
     </div>
   );
 }
+
+const LOGO = `${import.meta.env.BASE_URL}brand/logo-idmt-reversed.webp`;
 
 export default function Shell({ route, onNavigate, onLogout, children }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);

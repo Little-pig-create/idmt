@@ -7,5 +7,5 @@ import settings from './site-settings.json';
 export const site = {
   ...settings,
   slogan: 'RESEARCH · INNOVATION · IMPACT',
-  url: 'https://little-pig-create.github.io',
+  url: import.meta.env.SITE ?? 'https://little-pig-create.github.io',
 } as const;
