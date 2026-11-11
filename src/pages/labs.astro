@@ -1,0 +1,94 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/site/PageHero.astro';
+import SectionHead from '../components/site/SectionHead.astro';
+import { u } from '../lib/paths';
+
+const labs = (await getCollection('labs', ({ data }) => !data.draft)).sort((a, b) => a.data.order - b.data.order);
+const professional = labs.filter((l) => l.data.group === '专业实验室');
+const centers = labs.filter((l) => l.data.group === '研究中心分中心');
+const platforms = labs.filter((l) => l.data.group === '公共平台');
+---
+
+<BaseLayout title="技术平台" description="IDMT 十大专业实验室与研究中心分中心：SMT、SPI、AOI、FBT、烤机、EMC、HALT、环境试验与 ATE，覆盖单板到集群的完整验证链。" transparentHeader image="/images/lab-line.jpg">
+  <PageHero
+    eyebrow="LABORATORIES / 技术平台"
+    title="十大专业实验室，把验证留在院内"
+    description="一条完整的硬件验证链，从锡膏印刷的三维检测，到整机烤机、EMC 暗室与量产 ATE。研究团队不必在外部实验室之间排队，迭代周期以天计。"
+    crumbs={[{ label: '技术平台' }]}
+    image={u('/images/lab-line.webp')}
+  >
+    <div class="mt-10 grid grid-cols-2 gap-6 border-t border-white/12 pt-7 sm:grid-cols-4">
+      {[
+        { value: '10', label: '专业实验室' },
+        { value: '8', label: '研究中心分中心' },
+        { value: '5', label: '公共平台' },
+        { value: '1', label: '闭环验证链' },
+      ].map((s) => (
+        <div class="border-l border-white/12 pl-4">
+          <p class="font-display text-[2rem] font-bold leading-none text-white">{s.value}</p>
+          <p class="mt-2 text-[12.5px] text-white/50">{s.label}</p>
+        </div>
+      ))}
+    </div>
+  </PageHero>
+
+  <section class="section bg-canvas">
+    <div class="container-page">
+      <SectionHead eyebrow="LABS / 专业实验室" title="从一块单板到一整柜机器" description="十间实验室按「单板—整机—机柜」三层组织，测试数据回流到同一套质量追溯体系。" />
+      <div class="mt-10 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
+        {professional.map((lab) => (
+          <article class="group bg-surface p-6 transition-colors hover:bg-canvas">
+            <div class="flex items-baseline justify-between">
+              <span class="font-display text-[1.5rem] font-bold text-line-strong transition-colors group-hover:text-brand">{String(lab.data.order).padStart(2, '0')}</span>
+              <span class="font-mono text-[9px] tracking-[0.14em] text-ink-tertiary">{lab.data.nameEn}</span>
+            </div>
+            <h3 class="mt-3 font-display text-[1.1rem] font-semibold text-ink">{lab.data.name}</h3>
+            <p class="mt-2 text-[13px] leading-relaxed text-ink-secondary">{lab.data.summary}</p>
+            {lab.data.capability && (
+              <p class="mt-4 border-t border-line pt-3 text-[12px] leading-relaxed text-ink-tertiary">{lab.data.capability}</p>
+            )}
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section border-t border-line bg-surface">
+    <div class="container-page grid gap-12 lg:grid-cols-2 lg:gap-16">
+      <div>
+        <p class="eyebrow">CENTERS / 研究中心分中心</p>
+        <h2 class="mt-4 font-display text-h2 font-bold tracking-[-0.02em] text-ink">八个分中心，把方向做深</h2>
+        <ul class="mt-7 divide-y divide-line">
+          {centers.map((c) => (
+            <li class="flex items-start justify-between gap-6 py-4">
+              <div>
+                <p class="text-[14.5px] font-semibold text-ink">{c.data.name}</p>
+                <p class="mt-1 text-[12.5px] leading-relaxed text-ink-secondary">{c.data.summary}</p>
+              </div>
+              <span class="mt-1 font-mono text-[9.5px] tracking-[0.12em] text-ink-tertiary">{String(c.data.order).padStart(2, '0')}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div>
+        <p class="eyebrow">PLATFORMS / 公共平台</p>
+        <h2 class="mt-4 font-display text-h2 font-bold tracking-[-0.02em] text-ink">把实验室开放给合作方</h2>
+        <ul class="mt-7 divide-y divide-line">
+          {platforms.map((p) => (
+            <li class="py-4">
+              <p class="text-[14.5px] font-semibold text-ink">{p.data.name}</p>
+              <p class="mt-1 text-[12.5px] leading-relaxed text-ink-secondary">{p.data.summary}</p>
+            </li>
+          ))}
+        </ul>
+
+        <div class="mt-8 overflow-hidden rounded-2xl border border-line">
+          <img src={u('/images/lab-line.webp')} alt="实验室与产线现场" class="h-52 w-full object-cover" loading="lazy" />
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

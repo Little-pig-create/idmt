@@ -1,165 +1,142 @@
 /* ============================================================
    数字管理技术研究院 · 设计令牌单一数据源
-   美学方向：Institutional Academia（学术机构风）
+   美学方向：Deep-Tech Institution（深空 / 精密 / 大气）
 
-   中性层一律为**纯中性灰**（H0 / S0%），不带暖调偏移。
-   依据：清华国情研究院（#6a3177 + #333/#666/#999/#eee）、北大国发院（#a71016 + #333/#6a6a6a/#ededed）、
-   NBER（#025cb9 + #4e505a/#bfc0c1/#f0f0f0）四家的实际样式表 —— 中性色饱和度均在 0-7%，
-   没有一家使用暖米白。暖调画布会读成"杂志 / 设计工作室"，不是机构。
-   历史上 canvas 为 #f7f7f5（H60 S11%），已校正。
+   两套表面：
+   - 明面：冷白画布 + 卡片白，用于长阅读与信息密集区；
+   - 暗面：深空蓝黑，用于首屏、技术体系、CTA 等需要体量感的区块。
+   品牌色只用两枚：科技蓝（--color-brand）与青绿（--color-brand-2），
+   二者构成 120° 渐变；金色只作极小面积的机构印记，不参与功能区。
 
-   所有颜色 / 字体 / 间距 / 圆角 / 阴影 / 动效均在此定义，
-   组件中禁止硬编码颜色值。
+   组件中禁止硬编码颜色值 —— 全部走这里的令牌。
    ============================================================ */
 
 @theme {
-  /* ---------- 色彩：表面（纯中性） ----------
-     浅色端是一条**阶梯**，相邻两档之间要有肉眼可辨的一级：
-     白（卡片）→ canvas（页面底）→ surface-subtle（浅底区块）→ line（发丝线）→ line-strong（强调描边）。
-     历史上前四档挤在 #ffffff / #f7f7f7 / #f1f1f1 / #e2e2e2（相邻亮度比 1.071 / 1.054 / 1.209），
-     看着不是"层级"而是"同一层灰度没对齐"；去掉装饰图块之后页面结构全靠这条线撑，
-     所以把间距拉开到 1.119 / 1.105 / 1.211（实测）。 */
-  --color-canvas: #f2f2f2;
-  --color-surface: #ffffff;
-  --color-surface-subtle: #e7e7e7;
-  --color-surface-ink: #14202e;
+  /* ---------- 品牌 ---------- */
+  --color-brand: #1f5eff;
+  --color-brand-hover: #1749d6;
+  --color-brand-soft: #e6edff;
+  --color-brand-ink: #0b2a75;
+  --color-brand-2: #20c9b4;
+  --color-brand-2-soft: #e0faf6;
+  --color-gold: #c19a4b;
 
-  /* ---------- 色彩：文字（纯中性） ---------- */
-  --color-ink: #1a1a1a;
-  --color-ink-secondary: #565656;
-  /* 10-12px 的日期 / 英文名 / 月标都用它，必须过正文级 AA（4.5:1）。
-     全站最不利背景是 surface-subtle #e7e7e7：#636363 对它是 4.86:1，
-     对 accent-soft 4.80:1，对 canvas 5.37:1，对白 6.01:1。
-     历史值两轮校正：#6e6e66 在 accent-soft 上仅 4.48:1 被门禁拦下，
-     改 #686868 后新浅色阶梯加深了底色，最不利组合只剩 4.51:1 —— 贴线即隐患，
-     故再降到 #636363，留出约 0.3 的余量给后续改配色。 */
-  --color-ink-tertiary: #636363;
+  /* ---------- 明面 ---------- */
+  --color-canvas: #f4f6fa;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #eaeff6;
+  --color-surface-ink: #0a1424;
+
+  /* ---------- 暗面 ---------- */
+  --color-night: #050b16;
+  --color-night-2: #0a1526;
+  --color-night-3: #101f36;
+  --color-night-line: #1e2f4a;
+  --color-on-night: #eef3fb;
+  --color-on-night-soft: #b9c6da;
+  --color-on-night-muted: #8496b0;
+  --color-on-night-faint: #7689a5;
+
+  /* ---------- 文字 ---------- */
+  --color-ink: #0a1424;
+  --color-ink-secondary: #45556d;
+  --color-ink-tertiary: #5d6b7e;
   --color-ink-invert: #ffffff;
 
-  /* 深底（报头 / 页脚底条）上的文字与描边层级。
-     历史上这些是散落在 Header / Footer / global.css 里写死的 rgba(247,247,245,·)，
-     共 6 个互不相干的透明度 —— 那是画布色的副本，改配色时不会跟着变。
-     现在收敛为 5 档语义层级，全部由 ink-invert 派生。 */
-  --color-on-masthead: var(--color-ink-invert);
-  --color-on-masthead-soft: color-mix(in srgb, var(--color-ink-invert) 82%, transparent);
-  --color-on-masthead-muted: color-mix(in srgb, var(--color-ink-invert) 66%, transparent);
-  --color-on-masthead-faint: color-mix(in srgb, var(--color-ink-invert) 50%, transparent);
-  --color-on-masthead-line: color-mix(in srgb, var(--color-ink-invert) 28%, transparent);
-  --color-on-masthead-line-strong: color-mix(in srgb, var(--color-ink-invert) 70%, transparent);
+  /* ---------- 描边 ---------- */
+  --color-line: #dde5f0;
+  --color-line-strong: #c3d0e2;
 
-  /* ---------- 色彩：描边（纯中性） ----------
-     发丝线要"看得见但不抢眼"：对最常出现的两种底（canvas、surface）分别 1.34:1 / 1.50:1，
-     落在最浅的底（surface-subtle）上也有 1.21:1 —— 旧值 #e2e2e2 对 canvas 只有 1.21:1，
-     在白卡上 1.34:1，读起来像"这条线没画实"。 */
-  --color-line: #d3d3d3;
-  --color-line-strong: #bcbcbc;
-
-  /* ---------- 色彩：主色（深靛） ---------- */
-  --color-accent: #1d4e89;
-  --color-accent-hover: #163c6b;
-  /* 强调底：与 surface-subtle 同处一个明度档（差 1.01:1，不构成层级），
-     靠色相区分而不是靠深浅 —— 旧值 #eaf0f7 彩度只有 ΔRGB 13，实测就是"一种灰"。 */
-  --color-accent-soft: #dbe7f5;
-  --color-accent-ink: #0f2b4c;
-
-  /* ---------- 色彩：语义状态 ----------
-     站点目前没有用到（无表单校验、无彩色徽章 —— 这是有意的克制），
-     保留是为了状态反馈有据可依；数值已校准到正文级 AA。 */
-  --color-success: #127a54;
-  --color-success-soft: #eaf7f1;
-  --color-warning: #8f5a08;
-  --color-warning-soft: #fff6e5;
-  --color-error: #c53e4a;
-  --color-error-soft: #fff1f2;
+  /* ---------- 语义 ---------- */
+  --color-success: #0f7a55;
+  --color-success-soft: #e6f7f0;
+  --color-warning: #8a5a06;
+  --color-warning-soft: #fff5e2;
+  --color-error: #c33241;
+  --color-error-soft: #fdecee;
 
   /* ---------- 字体 ---------- */
-  --font-display: "Source Serif 4", "EB Garamond", Georgia, "Noto Serif SC", serif;
-  --font-sans: "IBM Plex Sans", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
-  --font-serif-cjk: "Noto Serif SC", "Source Han Serif SC", "Source Serif 4", serif;
-  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  --font-display: "IBM Plex Sans", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-sans: "IBM Plex Sans", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-serif-cjk: "LXGW ZhiSong", "Noto Serif SC", "Songti SC", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
   /* ---------- 字号 ---------- */
-  --text-display: clamp(2.5rem, 6vw, 4.5rem);
-  --text-display--line-height: 1.05;
-  --text-h1: clamp(2rem, 4vw, 3rem);
-  --text-h1--line-height: 1.15;
-  --text-h2: clamp(1.5rem, 2.5vw, 2rem);
-  --text-h2--line-height: 1.25;
-  --text-h3: 1.25rem;
+  --text-display: clamp(2.6rem, 6.4vw, 5.5rem);
+  --text-display--line-height: 1.04;
+  --text-h1: clamp(2.1rem, 4.2vw, 3.4rem);
+  --text-h1--line-height: 1.12;
+  --text-h2: clamp(1.65rem, 2.7vw, 2.35rem);
+  --text-h2--line-height: 1.2;
+  --text-h3: 1.3rem;
   --text-h3--line-height: 1.4;
   --text-body: 1.0625rem;
-  --text-body--line-height: 1.75;
-  --text-ui: 0.875rem;
-  --text-ui--line-height: 1.5;
+  --text-body--line-height: 1.8;
+  --text-ui: 0.9375rem;
+  --text-ui--line-height: 1.6;
   --text-meta: 0.75rem;
   --text-meta--line-height: 1.5;
 
   /* ---------- 圆角 ---------- */
-  --radius-sm: 3px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
 
-  /* ---------- 阴影（极轻） ----------
-     色相跟随背景：画布是纯中性 #f2f2f2，阴影也用中性灰，
-     不用纯黑（纯黑影子在任何底色上都显脏）。
-     注意 --shadow-sm 当前 0 处引用（卡片按设计就是无阴影，靠描边与留白分层）。
-     历史上还有 --shadow-focus，与 global.css 的 :focus-visible outline 是两套并存的
-     焦点环机制 —— 同义双写是漂移隐患，已删除，焦点环统一走 outline。 */
-  --shadow-sm: 0 1px 2px rgba(58, 58, 58, 0.05);
-  --shadow-menu: 0 8px 28px rgba(58, 58, 58, 0.1);
-  --shadow-dialog: 0 20px 48px rgba(58, 58, 58, 0.16);
+  /* ---------- 阴影 ---------- */
+  --shadow-xs: 0 1px 2px rgba(10, 20, 36, 0.06);
+  --shadow-sm: 0 2px 8px rgba(10, 20, 36, 0.06);
+  --shadow-md: 0 12px 32px rgba(10, 20, 36, 0.09);
+  --shadow-lg: 0 28px 70px rgba(4, 12, 26, 0.18);
+  --shadow-glow: 0 20px 70px rgba(31, 94, 255, 0.28);
 
   /* ---------- 动效 ---------- */
-  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* ---------- 门户式布局：报头与区块 ---------- */
-  /* 报头深底（深靛），用于报头带与页脚底条 */
-  --color-masthead: #0f2b4c;
-  /* 工具条底色就是 surface-subtle，历史值是它的字面副本（两份 #f1f1f1），
-     改配色时只会漏改一处 —— 现在直接引用，单一数据源。 */
-  --color-utility: var(--color-surface-subtle);
+  /* ---------- 渐变 ---------- */
+  --gradient-brand: linear-gradient(120deg, #1f5eff 0%, #2ea6ff 46%, #20c9b4 100%);
+  --gradient-night: linear-gradient(180deg, #050b16 0%, #0a1526 55%, #050b16 100%);
 
-  /* 遮罩（抽屉 / 弹层） */
-  --color-scrim: color-mix(in srgb, var(--color-ink) 32%, transparent);
-
-  /* ---------- 抽象图形配色（焦点图与专题配图，装饰性） ----------
-     全部落在主色 H209-214 色族内，不再混入暖铜。
-     历史上 fig-d 为 #a98c62（H35 S29% 暖铜），是全站唯一的暖色，
-     与冷靛主色系不同族 —— 已校正为同族冷灰蓝。 */
-  --color-fig-a: #1d4e89;
-  --color-fig-b: #0f2b4c;
-  --color-fig-c: #4a6b8a;
-  --color-fig-d: #7a8798;
-  --color-fig-e: #d8d8d8;
+  /* ---------- shadcn/ui 语义映射 ----------
+     shadcn 组件只认 background / foreground / primary / muted 这一套；
+     这里把它们映射到本院令牌，避免出现第二套颜色来源。 */
+  --color-background: var(--color-canvas);
+  --color-foreground: var(--color-ink);
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--color-ink);
+  --color-popover: var(--color-surface);
+  --color-popover-foreground: var(--color-ink);
+  --color-primary: var(--color-brand);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--color-surface-subtle);
+  --color-secondary-foreground: var(--color-ink);
+  --color-muted: #eef2f8;
+  --color-muted-foreground: var(--color-ink-secondary);
+  --color-accent: #e9f0fb;
+  --color-accent-foreground: var(--color-brand-ink);
+  --color-destructive: var(--color-error);
+  --color-destructive-foreground: #ffffff;
+  --color-border: var(--color-line);
+  --color-input: var(--color-line);
+  --color-ring: var(--color-brand);
 }
 
-/* ---------- 布局常量（非 Tailwind 命名空间，直接作 CSS 变量） ---------- */
+/* ---------- 布局常量 ---------- */
 :root {
-  --layout-max: 1200px;
-  --layout-wide: 1320px;
-  --layout-prose: 720px;
+  --layout-max: 1240px;
+  --layout-wide: 1440px;
+  --layout-prose: 760px;
 
-  /* 报头三段高度 */
-  --utility-h: 34px;
-  --masthead-h: 84px;
-  /* 吸顶主导航高度。全站吸顶偏移一律用 var(--nav-h)，不要再新增同义别名（历史上 --header-h 与之重复，已移除） */
-  --nav-h: 52px;
-
-  --duration-fast: 120ms;
-  --duration-normal: 180ms;
-  --duration-slow: 260ms;
+  --nav-h: 72px;
+  --duration-fast: 160ms;
+  --duration-normal: 260ms;
+  --duration-slow: 420ms;
 }
 
 @media (max-width: 1023px) {
   :root {
-    --masthead-h: 64px;
-    --nav-h: 48px;
-  }
-}
-
-@media (max-width: 767px) {
-  :root {
-    --masthead-h: 60px;
-    --nav-h: 44px;
+    --nav-h: 64px;
   }
 }

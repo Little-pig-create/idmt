@@ -1,0 +1,134 @@
+---
+import { nav } from '../../data/nav';
+import { site } from '../../data/site';
+import MobileNav from './MobileNav.tsx';
+import { u } from '../../lib/paths';
+
+interface Props {
+  transparent?: boolean;
+}
+
+const { transparent = false } = Astro.props;
+const path = Astro.url.pathname.replace(/^\/idmt/, '') || '/';
+const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
+---
+
+<header
+  class:list={[
+    'site-header fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-300',
+    transparent ? 'is-transparent' : 'is-solid',
+  ]}
+  data-site-header
+>
+  <div class="container-wide flex h-[var(--nav-h)] items-center justify-between gap-6">
+    {/* 品牌 */}
+    <a href={u("/")} class="group flex shrink-0 items-center gap-3" aria-label={`${site.name} 首页`}>
+      <span class="relative grid size-9 place-items-center overflow-hidden rounded-md bg-[var(--gradient-brand)] shadow-[0_6px_18px_rgba(31,94,255,.35)]">
+        <svg viewBox="0 0 24 24" class="size-5" fill="none" aria-hidden="true">
+          <path d="M4 18V9.5L9 6l5 3.5V18" stroke="white" stroke-width="1.6" stroke-linejoin="round" />
+          <path d="M14 11.5 20 8v10" stroke="white" stroke-width="1.6" stroke-linejoin="round" opacity=".75" />
+          <circle cx="9" cy="18" r="1.5" fill="white" />
+        </svg>
+      </span>
+      <span class="flex flex-col leading-none">
+        <span class="font-display text-[15px] font-semibold tracking-tight text-white">{site.name}</span>
+        <span class="mt-1 font-mono text-[9px] tracking-[0.24em] text-white/55">IDMT</span>
+      </span>
+    </a>
+
+    {/* 桌面导航 */}
+    <nav aria-label="主导航" class="hidden items-center gap-1 lg:flex">
+      {
+        nav.map((item) => (
+          <div class="group relative">
+            <a
+              href={u(item.href)}
+              class:list={[
+                'relative inline-flex h-9 items-center rounded-md px-3 text-[13.5px] font-medium transition-colors',
+                isActive(item.href) ? 'text-white' : 'text-white/70 hover:text-white',
+              ]}
+              aria-current={isActive(item.href) ? 'page' : undefined}
+            >
+              {item.label}
+              {item.children && (
+                <svg viewBox="0 0 12 12" class="ml-1.5 size-2.5 opacity-60 transition-transform group-hover:rotate-180" aria-hidden="true">
+                  <path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+                </svg>
+              )}
+              {isActive(item.href) && <span class="absolute inset-x-3 -bottom-0.5 h-px bg-[var(--color-brand-2)]" />}
+            </a>
+
+            {item.children && (
+              <div class="invisible absolute left-0 top-full w-[280px] translate-y-1 pt-2 opacity-0 transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                <div class="overflow-hidden rounded-xl border border-white/10 bg-night-2/95 p-2 shadow-[var(--shadow-lg)] backdrop-blur-xl">
+                  {item.children.map((child) => (
+                    <a
+                      href={u(child.href)}
+                      class="block rounded-lg px-3 py-2 text-[13px] text-white/70 transition-colors hover:bg-white/[0.06] hover:text-white"
+                    >
+                      {child.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ))
+      }
+    </nav>
+
+    {/* 右侧动作 */}
+    <div class="flex items-center gap-2">
+      <a
+        href={u("/search")}
+        class="grid size-9 place-items-center rounded-md text-white/70 transition-colors hover:bg-white/[0.06] hover:text-white"
+        aria-label="全站搜索"
+      >
+        <svg viewBox="0 0 20 20" class="size-4" fill="none" aria-hidden="true">
+          <circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.5" />
+          <path d="m13.5 13.5 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+      </a>
+      <a
+        href={u("/join")}
+        class="hidden h-9 items-center rounded-md bg-white px-4 text-[13px] font-semibold text-[var(--color-ink)] transition-transform hover:-translate-y-0.5 md:inline-flex"
+      >
+        加入我们
+      </a>
+      <MobileNav
+        client:load
+        joinHref={u('/join')}
+        items={nav.map((item) => ({
+          ...item,
+          href: u(item.href),
+          children: item.children?.map((child) => ({ ...child, href: u(child.href) })),
+        }))}
+      />
+    </div>
+  </div>
+</header>
+
+<script>
+  const header = document.querySelector('[data-site-header]');
+  if (header) {
+    const onScroll = () => {
+      const solid = window.scrollY > 24 || !header.classList.contains('is-transparent');
+      header.classList.toggle('is-solid', solid);
+      if (!header.classList.contains('is-transparent')) header.classList.add('is-solid');
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
+</script>
+
+<style>
+  .site-header.is-transparent {
+    background: linear-gradient(180deg, rgba(5, 11, 22, 0.55) 0%, rgba(5, 11, 22, 0) 100%);
+  }
+
+  .site-header.is-solid {
+    background: rgba(5, 11, 22, 0.86);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(18px) saturate(140%);
+  }
+</style>

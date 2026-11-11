@@ -1,0 +1,60 @@
+---
+interface Props {
+  eyebrow: string;
+  title: string;
+  description?: string;
+  href?: string;
+  linkLabel?: string;
+  tone?: 'light' | 'dark';
+  align?: 'left' | 'center';
+}
+
+const {
+  eyebrow,
+  title,
+  description,
+  href,
+  linkLabel = '查看全部',
+  tone = 'light',
+  align = 'left',
+} = Astro.props;
+
+const isDark = tone === 'dark';
+---
+
+<div class:list={['flex flex-col gap-6 md:flex-row md:items-end md:justify-between', align === 'center' && 'md:flex-col md:items-center']}>
+  <div class:list={[align === 'center' && 'text-center']}>
+    <p class:list={['eyebrow', isDark && 'eyebrow-night']}>{eyebrow}</p>
+    <h2
+      class:list={[
+        'mt-4 font-display text-h2 font-bold tracking-[-0.02em]',
+        isDark ? 'text-white' : 'text-ink',
+      ]}
+    >
+      {title.split('\n').map((line, i) => (i === 0 ? line : <><br />{line}</>))}
+    </h2>
+    {description && (
+      <p class:list={['mt-3 max-w-2xl text-[15px] leading-relaxed', isDark ? 'text-white/60' : 'text-ink-secondary']}>
+        {description}
+      </p>
+    )}
+  </div>
+
+  {href && (
+    <a
+      href={href}
+      class:list={[
+        'group inline-flex shrink-0 items-center gap-2 text-[13.5px] font-medium transition-colors',
+        isDark ? 'text-white/70 hover:text-white' : 'text-ink-secondary hover:text-brand',
+      ]}
+    >
+      {linkLabel}
+      <span class="grid size-7 place-items-center rounded-full border transition-transform group-hover:translate-x-0.5"
+            class:list={[isDark ? 'border-white/20' : 'border-line-strong']}>
+        <svg viewBox="0 0 12 12" class="size-2.5" fill="none" aria-hidden="true">
+          <path d="M2 6h8M6.5 2.5 10 6l-3.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </span>
+    </a>
+  )}
+</div>

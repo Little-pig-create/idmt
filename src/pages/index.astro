@@ -1,464 +1,480 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import SectionHeading from '../components/ui/SectionHeading.astro';
-import CoverImage from '../components/ui/CoverImage.astro';
-import PublicationItem from '../components/content/PublicationItem.astro';
-import PersonCard from '../components/content/PersonCard.astro';
-import EventItem from '../components/content/EventItem.astro';
-import NoticeList from '../components/content/NoticeList.astro';
-import Carousel from '../components/ui/Carousel.astro';
-import TopicMark from '../components/ui/TopicMark.astro';
-import { site, researchAreas } from '../data/site';
+import SectionHead from '../components/site/SectionHead.astro';
+import Reveal from '../components/site/Reveal.tsx';
+import Stats from '../components/site/Stats.tsx';
+import CapabilityTabs from '../components/site/CapabilityTabs.tsx';
+import ProductCarousel from '../components/site/ProductCarousel.tsx';
+import PartnerMarquee from '../components/site/PartnerMarquee.tsx';
+import { site } from '../data/site';
+import { milestones, partners } from '../data/org';
 import { u } from '../lib/paths';
 
-const fmtDate = (d: Date) =>
-  `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
-
-const research = (await getCollection('research', ({ data }) => !data.draft)).sort(
-  (a, b) => a.data.order - b.data.order
-);
-
-const publications = (await getCollection('publications', ({ data }) => !data.draft)).sort(
-  (a, b) => b.data.year - a.data.year
-);
-const latestPublications = publications.slice(0, 5);
-
-/**
- * 方向卡上的成果数：与研究方向详情页同一套关联口径
- * （`research/[slug].astro:24` 的 keywords ∩ 成果 tags），两处必须一致，
- * 否则首页说「3 项」、点进去列 2 项。
- */
-const publicationCountByArea = new Map(
-  research.map((area) => [
-    area.id,
-    publications.filter((p) => p.data.tags.some((t) => area.data.keywords.includes(t))).length,
-  ])
-);
-
-const people = (await getCollection('people', ({ data }) => !data.draft)).sort(
-  (a, b) => a.data.order - b.data.order
-);
-
-const news = (await getCollection('news', ({ data }) => !data.draft)).sort(
-  (a, b) => b.data.date.getTime() - a.data.date.getTime()
-);
-const featured = news.find((n) => n.data.featured) ?? news[0];
-const topNews = news.filter((n) => n.id !== featured?.id).slice(0, 3);
-/** 要闻区非对称布局：第一条做头条（大图），其余做右栏简讯（纯文字） */
-const [leadNews, ...briefNews] = topNews;
-
-/** 轮播：焦点（或最新一条）优先，其余按日期倒序补足，共 5 条 */
-const carouselSlides = (featured ? [featured, ...news.filter((n) => n.id !== featured.id)] : news)
-  .slice(0, 5)
-  .map((n, i) => ({
-    id: n.id,
-    href: `/news/${n.id}`,
-    badge: i === 0 ? '焦点' : '要闻',
-    tag: n.data.tags[0],
-    cover: n.data.cover,
-    coverAlt: n.data.coverAlt,
-    date: n.data.date,
-    dateText: fmtDate(n.data.date),
-    title: n.data.title,
-    summary: n.data.summary,
-  }));
-
-const events = (await getCollection('events', ({ data }) => !data.draft)).sort(
-  (a, b) => a.data.startDate.getTime() - b.data.startDate.getTime()
-);
-const now = Date.now();
-const upcomingEvents = events.filter((e) => e.data.startDate.getTime() >= now);
-const shownEvents = (upcomingEvents.length > 0 ? upcomingEvents : events).slice(0, 4);
-
+const research = (await getCollection('research', ({ data }) => !data.draft)).sort((a, b) => a.data.order - b.data.order);
+const products = (await getCollection('products', ({ data }) => !data.draft)).sort((a, b) => a.data.order - b.data.order);
+const labs = (await getCollection('labs', ({ data }) => !data.draft && data.group === '专业实验室')).sort((a, b) => a.data.order - b.data.order);
+const news = (await getCollection('news', ({ data }) => !data.draft)).sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+const events = (await getCollection('events', ({ data }) => !data.draft)).sort((a, b) => a.data.startDate.getTime() - b.data.startDate.getTime());
 const notices = (await getCollection('notices', ({ data }) => !data.draft))
-  .sort((a, b) => {
-    if (a.data.pinned !== b.data.pinned) return a.data.pinned ? -1 : 1;
-    return b.data.date.getTime() - a.data.date.getTime();
-  })
-  .slice(0, 6);
+  .sort((a, b) => Number(b.data.pinned) - Number(a.data.pinned) || b.data.date.getTime() - a.data.date.getTime())
+  .slice(0, 4);
 
-const noticeItems = notices.map((n) => ({
-  title: n.data.title,
-  date: n.data.date,
-  href: `/notices#${n.id}`,
-  category: n.data.category,
-  pinned: n.data.pinned,
-}));
+const featured = news.find((n) => n.data.featured) ?? news[0];
+const restNews = news.filter((n) => n.id !== featured?.id).slice(0, 4);
 
-/** 专题：首页展示前 3 个（按 order），全部在 /topics */
-const topics = (await getCollection('topics', ({ data }) => !data.draft))
-  .sort((a, b) => a.data.order - b.data.order)
-  .slice(0, 3);
-
-const projects = (await getCollection('projects', ({ data }) => !data.draft)).filter(
-  (p) => p.data.status === 'ongoing'
-);
-
-const ongoingCount = projects.length;
-const completedCount = (await getCollection('projects', ({ data }) => !data.draft)).length - ongoingCount;
+const fmt = (d: Date) => `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 
 const stats = [
-  { value: String(research.length), label: '研究方向' },
-  { value: String(publications.length), label: '学术成果' },
-  { value: String(people.length), label: '研究人员' },
-  { value: String(events.length), label: '学术活动' },
+  { value: 6, suffix: '个', label: '研究中心', note: 'RESEARCH CENTERS' },
+  { value: research.length, suffix: '个', label: '研究方向', note: 'RESEARCH AREAS' },
+  { value: labs.length, suffix: '间', label: '专业实验室', note: 'LABORATORIES' },
+  { value: products.length, suffix: '项', label: '产品与方案', note: 'PRODUCT LINES' },
+];
+
+const capabilities = [
+  {
+    id: 'computing',
+    label: '算力底座',
+    en: 'COMPUTING',
+    title: '从一块单板到万卡集群',
+    description:
+      '器件贴装、单板设计、整机柜与集群调度在同一条验证链上完成。十大专业实验室让每一层设计都能在本院闭环，不必外送。',
+    points: ['102×102mm 超大 BGA 与高速 PCB 叠层', '风冷 / 冷板 / 浸没三条散热路线', '64–1024 卡梯度集群与万卡风液混合', '固件一致性与集群统一纳管'],
+    image: u('/images/datacenter.webp'),
+    href: u('/research/intelligent-computing'),
+  },
+  {
+    id: 'intelligence',
+    label: '智能系统',
+    en: 'INTELLIGENCE',
+    title: '让机器在真实世界稳定工作',
+    description:
+      '无人车、无人机、移动机器人与协作机械臂共用一套感知、决策与控制底座，仿真先行，实车收敛。',
+    points: ['多模态感知融合与车路协同', '激光 SLAM 与视觉引导抓取', '数字孪生与车辆在环仿真', '大模型驱动的任务编排'],
+    image: u('/images/hero-city.webp'),
+    href: u('/research/ai-autonomous-systems'),
+  },
+  {
+    id: 'industry',
+    label: '产业场景',
+    en: 'INDUSTRY',
+    title: '把技术变成可交付的产线',
+    description:
+      '增材制造、固态储氢与低空经济三条产业化路径已进入验证阶段，技术指标以现场工况为准，而不是实验室峰值。',
+    points: ['金属增材鞋模：8 道工序压缩至 4 道', '固态储氢：4282 公里高原实测', '低空运输平台：850kg 级起飞重量', '智慧社区与工业软件规模化交付'],
+    image: u('/images/print-mold.webp'),
+    href: u('/products'),
+  },
+];
+
+const principles = [
+  { title: '面向未来', en: 'FUTURE-ORIENTED', desc: '瞄准未来 10–15 年的前沿性、革命性、颠覆性技术。' },
+  { title: '交叉融合', en: 'CONVERGENCE', desc: '打破学科壁垒，推动理工结合、工工交叉、医工融合。' },
+  { title: '科教结合', en: 'EDUCATION', desc: '把科研成果转化为教学内容，让学生在真实课题中成长。' },
+  { title: '开放创新', en: 'OPENNESS', desc: '以世界眼光配置资源，在开放中汇聚合作与人才。' },
 ];
 ---
 
-<BaseLayout title={site.name} description={site.description}>
-  {/* ============ 机构定位条 ============ */}
-  <div data-cfg-block="positioning" class="border-b border-line bg-surface">
-    <div class="container-page flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 py-4">
-      <p class="font-[family-name:var(--font-serif-cjk)] text-[1.1875rem] font-semibold text-ink lg:text-[1.3125rem]">
-        {site.tagline}
-      </p>
-      <p class="max-w-2xl text-ui leading-relaxed text-ink-secondary">
-        聚焦{researchAreas.join('、')}四个专业领域。
-      </p>
-    </div>
-  </div>
+<BaseLayout title={site.name} description={site.description} transparentHeader image="/images/hero-city.jpg">
+  <section class="relative isolate flex min-h-[100svh] flex-col justify-end overflow-hidden bg-night pt-[var(--nav-h)]">
+    <img
+      src={u('/images/hero-city.webp')}
+      alt="城市低空与地面无人系统协同运行的概念场景"
+      class="absolute inset-0 -z-20 h-full w-full object-cover object-center"
+      fetchpriority="high"
+    />
+    <div class="absolute inset-0 -z-10 bg-[linear-gradient(100deg,rgba(5,11,22,.94)_0%,rgba(5,11,22,.76)_38%,rgba(5,11,22,.32)_62%,rgba(5,11,22,.62)_100%)]"></div>
+    <div class="absolute inset-0 -z-10 bg-[radial-gradient(60%_50%_at_18%_28%,rgba(31,94,255,.28),transparent_70%)]"></div>
+    <div class="grid-lines absolute inset-0 -z-10 opacity-60"></div>
 
-  {/* ============ 焦点图 + 通知公告 ============ */}
-  <section data-cfg-block="focus" class="border-b border-line">
-    <div class="container-page py-8 lg:py-10">
-      <div class="grid gap-8 lg:grid-cols-[1.5fr_1fr] lg:gap-10">
-        {carouselSlides.length > 0 && <Carousel slides={carouselSlides} label="焦点内容" />}
+    <div class="container-wide pb-14 pt-24 lg:pb-20">
+      <div class="max-w-4xl">
+        <p class="flex items-center gap-3 font-mono text-[10.5px] tracking-[0.26em] text-white/55">
+          <span class="inline-block h-px w-8 bg-[var(--color-brand-2)]"></span>
+          {site.nameEn.toUpperCase()}
+        </p>
 
-        <div>
-          <SectionHeading
-            eyebrow="Notices"
-            title="通知公告"
-            moreHref="/notices"
-            moreLabel="更多"
-          />
-          <NoticeList items={noticeItems} compact />
+        <h1 class="mt-4 font-display text-display font-bold tracking-[-0.035em] text-white">
+          以数字技术<br />
+          <span class="gradient-text">重塑产业未来</span>
+        </h1>
+
+        <p class="mt-6 max-w-2xl text-[15.5px] leading-relaxed text-white/80 md:text-[17px]">
+          立足数字管理，面向智能时代。研究院聚焦智能算力、人工智能与无人系统、机器人、数据智能、
+          先进制造、新能源与低空经济，打通从基础研究到产业化的最后一公里。
+        </p>
+
+        <div class="mt-9 flex flex-wrap items-center gap-3">
+          <a href={u("/research")} class="inline-flex h-12 items-center gap-2 rounded-lg bg-white px-6 text-[14px] font-semibold text-[var(--color-ink)] transition-transform hover:-translate-y-0.5">
+            探索研究方向
+            <svg viewBox="0 0 16 16" class="size-4" fill="none" aria-hidden="true">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </a>
+          <a href={u("/about")} class="inline-flex h-12 items-center rounded-lg border border-white/20 px-6 text-[14px] font-medium text-white/85 backdrop-blur transition-colors hover:border-white/45 hover:text-white">
+            了解研究院
+          </a>
         </div>
       </div>
+
+      <div class="mt-16 border-t border-white/12 pt-8 lg:mt-20">
+        <Stats items={stats} />
+      </div>
     </div>
-  </section>
 
-  {/* ============ 要闻 ============ */}
-  <section data-cfg-block="news" class="section border-b border-line bg-surface">
-    <div class="container-page">
-      <SectionHeading
-        title="要闻"
-        description="研究院的研究进展、合作动态与学术活动报道。"
-        moreHref="/news"
-        moreLabel="更多"
-      />
-
-      {/*
-        非对称布局：头条占 2/3（带图），右栏是纯文字简讯。
-        原先三条等宽卡片看不出主次，也与「研究方向 / 专题」两块长得一模一样；
-        头条配图 + 简讯纯文字，用图像的有无直接建立层级。
-      */}
-      <div class="grid gap-6 lg:grid-cols-3 lg:gap-8">
-        {
-          leadNews && (
-            <a href={u(`/news/${leadNews.id}`)} class="portal-card group lg:col-span-2">
-              <CoverImage
-                cover={leadNews.data.cover}
-                alt={leadNews.data.coverAlt ?? leadNews.data.title}
-                loading="eager"
-              />
-              <div class="p-5 lg:p-6">
-                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <time
-                    datetime={leadNews.data.date.toISOString().slice(0, 10)}
-                    class="numeric text-meta text-ink-tertiary"
-                  >
-                    {fmtDate(leadNews.data.date)}
-                  </time>
-                  {leadNews.data.tags.slice(0, 1).map((t) => (
-                    <span class="tag tag-quiet">{t}</span>
-                  ))}
-                  {leadNews.data.featured && <span class="tag">精选</span>}
-                </div>
-                {/* 头条层级原先靠配图建立；无图时改由衬线字号与行距承担 */}
-                <h3
-                  class:list={[
-                    'mt-2.5 font-[family-name:var(--font-serif-cjk)] leading-snug text-ink',
-                    leadNews.data.cover
-                      ? 'text-[1.375rem] lg:text-[1.5rem]'
-                      : 'text-[1.5rem] lg:text-[1.875rem]',
-                  ]}
-                >
-                  <span class="link-title">{leadNews.data.title}</span>
-                </h3>
-                <p class="mt-3 max-w-2xl line-clamp-2 text-ui leading-relaxed text-ink-secondary">
-                  {leadNews.data.summary}
-                </p>
-              </div>
-            </a>
-          )
-        }
-
-        <div class="flex flex-col">
-          {
-            briefNews.map((item) => (
-              <a
-                href={u(`/news/${item.id}`)}
-                class="group border-t border-line py-5 first:pt-0 last:pb-0"
-              >
-                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <time
-                    datetime={item.data.date.toISOString().slice(0, 10)}
-                    class="numeric text-meta text-ink-tertiary"
-                  >
-                    {fmtDate(item.data.date)}
-                  </time>
-                  {item.data.tags.slice(0, 1).map((t) => (
-                    <span class="tag tag-quiet">{t}</span>
-                  ))}
-                  {item.data.featured && <span class="tag">精选</span>}
-                </div>
-                <h3 class="mt-2 text-[1.0625rem] leading-snug">
-                  <span class="link-title">{item.data.title}</span>
-                </h3>
+    <aside class="absolute right-10 top-1/2 hidden w-[320px] -translate-y-1/2 xl:block">
+      <div class="rounded-2xl border border-white/12 bg-white/[0.045] p-6 backdrop-blur-md">
+        <div class="flex items-center justify-between">
+          <p class="font-mono text-[9.5px] tracking-[0.22em] text-white/45">CORE CAPABILITIES</p>
+          <span class="size-1.5 rounded-full bg-[var(--color-brand-2)]"></span>
+        </div>
+        <ul class="mt-5 space-y-0">
+          {[
+            { n: '01', t: '智能算力基础设施', e: 'COMPUTING' },
+            { n: '02', t: '人工智能与无人系统', e: 'AI & AUTONOMY' },
+            { n: '03', t: '数据智能与大模型', e: 'DATA INTELLIGENCE' },
+            { n: '04', t: '先进制造与新能源', e: 'MANUFACTURING' },
+          ].map((row) => (
+            <li>
+              <a href={u('/research')} class="group flex items-center justify-between gap-3 border-b border-white/8 py-3 last:border-0">
+                <span class="flex items-baseline gap-3">
+                  <span class="font-mono text-[9px] text-white/30">{row.n}</span>
+                  <span class="text-[13px] text-white/80 group-hover:text-white">{row.t}</span>
+                </span>
+                <span class="font-mono text-[8px] tracking-[0.14em] text-white/25">{row.e}</span>
               </a>
-            ))
-          }
-        </div>
-      </div>
-    </div>
-  </section>
-
-  {/* ============ 学术活动 + 科研项目 ============ */}
-  <section data-cfg-block="events" class="section border-b border-line">
-    <div class="container-page grid gap-10 lg:grid-cols-2 lg:gap-14">
-      <div>
-        <SectionHeading title="学术活动" moreHref="/events" moreLabel="更多" />
-        <div>
-          {
-            shownEvents.map((event) => (
-              <EventItem
-                title={event.data.title}
-                startDate={event.data.startDate}
-                location={event.data.location}
-                type={event.data.type}
-                speakers={event.data.speakers}
-                summary={event.data.summary}
-                href={`/events/${event.id}`}
-              />
-            ))
-          }
-        </div>
-      </div>
-
-      <div>
-        <SectionHeading title="科研项目" moreHref="/projects" moreLabel="更多" />
-        {projects.length === 0 && <p class="text-ui text-ink-secondary">暂无公开的项目信息。</p>}
-        <ul class="brief-list">
-          {
-            projects.map((project) => (
-              <li>
-                <a href={u(`/projects/${project.id}`)} class="brief-item group">
-                  <p class="brief-item-title">{project.data.title}</p>
-                  <p class="mt-1 text-meta text-ink-tertiary">
-                    {project.data.funder}
-                    <span aria-hidden="true"> · </span>
-                    <span class="numeric">{project.data.period}</span>
-                  </p>
-                </a>
-              </li>
-            ))
-          }
+            </li>
+          ))}
         </ul>
-        {
-          completedCount > 0 && (
-            <p class="mt-4 text-meta text-ink-tertiary">
-              另有 <span class="numeric text-ink-secondary">{completedCount}</span> 项已结项课题，可在项目页查看。
-            </p>
-          )
-        }
+        <a href={u('/labs')} class="mt-5 inline-flex h-9 items-center rounded-md border border-white/15 px-3 text-[12px] text-white/75 hover:border-white/40 hover:text-white">
+          查看技术平台
+        </a>
+      </div>
+    </aside>
+
+    <div class="pointer-events-none absolute bottom-6 right-6 hidden items-center gap-2 font-mono text-[10px] tracking-[0.2em] text-white/35 lg:flex">
+      SCROLL
+      <span class="relative block h-10 w-px bg-white/20">
+        <span class="absolute inset-x-0 top-0 h-3 animate-[float-soft_2.4s_ease-in-out_infinite] bg-[var(--color-brand-2)]"></span>
+      </span>
+    </div>
+  </section>
+
+  <section class="section border-b border-line bg-surface" data-cfg-block="positioning">
+    <div class="container-page grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
+      <div>
+        <p class="eyebrow">POSITIONING / 机构定位</p>
+        <h2 class="mt-5 max-w-[15ch] font-display text-h1 font-bold leading-[1.18] tracking-[-0.025em] text-ink">
+          面向产业问题的<br /><span class="text-brand">数字技术研究院</span>
+        </h2>
+        <p class="mt-6 max-w-lg text-[15.5px] leading-[1.9] text-ink-secondary">
+          IDMT 由高校联合社会力量共建，以「小而精」的骨干研发团队为核心，
+          在真实产业场景中提出课题、验证技术、交付系统。我们既不只做论文，也不只做集成。
+        </p>
+        <div class="mt-8 flex flex-wrap gap-x-8 gap-y-3 text-[13px] text-ink-tertiary">
+          <span class="inline-flex items-center gap-2"><span class="size-1.5 rounded-full bg-brand"></span>高校联合共建</span>
+          <span class="inline-flex items-center gap-2"><span class="size-1.5 rounded-full bg-brand-2"></span>产研融合</span>
+          <span class="inline-flex items-center gap-2"><span class="size-1.5 rounded-full bg-gold"></span>开放协作</span>
+        </div>
+      </div>
+
+      <div class="grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2">
+        {principles.map((item) => (
+          <div class="group bg-surface p-7 transition-colors hover:bg-canvas">
+            <p class="font-mono text-[9.5px] tracking-[0.2em] text-ink-tertiary">{item.en}</p>
+            <h3 class="mt-3 font-display text-[1.3rem] font-bold text-ink">{item.title}</h3>
+            <p class="mt-2 text-[13.5px] leading-relaxed text-ink-secondary">{item.desc}</p>
+          </div>
+        ))}
       </div>
     </div>
   </section>
 
-  {/* ============ 研究方向 ============ */}
-  <section data-cfg-block="research" class="section border-b border-line bg-surface">
+  <section class="section bg-canvas" data-cfg-block="research">
     <div class="container-page">
-      <SectionHeading
-        eyebrow="Research"
-        title="研究方向"
-        description="四个专业领域覆盖从关键核心技术研发到成果转化的衔接路径。"
-        moreHref="/research"
-        moreLabel="更多"
+      <SectionHead
+        eyebrow="RESEARCH / 研究方向"
+        title="九个方向，一条从底座到场景的技术链路"
+        description="从算力与器件，到智能系统与产业平台。每个方向都对应可验证的实验室能力与可交付的产品形态。"
+        href={u("/research")}
+        linkLabel="全部研究方向"
       />
 
-      {/*
-        目录式两栏，不配图也不编号：
-        - 编号（01/02/03/04）原先按 `order` 补零呈现，但那四个字段是并列分类，不是阅读顺序，
-          编号在暗示一个不存在的序列。docs/DESIGN_SYSTEM.md §9.F 把「方向 01」列为禁例，
-          只是 TASTE-002 的匹配器只扫眉标签元素，没扫到卡片上的这个 span。
-        - 原先四栏各挂一张抽象图形，会与「要闻 / 专题」的图卡连成一片；四张同风格图形并排
-          本身就是重复。改用发丝线分隔的栏式排版（容器 bg-line + gap-px 画出 1px 分隔线）。
-        - 卡片补上真实关联数据（该方向的公开成果数），把「方向」与「成果」两块之间的关系写明。
-      */}
-      <div class="grid gap-px overflow-hidden rounded-md border border-line bg-line sm:grid-cols-2">
-        {
-          research.map((area) => {
-            const lead = people.find((p) => p.data.name === area.data.lead);
-            const pubCount = publicationCountByArea.get(area.id) ?? 0;
-            return (
-              <div class="group relative flex flex-col bg-surface p-6 transition-colors hover:bg-canvas lg:p-8">
-                <h3 class="font-[family-name:var(--font-serif-cjk)] text-[1.3125rem] leading-snug text-ink lg:text-[1.4375rem]">
-                  <a href={u(`/research/${area.id}`)} class="link-title stretched-link">
-                    {area.data.title}
-                  </a>
-                </h3>
-
-                <p class="mt-3 flex-1 text-ui leading-relaxed text-ink-secondary">
-                  {area.data.summary}
-                </p>
-
-                <p class="mt-5 flex flex-wrap gap-x-8 gap-y-1 border-t border-line pt-3 text-meta text-ink-tertiary">
-                  {
-                    area.data.lead && (
-                      <span>
-                        负责人{' '}
-                        {lead ? (
-                          <a href={u(`/people/${lead.id}`)} class="link stretched-link-above">
-                            {area.data.lead}
-                          </a>
-                        ) : (
-                          <span class="text-ink-secondary">{area.data.lead}</span>
-                        )}
-                      </span>
-                    )
-                  }
-                  {pubCount > 0 && <span>公开成果 {pubCount} 项</span>}
-                </p>
-              </div>
-            );
-          })
-        }
-      </div>
-    </div>
-  </section>
-
-  {/* ============ 学术成果 ============ */}
-  <section data-cfg-block="publications" class="section border-b border-line">
-    <div class="container-page">
-      <SectionHeading
-        title="学术成果"
-        description="期刊论文、会议论文、著作与研究报告，按年份排列。"
-        moreHref="/publications"
-        moreLabel="更多"
-      />
-
-      <div class="mt-2">
-        {
-          latestPublications.map((pub) => (
-            <PublicationItem
-              title={pub.data.title}
-              authors={pub.data.authors}
-              venue={pub.data.venue}
-              year={pub.data.year}
-              type={pub.data.type}
-              doi={pub.data.doi}
-              pdf={pub.data.pdf}
-              tags={pub.data.tags}
-            />
-          ))
-        }
-      </div>
-    </div>
-  </section>
-
-  {/* ============ 研究团队 ============ */}
-  <section data-cfg-block="people" class="section border-b border-line bg-surface">
-    <div class="container-page">
-      <SectionHeading title="研究团队" moreHref="/people" moreLabel="更多" />
-
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {
-          people.slice(0, 4).map((person) => (
-            <PersonCard
-              name={person.data.name}
-              nameEn={person.data.nameEn}
-              title={person.data.title}
-              researchAreas={person.data.researchAreas}
-              href={`/people/${person.id}`}
-            />
-          ))
-        }
-      </div>
-    </div>
-  </section>
-
-  {/* ============ 数据统计 ============ */}
-  <section data-cfg-block="statBand" class="stat-band">
-    {/*
-      四个数字原先只是 gap-8 平铺，看不出是一组数据。
-      改用 gap-px + 半透明分隔色画出 1px 发丝线（沿用报头的 --color-on-masthead-line），
-      读起来更像一张数据表。格内 px-6 让发丝线两侧有呼吸。
-    */}
-    <div class="container-page">
-      <div class="grid grid-cols-2 gap-px bg-[var(--color-on-masthead-line)] lg:grid-cols-4">
-        {
-          stats.map((s) => (
-            <div class="bg-masthead px-6 py-10 lg:py-12">
-              <p class="stat-band-value">{s.value}</p>
-              <p class="stat-band-label mt-2">{s.label}</p>
-            </div>
-          ))
-        }
-      </div>
-    </div>
-  </section>
-
-  {/* ============ 专题专栏 ============ */}
-  <section data-cfg-block="topics" class="section border-b border-line">
-    <div class="container-page">
-      <SectionHeading
-        eyebrow="Topics"
-        title="专题专栏"
-        description="围绕长期议题组织的研究成果、数据与活动。"
-        moreHref="/topics"
-        moreLabel="全部专题"
-      />
-
-      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {
-          topics.map((topic) => (
-            <a href={u(`/topics/${topic.id}`)} class="portal-card group">
-              <TopicMark
-                image={topic.data.image}
-                alt={topic.data.title}
-                seed={topic.data.seed}
+      <div class="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        {research.map((item, index) => (
+          <a
+            href={u(`/research/${item.id}`)}
+            class:list={[
+              'group card-lift relative flex flex-col overflow-hidden rounded-2xl border border-line bg-surface',
+              index === 0 && 'md:col-span-2 lg:col-span-2 lg:row-span-2',
+            ]}
+          >
+            <div
+              class:list={[
+                'relative overflow-hidden',
+                index === 0 ? 'aspect-[16/10] lg:aspect-auto lg:min-h-[300px] lg:flex-1' : 'aspect-[16/10]',
+              ]}
+            >
+              <img
+                src={u(item.data.cover ?? '/images/datacenter.webp')}
+                alt={item.data.coverAlt ?? item.data.title}
+                class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                loading={index === 0 ? 'eager' : 'lazy'}
               />
-              <div class="p-5">
-                {topic.data.badge && <span class="tag tag-quiet">{topic.data.badge}</span>}
-                <h3 class="mt-2 text-[1.0625rem] leading-snug">
-                  <span class="link-title">{topic.data.title}</span>
+              <div class="absolute inset-0 bg-gradient-to-t from-night/75 via-night/10 to-transparent"></div>
+              <span class="absolute left-4 top-4 font-mono text-[10px] tracking-[0.18em] text-white/70">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <div class="absolute inset-x-5 bottom-4">
+                <p class="font-mono text-[9px] tracking-[0.18em] text-white/50">{item.data.titleEn.toUpperCase()}</p>
+                <h3 class:list={['mt-1 font-display font-bold text-white', index === 0 ? 'text-[1.75rem] lg:text-[2.1rem]' : 'text-[1.15rem]']}>
+                  {item.data.title}
                 </h3>
-                <p class="mt-2 text-ui leading-relaxed text-ink-secondary">{topic.data.summary}</p>
               </div>
-            </a>
-          ))
-        }
+            </div>
+            <div class="flex flex-1 flex-col p-5">
+              <p class:list={['text-ink-secondary', index === 0 ? 'text-[14.5px] leading-relaxed' : 'line-clamp-2 text-[13px] leading-relaxed']}>
+                {item.data.summary}
+              </p>
+              {index === 0 && (
+                <>
+                  <ul class="mt-5 space-y-2">
+                    {item.data.capabilities.slice(0, 3).map((cap) => (
+                      <li class="flex gap-2.5 text-[13px] leading-relaxed text-ink-secondary">
+                        <span class="mt-[7px] size-1.5 shrink-0 rounded-full bg-brand-2" />
+                        {cap}
+                      </li>
+                    ))}
+                  </ul>
+                  <div class="mt-5 flex flex-wrap gap-1.5">
+                    {item.data.keywords.slice(0, 4).map((k) => (
+                      <span class="rounded-full border border-line px-2.5 py-1 text-[11px] text-ink-tertiary">{k}</span>
+                    ))}
+                  </div>
+                </>
+              )}
+              <span class="mt-auto pt-4 text-[12.5px] font-medium text-brand opacity-0 transition-opacity group-hover:opacity-100">
+                查看方向 →
+              </span>
+            </div>
+          </a>
+        ))}
       </div>
     </div>
   </section>
 
-  {/* ============ 加入我们 ============ */}
-  <section data-cfg-block="join" class="section">
+  <section class="night relative overflow-hidden" data-cfg-block="capability">
+    <div class="grid-lines absolute inset-0 opacity-40"></div>
+    <div class="absolute -left-40 top-0 size-[520px] rounded-full bg-[radial-gradient(circle,rgba(31,94,255,.22),transparent_65%)]"></div>
+    <div class="container-page section relative">
+      <SectionHead
+        eyebrow="CAPABILITY / 技术体系"
+        title="三层能力，支撑从研究到交付"
+        description="算力底座提供确定性，智能系统提供通用性，产业场景提供约束条件。三者共同决定技术是否真的可用。"
+        tone="dark"
+      />
+      <div class="mt-10">
+        <CapabilityTabs items={capabilities} client:visible />
+      </div>
+    </div>
+  </section>
+
+  <section class="night border-t border-white/10 pb-20" data-cfg-block="products">
+    <div class="container-page pt-16">
+      <SectionHead
+        eyebrow="PRODUCTS / 产品与方案"
+        title="可交付的整机、平台与产线"
+        description="每一条产品线都对应一个真实场景与一组可核验的工程指标。"
+        href={u("/products")}
+        linkLabel="全部产品"
+        tone="dark"
+      />
+      <div class="mt-4">
+        <ProductCarousel
+          client:visible
+          items={products.slice(0, 8).map((p) => ({
+            slug: p.id,
+            href: u(`/products/${p.id}`),
+            title: p.data.title,
+            category: p.data.category,
+            summary: p.data.summary,
+            image: u(p.data.image ?? '/images/datacenter.webp'),
+            spec: p.data.specs[0],
+          }))}
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="section border-y border-line bg-surface" data-cfg-block="labs">
+    <div class="container-page grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
+      <div class="lg:sticky lg:top-28 lg:self-start">
+        <p class="eyebrow">LABORATORIES / 技术平台</p>
+        <h2 class="mt-5 font-display text-h2 font-bold tracking-[-0.02em] text-ink">十大专业实验室，<br />把设计验证留在院内</h2>
+        <p class="mt-5 max-w-md text-[15px] leading-[1.85] text-ink-secondary">
+          从锡膏检测到 EMC 暗室，从烤机到量产 ATE。硬件团队不必在实验室之间奔波，迭代周期以天计。
+        </p>
+        <a href={u("/labs")} class="mt-7 inline-flex h-11 items-center rounded-lg bg-ink px-5 text-[13.5px] font-semibold text-white transition-transform hover:-translate-y-0.5">
+          查看全部平台
+        </a>
+      </div>
+
+      <div class="grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2">
+        {labs.map((lab) => (
+          <div class="group bg-surface p-5 transition-colors hover:bg-canvas">
+            <div class="flex items-baseline justify-between">
+              <p class="font-mono text-[10px] tracking-[0.16em] text-brand">{String(lab.data.order).padStart(2, '0')}</p>
+              <p class="font-mono text-[9px] tracking-[0.14em] text-ink-tertiary">{lab.data.nameEn}</p>
+            </div>
+            <h3 class="mt-2.5 font-display text-[1.05rem] font-semibold text-ink">{lab.data.name}</h3>
+            <p class="mt-1.5 text-[12.5px] leading-relaxed text-ink-secondary">{lab.data.summary}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section bg-canvas" data-cfg-block="strategy">
     <div class="container-page">
-      <div class="grid gap-8 border border-line bg-surface p-8 sm:p-10 lg:grid-cols-[1.5fr_1fr] lg:items-center lg:gap-16 lg:p-12">
-        <div>
-          <h2 class="text-h2">与我们一起研究真实的管理问题</h2>
-          <p class="mt-4 max-w-xl text-body leading-relaxed text-ink-secondary">
-            研究院每年招收硕士研究生，并提供面向在校生的研究助理岗位。我们看重对问题的好奇心，胜过对工具的熟练度。
-          </p>
+      <SectionHead
+        eyebrow="STRATEGY / 治理与发展"
+        title="三年三步，把研究能力沉淀为组织能力"
+        description="以科研产值、人才培养与引进为可量化抓手，逐级扩大合作半径与成果转化规模。"
+        href={u("/about")}
+        linkLabel="关于研究院"
+      />
+
+      <div class="mt-12 grid gap-5 md:grid-cols-3">
+        {milestones.map((m, i) => (
+          <Reveal client:visible delay={i * 0.08}>
+            <div class="h-full rounded-2xl border border-line bg-surface p-7">
+              <p class="font-mono text-[10px] tracking-[0.2em] text-brand">{m.year}</p>
+              <h3 class="mt-3 font-display text-[1.35rem] font-bold text-ink">{m.title}</h3>
+              <p class="mt-1 text-[12.5px] text-ink-tertiary">{m.subtitle}</p>
+              <ul class="mt-6 space-y-3 border-t border-line pt-5">
+                {m.metrics.map((metric) => (
+                  <li class="flex items-baseline justify-between gap-4">
+                    <span class="text-[12.5px] text-ink-secondary">{metric.label}</span>
+                    <span class="font-display text-[15px] font-semibold text-ink">{metric.value}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Reveal>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section border-t border-line bg-surface" data-cfg-block="news">
+    <div class="container-page">
+      <SectionHead eyebrow="INSIGHTS / 动态" title="研究进展与学术活动" href={u("/news")} linkLabel="全部新闻" />
+
+      <div class="mt-12 grid gap-10 lg:grid-cols-[1.25fr_1fr] lg:gap-14">
+        {featured && (
+          <a href={u(`/news/${featured.id}`)} class="group block">
+            <div class="relative aspect-[16/9] overflow-hidden rounded-2xl border border-line">
+              <img
+                src={u(featured.data.cover ?? '/images/lab-line.webp')}
+                alt={featured.data.coverAlt ?? featured.data.title}
+                class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                loading="lazy"
+              />
+            </div>
+            <div class="mt-5 flex items-center gap-3 font-mono text-[10px] tracking-[0.14em] text-ink-tertiary">
+              <span>{fmt(featured.data.date)}</span>
+              <span class="h-px w-6 bg-line-strong"></span>
+              <span class="text-brand">{featured.data.tags[0]}</span>
+            </div>
+            <h3 class="mt-2.5 font-display text-[1.5rem] font-bold leading-snug tracking-[-0.01em] text-ink group-hover:text-brand">
+              {featured.data.title}
+            </h3>
+            <p class="mt-2.5 text-[14px] leading-relaxed text-ink-secondary">{featured.data.summary}</p>
+          </a>
+        )}
+
+        <div class="space-y-8">
+          <div>
+            <p class="font-mono text-[10px] tracking-[0.2em] text-ink-tertiary">最新</p>
+            <ul class="mt-4 divide-y divide-line">
+              {restNews.map((item) => (
+                <li>
+                  <a href={u(`/news/${item.id}`)} class="group flex gap-4 py-3.5">
+                    <span class="w-16 shrink-0 font-mono text-[10.5px] text-ink-tertiary">{fmt(item.data.date).slice(5)}</span>
+                    <span class="text-[14px] leading-snug text-ink group-hover:text-brand">{item.data.title}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div class="rounded-2xl border border-line bg-canvas p-6">
+            <div class="flex items-center justify-between">
+              <p class="font-mono text-[10px] tracking-[0.2em] text-ink-tertiary">NOTICES / 通知公告</p>
+              <a href={u("/notices")} class="text-[12px] text-ink-tertiary hover:text-brand">更多</a>
+            </div>
+            <ul class="mt-4 space-y-3">
+              {notices.map((n) => (
+                <li>
+                  <a href={u("/notices")} class="flex items-start gap-3 text-[13px] leading-snug text-ink-secondary hover:text-brand">
+                    <span class="mt-1.5 size-1 shrink-0 rounded-full bg-brand"></span>
+                    {n.data.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between">
+              <p class="font-mono text-[10px] tracking-[0.2em] text-ink-tertiary">EVENTS / 学术活动</p>
+              <a href={u("/events")} class="text-[12px] text-ink-tertiary hover:text-brand">更多</a>
+            </div>
+            <ul class="mt-4 space-y-3">
+              {events.slice(0, 2).map((e) => (
+                <li class="flex gap-3">
+                  <div class="grid size-11 shrink-0 place-items-center rounded-lg border border-line bg-surface text-center">
+                    <span class="font-display text-[15px] font-bold leading-none text-ink">{e.data.startDate.getDate()}</span>
+                    <span class="mt-0.5 font-mono text-[8.5px] text-ink-tertiary">{e.data.startDate.getMonth() + 1}月</span>
+                  </div>
+                  <a href={u(`/events/${e.id}`)} class="text-[13px] leading-snug text-ink hover:text-brand">{e.data.title}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-        <div class="flex flex-wrap gap-3 lg:justify-end">
-          <a href={u('/join')} class="btn btn-primary" data-cfg-el="joinPrimary" data-cfg-route="/" data-cfg-label>招生与招聘</a>
-          <a href={u('/contact')} class="btn btn-secondary" data-cfg-el="joinSecondary" data-cfg-route="/" data-cfg-label>联系我们</a>
-        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-tight border-t border-line bg-canvas">
+    <div class="container-page">
+      <p class="text-center font-mono text-[10px] tracking-[0.22em] text-ink-tertiary">COLLABORATION / 合作与场景</p>
+      <div class="mt-6">
+        <PartnerMarquee items={partners} />
+      </div>
+    </div>
+  </section>
+
+  <section class="relative overflow-hidden bg-night">
+    <div class="absolute inset-0 bg-[radial-gradient(70%_120%_at_50%_0%,rgba(31,94,255,.28),transparent_60%)]"></div>
+    <div class="container-page section relative text-center">
+      <p class="font-mono text-[10px] tracking-[0.26em] text-white/45">JOIN US</p>
+      <h2 class="mx-auto mt-5 max-w-3xl font-display text-h1 font-bold tracking-[-0.025em] text-white">
+        与我们一起，研究真实世界的<br class="hidden sm:block" /><span class="gradient-text">技术问题</span>
+      </h2>
+      <p class="mx-auto mt-5 max-w-xl text-[14.5px] leading-relaxed text-white/60">
+        研究院长期招收联合培养研究生、博士后与专职研究员，也欢迎产业伙伴共建联合实验室。
+      </p>
+      <div class="mt-9 flex flex-wrap justify-center gap-3">
+        <a href={u("/join")} class="inline-flex h-12 items-center rounded-lg bg-white px-6 text-[14px] font-semibold text-[var(--color-ink)] transition-transform hover:-translate-y-0.5">
+          查看加入方式
+        </a>
+        <a href={u("/contact")} class="inline-flex h-12 items-center rounded-lg border border-white/20 px-6 text-[14px] font-medium text-white/85 hover:border-white/45">
+          联系我们
+        </a>
       </div>
     </div>
   </section>
 </BaseLayout>
-

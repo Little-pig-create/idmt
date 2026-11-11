@@ -1,0 +1,36 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/site/PageHero.astro';
+import ProductGallery from '../../components/site/ProductGallery.tsx';
+import { u } from '../../lib/paths';
+
+const products = (await getCollection('products', ({ data }) => !data.draft)).sort((a, b) => a.data.order - b.data.order);
+---
+
+<BaseLayout title="产品与方案" description="IDMT 可交付的整机、平台与产线：智算集群、智能网联套件、线控底盘、移动作业机器人、金属增材、固态储氢与低空飞行器。" transparentHeader image="/images/production-line.jpg">
+  <PageHero
+    eyebrow="PRODUCTS / 产品与方案"
+    title="可交付的整机、平台与产线"
+    description="研究不止于论文。我们把技术沉淀为可以在客户现场运行的产品：从一台机器人、一套教学套件，到一条增材制造产线。"
+    crumbs={[{ label: '产品与方案' }]}
+    image={u('/images/production-line.webp')}
+  />
+
+  <section class="section bg-canvas">
+    <div class="container-page">
+      <ProductGallery
+        client:load
+        items={products.map((p) => ({
+          slug: p.id,
+          href: u(`/products/${p.id}`),
+          title: p.data.title,
+          category: p.data.category,
+          summary: p.data.summary,
+          image: u(p.data.image ?? '/images/datacenter.webp'),
+          tags: p.data.tags,
+        }))}
+      />
+    </div>
+  </section>
+</BaseLayout>

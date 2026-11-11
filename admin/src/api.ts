@@ -1,82 +1,51 @@
-import type {
-  Asset,
-  Capabilities,
-  CollectionMap,
-  ConfigSaveResponse,
-  ConfigSourceResponse,
-  Entry,
-  FrontendConfig,
-  Stats,
-  SurfaceResponse,
-  ValidationError,
-} from './types';
-
-const BASE = '/api';
+const BASE = '';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
+  const response = await fetch(`${BASE}${path}`, {
+    credentials: 'include',
+    headers: init?.body && !(init.body instanceof Blob) ? { 'Content-Type': 'application/json' } : undefined,
     ...init,
   });
-
-  const payload = await res.json().catch(() => null);
-
-  if (!res.ok || !payload?.ok) {
-    const error = new Error(payload?.error ?? `请求失败（HTTP ${res.status}）`);
-    (error as Error & { details?: ValidationError[] }).details = payload?.details;
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(data?.error ?? `请求失败（${response.status}）`);
+    (error as Error & { details?: string[] }).details = data?.details;
     throw error;
   }
-
-  return payload as T;
+  return data as T;
 }
 
 export const api = {
-  schema: () =>
-    request<{ collections: CollectionMap; capabilities?: Capabilities }>('/schema'),
-
-  stats: () => request<{ stats: Record<string, Stats> }>('/stats'),
-
-  list: (collection: string) =>
-    request<{ entries: Entry[] }>(`/content/${collection}`),
-
-  get: (collection: string, id: string) =>
-    request<{ entry: Entry }>(`/content/${collection}/${id}`),
-
-  create: (collection: string, id: string, data: Record<string, unknown>, body: string) =>
-    request<{ id: string }>(`/content/${collection}`, {
+  me: () => request<{ role: string; defaultPassword: boolean }>('/api/me'),
+  login: (password: string) =>
+    request<{ role: string; defaultPassword: boolean }>('/api/login', {
       method: 'POST',
-      body: JSON.stringify({ id, data, body }),
+      body: JSON.stringify({ password }),
     }),
-
-  update: (collection: string, id: string, data: Record<string, unknown>, body: string) =>
-    request<{ id: string }>(`/content/${collection}/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ data, body }),
+  logout: () => request('/api/logout', { method: 'POST' }),
+  schema: () => request<{ collections: Record<string, import('./types').CollectionSchema> }>('/api/schema'),
+  stats: () => request<import('./types').Stats>('/api/stats'),
+  entries: (collection: string) =>
+    request<{ entries: import('./types').Entry[] }>(`/api/entries?collection=${collection}`),
+  entry: (collection: string, id: string) =>
+    request<{ entry: import('./types').EntryDetail }>(`/api/entries/${collection}/${id}`),
+  createEntry: (collection: string, payload: { id?: string; data: unknown; body: string }) =>
+    request<{ id: string }>(`/api/entries/${collection}`, { method: 'POST', body: JSON.stringify(payload) }),
+  updateEntry: (collection: string, id: string, payload: { data: unknown; body: string }) =>
+    request(`/api/entries/${collection}/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  deleteEntry: (collection: string, id: string) =>
+    request(`/api/entries/${collection}/${id}`, { method: 'DELETE' }),
+  assets: () => request<{ assets: import('./types').Asset[] }>('/api/assets'),
+  uploadAsset: (file: File) =>
+    request<{ asset: import('./types').Asset }>(`/api/assets?name=${encodeURIComponent(file.name)}`, {
+      method: 'POST',
+      body: file,
+      headers: { 'Content-Type': file.type },
     }),
-
-  remove: (collection: string, id: string) =>
-    request<{ id: string }>(`/content/${collection}/${id}`, { method: 'DELETE' }),
-
-  build: () =>
-    request<{ code: number; output: string }>('/build', { method: 'POST' }),
-
-  assets: {
-    list: () => request<{ assets: Asset[] }>('/assets'),
-    upload: (name: string, type: string, dataBase64: string) =>
-      request<{ asset: Asset }>('/assets', { method: 'POST', body: JSON.stringify({ name, type, dataBase64 }) }),
-    remove: (name: string) => request<{ name: string }>(`/assets/${encodeURIComponent(name)}`, { method: 'DELETE' }),
-  },
-
-  /** 前端粒度管理 —— 只新增，不影响上面任何方法 */
-  frontendConfig: {
-    surface: () => request<SurfaceResponse>('/frontend-config/surface'),
-    source: () => request<ConfigSourceResponse>('/frontend-config/source'),
-    save: (config: FrontendConfig) =>
-      request<ConfigSaveResponse>('/frontend-config', {
-        method: 'PUT',
-        body: JSON.stringify({ config }),
-      }),
-    /** 前台消费用的动态构建结果（后台用于预览） */
-    delivered: () => request<unknown>('/frontend-config'),
-  },
+  deleteAsset: (name: string) => request(`/api/assets/${encodeURIComponent(name)}`, { method: 'DELETE' }),
+  settings: () => request<{ settings: Record<string, string> }>('/api/settings'),
+  saveSettings: (patch: Record<string, string>) =>
+    request<{ settings: Record<string, string> }>('/api/settings', { method: 'PUT', body: JSON.stringify(patch) }),
+  build: () => request<{ build: import('./types').BuildState }>('/api/build'),
+  startBuild: () => request<{ build: import('./types').BuildState }>('/api/build', { method: 'POST' }),
 };

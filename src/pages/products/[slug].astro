@@ -1,0 +1,118 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/site/PageHero.astro';
+import { u } from '../../lib/paths';
+
+export async function getStaticPaths() {
+  const products = await getCollection('products', ({ data }) => !data.draft);
+  return products.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+interface Props {
+  entry: CollectionEntry<'products'>;
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+
+const relatedResearch = (await getCollection('research', ({ data }) => !data.draft)).filter((r) =>
+  r.data.products.includes(entry.id)
+);
+
+const others = (await getCollection('products', ({ data }) => !data.draft))
+  .filter((p) => p.id !== entry.id)
+  .sort((a, b) => a.data.order - b.data.order)
+  .slice(0, 3);
+---
+
+<BaseLayout title={entry.data.title} description={entry.data.summary} transparentHeader image={entry.data.image ?? '/images/datacenter.jpg'}>
+  <PageHero
+    eyebrow={`PRODUCT / ${entry.data.category}`}
+    title={entry.data.title}
+    description={entry.data.summary}
+    crumbs={[{ label: '产品与方案', href: '/products' }, { label: entry.data.title }]}
+    image={u(entry.data.image ?? '/images/datacenter.webp')}
+  >
+    <div class="mt-9 flex flex-wrap gap-1.5">
+      {entry.data.tags.map((tag) => (
+        <span class="rounded border border-white/15 px-2.5 py-1 font-mono text-[10px] tracking-[0.08em] text-white/55">{tag}</span>
+      ))}
+    </div>
+  </PageHero>
+
+  <section class="section bg-surface">
+    <div class="container-page grid gap-14 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-20">
+      <div>
+        <div class="prose-idmt max-w-none">
+          <Content />
+        </div>
+
+        {entry.data.highlights.length > 0 && (
+          <div class="mt-12">
+            <h2 class="font-display text-[1.35rem] font-bold text-ink">方案要点</h2>
+            <div class="mt-5 grid gap-3 sm:grid-cols-2">
+              {entry.data.highlights.map((h) => (
+                <div class="flex gap-3 rounded-xl border border-line bg-canvas p-4 text-[13.5px] leading-relaxed text-ink-secondary">
+                  <span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-brand-2"></span>
+                  {h}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <aside class="space-y-5 lg:sticky lg:top-28 lg:self-start">
+        {entry.data.specs.length > 0 && (
+          <div class="overflow-hidden rounded-2xl border border-line">
+            <p class="border-b border-line bg-canvas px-5 py-3 font-mono text-[10px] tracking-[0.2em] text-ink-tertiary">
+              SPECIFICATIONS / 关键指标
+            </p>
+            <dl class="divide-y divide-line bg-surface">
+              {entry.data.specs.map((spec) => (
+                <div class="flex items-baseline justify-between gap-4 px-5 py-3">
+                  <dt class="text-[12.5px] text-ink-tertiary">{spec.label}</dt>
+                  <dd class="text-right text-[13px] font-semibold text-ink">{spec.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
+
+        {relatedResearch.length > 0 && (
+          <div class="rounded-2xl border border-line bg-canvas p-5">
+            <p class="font-mono text-[10px] tracking-[0.2em] text-ink-tertiary">RELATED RESEARCH</p>
+            <ul class="mt-3 space-y-2.5">
+              {relatedResearch.map((r) => (
+                <li>
+                  <a href={u(`/research/${r.id}`)} class="text-[13px] font-medium text-ink hover:text-brand">{r.data.title}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div class="rounded-2xl bg-night p-6 text-white">
+          <p class="font-mono text-[10px] tracking-[0.2em] text-white/40">ENQUIRY</p>
+          <p class="mt-3 text-[14px] leading-relaxed text-white/75">获取详细规格书、报价或安排现场演示。</p>
+          <a href={u("/contact")} class="mt-5 inline-flex h-10 items-center rounded-lg bg-white px-4 text-[13px] font-semibold text-[var(--color-ink)]">提交需求</a>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="border-t border-line bg-canvas py-14">
+    <div class="container-page">
+      <p class="font-mono text-[10px] tracking-[0.2em] text-ink-tertiary">MORE PRODUCTS</p>
+      <div class="mt-6 grid gap-5 sm:grid-cols-3">
+        {others.map((p) => (
+          <a href={u(`/products/${p.id}`)} class="group overflow-hidden rounded-xl border border-line bg-surface">
+            <img src={u(p.data.image ?? '/images/datacenter.webp')} alt="" class="aspect-[16/9] w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" loading="lazy" />
+            <p class="p-4 text-[13.5px] font-medium text-ink group-hover:text-brand">{p.data.title}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

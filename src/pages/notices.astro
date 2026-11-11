@@ -1,160 +1,55 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import PageHero from '../components/ui/PageHero.astro';
-import NoticeList from '../components/content/NoticeList.astro';
-import EmptyState from '../components/ui/EmptyState.astro';
-import { u } from '../lib/paths';
+import PageHero from '../components/site/PageHero.astro';
 
-const all = (await getCollection('notices', ({ data }) => !data.draft)).sort((a, b) => {
-  if (a.data.pinned !== b.data.pinned) return a.data.pinned ? -1 : 1;
-  return b.data.date.getTime() - a.data.date.getTime();
-});
-
-/** 渲染每条公告正文（同一页面内锚点定位） */
-const rendered = [];
-for (const entry of all) {
-  const { Content } = await render(entry);
-  rendered.push({ entry, Content });
-}
-
-const items = all.map((n) => ({
-  title: n.data.title,
-  date: n.data.date,
-  href: `#${n.id}`,
-  category: n.data.category,
-  pinned: n.data.pinned,
-}));
-
-const categories = [...new Set(all.map((n) => n.data.category))].map((c) => ({
-  label: c,
-  count: all.filter((n) => n.data.category === c).length,
-}));
+const notices = (await getCollection('notices', ({ data }) => !data.draft)).sort(
+  (a, b) => Number(b.data.pinned) - Number(a.data.pinned) || b.data.date.getTime() - a.data.date.getTime()
+);
+const categories = ['招生', '招聘', '科研', '会议', '其他'] as const;
+const fmt = (d: Date) => `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 ---
 
-<BaseLayout
-  title="通知公告"
-  description="数字管理技术研究院的招生、会议、科研与人事公告。"
->
+<BaseLayout title="通知公告" description="IDMT 招生、招聘、科研项目与会议通知。" transparentHeader>
   <PageHero
-    eyebrow="Notices"
-    title="通知公告"
-    description="研究院的招生、会议、科研与人事事务公告。公告按发布日期排列，重要公告置顶。"
-    crumbs={[{ label: '成果与动态', href: '/publications' }, { label: '通知公告' }]}
+    eyebrow="NOTICES / 通知公告"
+    title="通知与公告"
+    description="招生、招聘、开放课题与会议信息。所有公告以本页为准。"
+    crumbs={[{ label: '通知公告' }]}
+    size="compact"
   />
 
-  <section class="section">
-    <div class="container-page">
-      {
-        all.length === 0 ? (
-          <EmptyState
-            title="暂无公告"
-            description="新的招生、会议与科研事务公告会在此公布。"
-            suggestions={[
-              { label: '查看新闻动态', href: '/news' },
-              { label: '查看学术活动', href: '/events' },
-            ]}
-          />
-        ) : (
-          <div class="grid gap-12 lg:grid-cols-[1fr_320px] lg:gap-16">
-            <div>
-              <div class="section-bar">
-                <h2 class="section-bar-title">公告索引</h2>
-                <span class="section-bar-en">Index</span>
-                <span class="numeric ml-auto text-meta text-ink-tertiary">共 {all.length} 条</span>
-              </div>
+  <section class="section bg-canvas">
+    <div class="container-page grid gap-12 lg:grid-cols-[220px_1fr]">
+      <aside class="lg:sticky lg:top-28 lg:self-start">
+        <p class="font-mono text-[10px] tracking-[0.2em] text-ink-tertiary">CATEGORIES</p>
+        <ul class="mt-4 space-y-1.5">
+          {categories.map((c) => (
+            <li class="flex items-center justify-between rounded-lg bg-surface px-3 py-2 text-[13px] text-ink-secondary">
+              <span>{c}</span>
+              <span class="font-mono text-[10.5px] text-ink-tertiary">{notices.filter((n) => n.data.category === c).length}</span>
+            </li>
+          ))}
+        </ul>
+      </aside>
 
-              <div class="mt-4">
-                <NoticeList items={items} />
+      <div>
+        <ul class="divide-y divide-line rounded-2xl border border-line bg-surface">
+          {notices.map((n) => (
+            <li class="flex flex-wrap items-start gap-4 p-6">
+              <div class="flex w-24 shrink-0 flex-col gap-1">
+                <span class="rounded bg-brand-soft px-2 py-0.5 text-center text-[10.5px] font-medium text-brand-ink">{n.data.category}</span>
+                {n.data.pinned && <span class="text-center font-mono text-[9.5px] tracking-[0.1em] text-gold">置顶</span>}
               </div>
-
-              <div class="mt-14 space-y-8">
-                {
-                  rendered.map(({ entry, Content }) => (
-                    <article id={entry.id} class="border-b border-line pb-7">
-                      <div class="flex flex-wrap items-center gap-2">
-                        {entry.data.pinned && <span class="tag">置顶</span>}
-                        <span class="tag tag-quiet">{entry.data.category}</span>
-                        <time
-                          datetime={entry.data.date.toISOString().slice(0, 10)}
-                          class="numeric text-meta text-ink-tertiary"
-                        >
-                          {entry.data.date.getFullYear()}.
-                          {String(entry.data.date.getMonth() + 1).padStart(2, '0')}.
-                          {String(entry.data.date.getDate()).padStart(2, '0')}
-                        </time>
-                      </div>
-                      <h3 class="mt-3 text-[1.125rem] leading-snug text-ink">{entry.data.title}</h3>
-                      <div class="prose-academic mt-3 max-w-[68ch]">
-                        <Content />
-                      </div>
-
-                      {/*
-                        附件下载。招生简章、申报指南、年度报告这类公告，
-                        没有附件入口等于内容不完整。此前 schema 声明了 attachment
-                        字段但没有任何模板渲染它 —— 内容编辑填了也看不到。
-                      */}
-                      {entry.data.attachment && (
-                        <p class="mt-4">
-                          <a
-                            href={entry.data.attachment}
-                            class="btn btn-secondary"
-                            download
-                            rel="noopener"
-                          >
-                            <svg
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              aria-hidden="true"
-                            >
-                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                              <path d="m7 10 5 5 5-5" />
-                              <path d="M12 15V3" />
-                            </svg>
-                            下载附件
-                          </a>
-                        </p>
-                      )}
-                    </article>
-                  ))
-                }
+              <div class="min-w-0 flex-1">
+                <h2 class="text-[15px] font-semibold leading-snug text-ink">{n.data.title}</h2>
+                <div class="prose-idmt mt-2 max-w-none text-[13px]"><p class="text-ink-secondary">{n.data.summary ?? ''}</p></div>
               </div>
-            </div>
-
-            <aside class="space-y-8 lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start">
-              <div class="aside-block border-t border-line pt-5">
-                <p class="eyebrow mb-3">公告分类</p>
-                <ul class="space-y-2">
-                  {
-                    categories.map((c) => (
-                      <li class="flex items-baseline justify-between gap-3 border-b border-line pb-2 text-ui">
-                        <span class="text-ink-secondary">{c.label}</span>
-                        <span class="numeric text-meta text-ink-tertiary">{c.count}</span>
-                      </li>
-                    ))
-                  }
-                </ul>
-              </div>
-
-              <div class="aside-block border-t border-line pt-5">
-                <p class="eyebrow mb-3">相关入口</p>
-                <ul class="space-y-2 text-ui">
-                  <li><a href={u('/news')} class="link">新闻动态</a></li>
-                  <li><a href={u('/events')} class="link">学术活动</a></li>
-                  <li><a href={u('/join')} class="link">招生与招聘</a></li>
-                  <li><a href={u('/projects')} class="link">科研项目</a></li>
-                </ul>
-              </div>
-            </aside>
-          </div>
-        )
-      }
+              <time class="font-mono text-[11px] text-ink-tertiary" datetime={n.data.date.toISOString()}>{fmt(n.data.date)}</time>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   </section>
 </BaseLayout>

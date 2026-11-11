@@ -3,11 +3,10 @@
 @import "./tokens.css";
 @import "./typography.css";
 
-/* Tailwind v4 内容扫描范围：只扫会产生类名的目录。
-   不要把这里放宽成扫描整个 src —— src/content 是 MDX 正文，全文无 class 属性，
-   扫它既浪费、又会把正文里的英文单词和代码片段误判成类名候选，凭空生成一批用不到的工具类。
-   注意：本注释内不要出现星号后紧跟斜杠的字符序列，否则会提前结束 CSS 注释。 */
-@source "../components/**/*.{astro,tsx}";
+@custom-variant dark (&:is(.dark *));
+
+/* Tailwind v4 内容扫描范围：只扫会产生类名的目录。 */
+@source "../components/**/*.{astro,tsx,ts}";
 @source "../pages/**/*.{astro,ts}";
 @source "../layouts/**/*.astro";
 
@@ -25,13 +24,13 @@
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-size: var(--text-ui);
-    line-height: 1.5;
+    line-height: 1.6;
     font-feature-settings: "kern" 1;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    overflow-x: hidden;
   }
 
-  /* 报头不再固定，主导航吸顶；仅在锚点跳转时避开吸顶导航 */
   :target,
   [id] {
     scroll-margin-top: calc(var(--nav-h) + 1.5rem);
@@ -42,20 +41,20 @@
     text-decoration: none;
   }
 
-  /* 焦点可见：绝不移除 outline 而不给替代方案 */
   :focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 2px;
-    border-radius: var(--radius-sm);
+    outline: 2px solid var(--color-brand);
+    outline-offset: 3px;
+    border-radius: 4px;
   }
 
   ::selection {
-    background-color: var(--color-accent-soft);
-    color: var(--color-accent-ink);
+    background-color: color-mix(in srgb, var(--color-brand) 22%, transparent);
+    color: var(--color-brand-ink);
   }
 
   img,
-  svg {
+  svg,
+  video {
     display: block;
     max-width: 100%;
   }
@@ -80,20 +79,14 @@
 }
 
 /* ============================================================
-   组件层：布局与通用工具
+   版式与容器
    ============================================================ */
 @layer components {
   .container-page {
     width: 100%;
     max-width: var(--layout-max);
     margin-inline: auto;
-    padding-inline: 1rem;
-  }
-
-  @media (min-width: 640px) {
-    .container-page {
-      padding-inline: 1.5rem;
-    }
+    padding-inline: 1.5rem;
   }
 
   @media (min-width: 1024px) {
@@ -102,528 +95,297 @@
     }
   }
 
-  .container-prose {
+  .container-wide {
     width: 100%;
-    max-width: var(--layout-prose);
+    max-width: var(--layout-wide);
     margin-inline: auto;
-  }
-
-  /* 区块垂直节奏：移动 48px → 桌面 96px */
-  .section {
-    padding-block: 3rem;
+    padding-inline: 1.5rem;
   }
 
   @media (min-width: 1024px) {
-    .section {
-      padding-block: 6rem;
+    .container-wide {
+      padding-inline: 3rem;
     }
   }
 
-  /* 发丝分隔线 */
-  .hairline {
-    border-top: 1px solid var(--color-line);
+  .section {
+    padding-block: clamp(3.5rem, 7vw, 6.5rem);
   }
 
-  /* 区块标题上方的眉标 */
+  .section-tight {
+    padding-block: clamp(2.5rem, 4.5vw, 4rem);
+  }
+
+  /* 眉标签：英文小字 + 字距，机构站的标准语法 */
   .eyebrow {
-    font-family: var(--font-mono);
-    font-size: var(--text-meta);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--color-ink-tertiary);
-  }
-
-  /* 数字与日期统一等宽对齐 */
-  .numeric {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1;
-  }
-
-  /* ---------- 链接 ---------- */
-  .link {
-    color: var(--color-accent);
-    text-underline-offset: 3px;
-    transition: color var(--duration-fast) var(--ease-standard);
-  }
-
-  .link:hover {
-    color: var(--color-accent-hover);
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-  }
-
-  /* 按压反馈（taste-skill §4.5）：可交互元素必须有 tactile feedback。
-     本项目此前全站零条 :active 规则 —— 悬停有反馈、按下没有，手感是「半截」的。
-     一律只改颜色或 transform（GPU 合成，不触发重排、不引起布局位移）。 */
-  .link:active,
-  .link-title:active {
-    color: var(--color-accent-ink);
-  }
-
-  /* 标题链接：悬停变主色 + 下划线，不做位移 */
-  .link-title {
-    color: var(--color-ink);
-    transition: color var(--duration-fast) var(--ease-standard);
-  }
-
-  .link-title:hover {
-    color: var(--color-accent);
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 3px;
-  }
-
-  /* ---------- 整卡可点 ----------
-     卡片本体不是 <a>（否则卡内无法再放第二个链接，嵌套 <a> 是非法 HTML）。
-     改为：卡片 position:relative，主链接加 .stretched-link 用伪元素铺满整张卡，
-     卡内的次要链接加 .stretched-link-above 抬到伪元素之上即可各自独立可点。
-     无障碍名称仍来自主链接的可见文字。 */
-  .stretched-link::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-  }
-
-  .stretched-link-above {
-    position: relative;
-    z-index: 1;
-  }
-
-  /* ---------- 按钮 ---------- */
-  .btn {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    min-height: 44px;
-    padding: 0 1.25rem;
-    border-radius: var(--radius-md);
-    font-size: var(--text-ui);
+    gap: 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
     font-weight: 500;
-    cursor: pointer;
-    white-space: nowrap;
-    transition:
-      background-color var(--duration-normal) var(--ease-standard),
-      border-color var(--duration-normal) var(--ease-standard),
-      color var(--duration-normal) var(--ease-standard);
-  }
-
-  /* 按下时轻微下沉，模拟物理按压。用 transform 而非 top/margin，
-     不参与布局计算，因此不会引起相邻元素抖动。 */
-  .btn:active {
-    transform: translateY(1px);
-  }
-
-  .btn-primary:active {
-    background-color: var(--color-accent-ink);
-    border-color: var(--color-accent-ink);
-  }
-
-  .btn-secondary:active,
-  .btn-ghost:active {
-    background-color: var(--color-accent-soft);
-    border-color: var(--color-accent);
-  }
-
-  /* 减弱动效时保留颜色反馈，去掉位移 */
-  @media (prefers-reduced-motion: reduce) {
-    .btn:active {
-      transform: none;
-    }
-  }
-
-  .btn-primary {
-    background-color: var(--color-accent);
-    color: var(--color-ink-invert);
-    border: 1px solid var(--color-accent);
-  }
-
-  .btn-primary:hover {
-    background-color: var(--color-accent-hover);
-    border-color: var(--color-accent-hover);
-  }
-
-  .btn-secondary {
-    background-color: transparent;
-    color: var(--color-ink);
-    border: 1px solid var(--color-line-strong);
-  }
-
-  .btn-secondary:hover {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
-  }
-
-  .btn-ghost {
-    background-color: transparent;
-    border: 1px solid transparent;
-    color: var(--color-ink-secondary);
-  }
-
-  .btn-ghost:hover {
-    background-color: var(--color-surface-subtle);
-    color: var(--color-ink);
-  }
-
-  /* ---------- 卡片：描边 + 白底，无阴影，禁止嵌套 ---------- */
-  .card {
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-md);
-    transition: border-color var(--duration-normal) var(--ease-standard);
-  }
-
-  .card-hover:hover {
-    border-color: var(--color-accent);
-  }
-
-  /* ---------- 标签 ---------- */
-  .tag {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.125rem 0.5rem;
-    border-radius: var(--radius-sm);
-    background-color: var(--color-accent-soft);
-    color: var(--color-accent-ink);
-    font-size: var(--text-meta);
-    line-height: 1.6;
-  }
-
-  .tag-quiet {
-    background-color: var(--color-surface-subtle);
-    color: var(--color-ink-secondary);
-  }
-
-  /* ---------- 键盘可达的跳转链接 ---------- */
-  .skip-link {
-    position: absolute;
-    left: 1rem;
-    top: -100px;
-    z-index: 100;
-    padding: 0.625rem 1rem;
-    background-color: var(--color-accent);
-    color: var(--color-ink-invert);
-    border-radius: var(--radius-md);
-    transition: top var(--duration-fast) var(--ease-standard);
-  }
-
-  .skip-link:focus {
-    top: 1rem;
-  }
-
-  /* ---------- 首屏一次性进入动画（可降级） ---------- */
-  .reveal {
-    animation: reveal-in var(--duration-slow) var(--ease-standard) both;
-  }
-
-  @keyframes reveal-in {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .reveal {
-      animation: none;
-    }
-  }
-
-  /* ---------- 门户式区块标题栏 ---------- */
-  .section-bar {
-    display: flex;
-    align-items: baseline;
-    gap: 0.75rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--color-line);
-  }
-
-  .section-bar-title {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.625rem;
-    font-family: var(--font-serif-cjk);
-    font-size: 1.3125rem;
-    line-height: 1.3;
-    font-weight: 600;
-    color: var(--color-ink);
-  }
-
-  .section-bar-title::before {
-    content: "";
-    flex: none;
-    width: 3px;
-    height: 1.05em;
-    background-color: var(--color-accent);
-    border-radius: 1px;
-  }
-
-  .section-bar-en {
-    font-family: var(--font-mono);
-    font-size: var(--text-meta);
-    letter-spacing: 0.14em;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: var(--color-ink-tertiary);
+    color: var(--color-brand);
   }
 
-  /* 点击区补齐到 44×44。此前实测仅 21px 高、36px 宽。
-     标题栏是 baseline 对齐，链接用负 margin 抵消纵向撑开，
-     并用 min-width + 居中保证横向也达到 44px，视觉上「更多+」仍在右侧。 */
-  .section-bar-more {
-    display: inline-flex;
-    align-items: center;
-    justify-content: flex-end;
-    margin-left: auto;
-    min-height: 44px;
-    min-width: 44px;
-    margin-block: -0.6875rem;
-    white-space: nowrap;
-    font-size: var(--text-ui);
-    color: var(--color-accent);
-    transition: color var(--duration-fast) var(--ease-standard);
-  }
-
-  .section-bar-more:hover {
-    color: var(--color-accent-hover);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-
-  /* 必须排在 :hover 之后：两者特异性相同，后写的生效。
-     否则按下时 hover 的 underline 会盖掉按压色。 */
-  .section-bar-more:active {
-    color: var(--color-accent-ink);
-  }
-
-  /* 区块副标题行（标题栏下方的一句话说明） */
-  .section-note {
-    margin-top: 0.75rem;
-    font-size: var(--text-ui);
-    line-height: 1.6;
-    color: var(--color-ink-secondary);
-  }
-
-  /* ---------- 通知公告列表 ---------- */
-  .notice-list > li + li {
-    border-top: 1px solid var(--color-line);
-  }
-
-  .notice-item {
-    display: flex;
-    align-items: baseline;
-    gap: 0.625rem;
-    padding: 0.6875rem 0;
-    transition: color var(--duration-fast) var(--ease-standard);
-  }
-
-  .notice-item::before {
+  .eyebrow::before {
     content: "";
-    flex: none;
-    width: 4px;
-    height: 4px;
-    margin-top: 0.5em;
-    border-radius: 50%;
-    background-color: var(--color-line-strong);
-    transition: background-color var(--duration-fast) var(--ease-standard);
-  }
-
-  .notice-item:hover::before {
-    background-color: var(--color-accent);
-  }
-
-  .notice-title {
-    min-width: 0;
-    flex: 1;
-    font-size: var(--text-ui);
-    line-height: 1.6;
-    color: var(--color-ink);
-    transition: color var(--duration-fast) var(--ease-standard);
-  }
-
-  .notice-item:hover .notice-title {
-    color: var(--color-accent);
-  }
-
-  .notice-date {
-    flex: none;
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
-    font-size: var(--text-meta);
-    color: var(--color-ink-tertiary);
-  }
-
-  /* ---------- 要点列表（带日期的动态条目） ---------- */
-  .brief-list > li + li {
-    border-top: 1px solid var(--color-line);
-  }
-
-  .brief-item {
-    display: block;
-    padding: 0.6875rem 0;
-  }
-
-  .brief-item-title {
-    font-size: var(--text-ui);
-    line-height: 1.6;
-    color: var(--color-ink);
-    transition: color var(--duration-fast) var(--ease-standard);
-  }
-
-  .brief-item:hover .brief-item-title {
-    color: var(--color-accent);
-  }
-
-  /* ---------- 抽象图形框 ---------- */
-  .figure-frame {
-    position: relative;
-    overflow: hidden;
-    background-color: var(--color-surface-subtle);
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-md);
-  }
-
-  .figure-frame > svg {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
-
-  /* ---------- 门户卡片 ---------- */
-  .portal-card {
-    display: block;
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    transition:
-      border-color var(--duration-normal) var(--ease-standard),
-      background-color var(--duration-normal) var(--ease-standard);
-  }
-
-  .portal-card:hover {
-    border-color: var(--color-accent);
-  }
-
-  /* 整卡可点时，按下给一层主色浅底，确认「这张被按到了」 */
-  .portal-card:active {
-    background-color: var(--color-accent-soft);
-    border-color: var(--color-accent);
-  }
-
-  /* ---------- 数据统计带 ---------- */
-  .stat-band {
-    background-color: var(--color-masthead);
-    color: var(--color-ink-invert);
-  }
-
-  .stat-band-label {
-    font-family: var(--font-mono);
-    font-size: var(--text-meta);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--color-on-masthead-muted);
-  }
-
-  .stat-band-value {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
-    font-size: clamp(1.75rem, 3vw, 2.5rem);
-    line-height: 1;
-    font-weight: 500;
-    color: var(--color-ink-invert);
-  }
-
-  /* ---------- 分段切换 ---------- */
-  .tab {
-    display: inline-flex;
-    align-items: center;
-    min-height: 2.25rem;
-    padding: 0 0.875rem;
-    border-radius: var(--radius-sm);
-    font-size: var(--text-ui);
-    color: var(--color-ink-secondary);
-    cursor: pointer;
-    transition:
-      background-color var(--duration-fast) var(--ease-standard),
-      color var(--duration-fast) var(--ease-standard);
-  }
-
-  .tab:hover {
-    background-color: var(--color-surface-subtle);
-    color: var(--color-ink);
-  }
-
-  .tab:active {
-    background-color: var(--color-accent-soft);
-    color: var(--color-accent-ink);
-  }
-
-  .tab[aria-selected='true'],
-  .tab[data-active='true'] {
-    background-color: var(--color-accent);
-    color: var(--color-ink-invert);
-  }
-
-  /* ---------- 侧栏区块（门户式右栏） ---------- */
-  .aside-block + .aside-block {
-    margin-top: 2.5rem;
-  }
-
-  /* ---------- 路由不可用提示（禁用 / 需权限） ----------
-     由前端配置运行时按需注入到 <main>。
-     保留站点骨架（页头/页脚），只替换主内容，用户始终有退路。 */
-  .route-unavailable {
-    padding-block: 4rem;
-  }
-
-  .route-unavailable__inner {
-    max-width: var(--layout-prose);
-    margin-inline: auto;
-    padding: 2.5rem 2rem;
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-md);
-    text-align: center;
-  }
-
-  .route-unavailable__title {
-    font-family: var(--font-serif-cjk);
-    font-size: 1.375rem;
-    font-weight: 600;
-    line-height: 1.4;
-    color: var(--color-ink);
-  }
-
-  .route-unavailable__desc {
-    margin-top: 0.75rem;
-    font-size: var(--text-ui);
-    line-height: 1.7;
-    color: var(--color-ink-secondary);
-  }
-
-  .route-unavailable__actions {
-    margin-top: 1.75rem;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.75rem;
-  }
-
-  /* 屏幕阅读器专用 */
-  .sr-only {
-    position: absolute;
-    width: 1px;
+    width: 1.75rem;
     height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
+    background: currentColor;
+    opacity: 0.7;
+  }
+
+  .eyebrow-night {
+    color: var(--color-brand-2);
+  }
+
+  /* 渐变文字：只用于一句主张，不铺满标题 */
+  .gradient-text {
+    background: var(--gradient-brand);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .night {
+    background-color: var(--color-night);
+    color: var(--color-on-night);
+  }
+
+  .night-2 {
+    background-color: var(--color-night-2);
+    color: var(--color-on-night);
+  }
+
+  /* 细网格：暗面区块的精密感底纹 */
+  .grid-lines {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    background-size: 72px 72px;
+  }
+
+  .hairline {
+    height: 1px;
+    background: var(--color-line);
+  }
+
+  .skip-link {
+    position: fixed;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 100;
+    transform: translateY(-160%);
+    background: var(--color-night);
+    color: var(--color-on-night);
+    padding: 0.6rem 1rem;
+    border-radius: var(--radius-md);
+    transition: transform var(--duration-fast) var(--ease-standard);
+  }
+
+  .skip-link:focus-visible {
+    transform: translateY(0);
+  }
+
+  /* 卡片：描边 + 极轻阴影，hover 时抬升 */
+  .card-lift {
+    transition:
+      transform var(--duration-normal) var(--ease-standard),
+      box-shadow var(--duration-normal) var(--ease-standard),
+      border-color var(--duration-normal) var(--ease-standard);
+  }
+
+  .card-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-line-strong);
+  }
+}
+
+/* ============================================================
+   正文排版（Markdown 渲染区）
+   ============================================================ */
+.prose-idmt {
+  max-width: var(--layout-prose);
+  color: var(--color-ink-secondary);
+  font-size: var(--text-body);
+  line-height: 1.85;
+}
+
+.prose-idmt > * + * {
+  margin-top: 1.25em;
+}
+
+.prose-idmt h2 {
+  margin-top: 2.4em;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
+}
+
+.prose-idmt h3 {
+  margin-top: 2em;
+  font-size: 1.175rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.prose-idmt strong {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.prose-idmt a {
+  color: var(--color-brand);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+.prose-idmt ul,
+.prose-idmt ol {
+  padding-left: 1.4em;
+}
+
+.prose-idmt ul {
+  list-style: disc;
+}
+
+.prose-idmt ol {
+  list-style: decimal;
+}
+
+.prose-idmt li + li {
+  margin-top: 0.5em;
+}
+
+.prose-idmt li::marker {
+  color: var(--color-brand);
+}
+
+.prose-idmt blockquote {
+  border-left: 2px solid var(--color-brand);
+  padding-left: 1.25rem;
+  font-family: var(--font-serif-cjk);
+  font-size: 1.125rem;
+  color: var(--color-ink);
+}
+
+.prose-idmt table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.prose-idmt th,
+.prose-idmt td {
+  border-bottom: 1px solid var(--color-line);
+  padding: 0.7rem 0.9rem;
+  text-align: left;
+}
+
+.prose-idmt th {
+  font-weight: 600;
+  color: var(--color-ink);
+  background: var(--color-surface-subtle);
+}
+
+.prose-idmt img {
+  border-radius: var(--radius-lg);
+}
+
+.prose-idmt code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background: var(--color-surface-subtle);
+  border-radius: 4px;
+  padding: 0.15em 0.4em;
+}
+
+/* ============================================================
+   动效
+   ============================================================ */
+@keyframes marquee-x {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.55;
+  }
+  70% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-marquee {
+  animation: marquee-x var(--marquee-duration, 40s) linear infinite;
+}
+
+.animate-float {
+  animation: float-soft 7s var(--ease-standard) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee,
+  .animate-float {
+    animation: none;
+  }
+}
+
+@theme inline {
+  --animate-marquee: marquee var(--duration) infinite linear;
+  --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
+  --animate-shine: shine var(--duration) infinite linear;
+  @keyframes marquee {
+  from {
+    transform: translateX(0);
+    }
+  to {
+    transform: translateX(calc(-100% - var(--gap)));
+    }
+  }
+  @keyframes marquee-vertical {
+  from {
+    transform: translateY(0);
+    }
+  to {
+    transform: translateY(calc(-100% - var(--gap)));
+    }
+  }
+  @keyframes shine {
+  0% {
+    background-position: 0% 0%;
+    }
+  50% {
+    background-position: 100% 100%;
+    }
+  to {
+    background-position: 0% 0%;
+    }
   }
 }

@@ -3,33 +3,20 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { u } from '../lib/paths';
 ---
 
-<BaseLayout title="页面未找到" description="请求的页面不存在。">
-  <section class="section">
-    <div class="container-page">
-      <div class="container-prose">
-        <p class="eyebrow mb-4">Error 404</p>
-        <h1>没有找到这个页面</h1>
-        <p class="mt-5 text-body leading-relaxed text-ink-secondary">
-          你访问的地址可能已被移动、重命名，或者链接本身有误。
-          可以回到首页，或通过搜索找到你要的内容。
-        </p>
-
-        <div class="mt-8 flex flex-wrap gap-3">
-          <a href={u('/')} class="btn btn-primary">返回首页</a>
-          <a href={u('/search')} class="btn btn-secondary">全站搜索</a>
-        </div>
-
-        <div class="mt-12 border-t border-line pt-8">
-          <p class="eyebrow mb-4">常用入口</p>
-          <ul class="flex flex-wrap gap-2">
-            <li><a href={u('/research')} class="tag tag-quiet">研究方向</a></li>
-            <li><a href={u('/people')} class="tag tag-quiet">研究团队</a></li>
-            <li><a href={u('/publications')} class="tag tag-quiet">学术成果</a></li>
-            <li><a href={u('/news')} class="tag tag-quiet">新闻动态</a></li>
-            <li><a href={u('/events')} class="tag tag-quiet">学术活动</a></li>
-            <li><a href={u('/join')} class="tag tag-quiet">招生招聘</a></li>
-          </ul>
-        </div>
+<BaseLayout title="页面不存在" description="您访问的页面不存在或已迁移。">
+  <section class="night relative flex min-h-[80svh] items-center overflow-hidden pt-[var(--nav-h)]">
+    <div class="grid-lines absolute inset-0 opacity-40"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(60%_60%_at_50%_20%,rgba(31,94,255,.2),transparent_70%)]"></div>
+    <div class="container-page relative text-center">
+      <p class="font-mono text-[10px] tracking-[0.26em] text-[var(--color-brand-2)]">ERROR 404</p>
+      <p class="mt-6 font-display text-[5rem] font-bold leading-none text-white/15">404</p>
+      <h1 class="mt-2 font-display text-h1 font-bold text-white">这个页面不在研究院里</h1>
+      <p class="mx-auto mt-4 max-w-md text-[14px] leading-relaxed text-white/55">
+        链接可能已经迁移。你可以回到首页，或从研究方向重新开始。
+      </p>
+      <div class="mt-8 flex justify-center gap-3">
+        <a href={u("/")} class="inline-flex h-11 items-center rounded-lg bg-white px-5 text-[13.5px] font-semibold text-[var(--color-ink)]">返回首页</a>
+        <a href={u("/research")} class="inline-flex h-11 items-center rounded-lg border border-white/20 px-5 text-[13.5px] text-white/85">研究方向</a>
       </div>
     </div>
   </section>

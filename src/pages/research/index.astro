@@ -1,70 +1,71 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import PageHero from '../../components/ui/PageHero.astro';
-import { researchStatusLabels } from '../../data/site';
+import PageHero from '../../components/site/PageHero.astro';
+import SectionHead from '../../components/site/SectionHead.astro';
 import { u } from '../../lib/paths';
 
-const areas = (await getCollection('research', ({ data }) => !data.draft)).sort(
-  (a, b) => a.data.order - b.data.order
-);
+const research = (await getCollection('research', ({ data }) => !data.draft)).sort((a, b) => a.data.order - b.data.order);
 ---
 
-<BaseLayout
-  title="研究方向"
-  description="数字管理技术研究院的四个专业领域：人工智能与无人系统、数字新基建与智慧城市、云计算与数据智能、高端制造与工业数字化。"
->
+<BaseLayout title="研究方向" description="IDMT 九大研究方向：从智能算力与数字基础设施，到人工智能、机器人、数据智能、先进制造、新能源、低空经济与智慧医疗。" transparentHeader image="/images/datacenter.jpg">
   <PageHero
-    eyebrow="Research"
-    title="研究方向"
-    description="四个专业领域覆盖从关键核心技术研发到成果转化的衔接路径。"
-    crumbs={[{ label: '研究', href: '/research' }, { label: '研究方向' }]}
+    eyebrow="RESEARCH / 研究方向"
+    title="九个方向，
+一条从底座到场景的技术链路"
+    description="我们不按学科划分研究，而按「问题发生在哪一层」组织能力：算力与器件、智能系统、产业场景。每个方向都对应对可验证的实验室能力与可交付的产品形态。"
+    crumbs={[{ label: '研究方向' }]}
+    image={u('/images/datacenter.webp')}
   />
 
-  <section class="section">
+  <section class="section bg-canvas">
     <div class="container-page">
-      <ul>
-        {
-          areas.map((area) => (
-            <li>
-              <article class="border-b border-line">
-                <a
-                  href={u(`/research/${area.id}`)}
-                  class="group grid gap-4 py-8 transition-colors duration-150 hover:bg-surface lg:grid-cols-[4rem_1.1fr_1.5fr] lg:gap-8 lg:py-10"
-                >
-                  <span class="numeric text-meta text-ink-tertiary lg:pt-2">
-                    {String(area.data.order).padStart(2, '0')}
-                  </span>
+      <div class="space-y-5">
+        {research.map((item, index) => (
+          <a
+            href={u(`/research/${item.id}`)}
+            class="group grid overflow-hidden rounded-2xl border border-line bg-surface transition-shadow hover:shadow-[var(--shadow-md)] lg:grid-cols-[0.9fr_1.1fr]"
+          >
+            <div class:list={['relative min-h-[220px] overflow-hidden', index % 2 === 1 && 'lg:order-2']}>
+              <img
+                src={u(item.data.cover ?? '/images/datacenter.webp')}
+                alt={item.data.coverAlt ?? item.data.title}
+                class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                loading={index < 2 ? 'eager' : 'lazy'}
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-night/55 to-transparent lg:from-night/25"></div>
+              <span class="absolute left-5 top-5 font-mono text-[10px] tracking-[0.2em] text-white/80">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+            </div>
 
-                  <div class="lg:pt-1">
-                    <h2 class="text-[1.375rem] leading-snug">
-                      <span class="link-title">{area.data.title}</span>
-                    </h2>
-                    <ul class="mt-4 flex flex-wrap gap-1.5">
-                      {area.data.keywords.map((kw) => (
-                        <li class="tag tag-quiet">{kw}</li>
-                      ))}
-                      {area.data.status && (
-                        <li class="tag tag-quiet">{researchStatusLabels[area.data.status] ?? area.data.status}</li>
-                      )}
-                    </ul>
-                  </div>
+            <div class="flex flex-col justify-center p-7 lg:p-10">
+              <p class="font-mono text-[9.5px] tracking-[0.2em] text-brand">{item.data.titleEn.toUpperCase()}</p>
+              <h2 class="mt-2.5 font-display text-[1.5rem] font-bold tracking-[-0.01em] text-ink group-hover:text-brand lg:text-[1.75rem]">
+                {item.data.title}
+              </h2>
+              <p class="mt-3 max-w-xl text-[14.5px] leading-relaxed text-ink-secondary">{item.data.summary}</p>
+              <div class="mt-5 flex flex-wrap gap-1.5">
+                {item.data.keywords.map((k) => (
+                  <span class="rounded-full border border-line px-2.5 py-1 text-[11px] text-ink-tertiary">{k}</span>
+                ))}
+              </div>
+              <span class="mt-6 inline-flex items-center gap-1.5 text-[12.5px] font-medium text-brand">
+                查看方向详情
+                <svg viewBox="0 0 16 16" class="size-3.5 transition-transform group-hover:translate-x-0.5" fill="none" aria-hidden="true">
+                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
 
-                  <div>
-                    <p class="text-body leading-relaxed text-ink-secondary">{area.data.summary}</p>
-                    <span class="mt-4 inline-flex items-center gap-1.5 text-ui font-medium text-accent">
-                      查看方向详情
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="transition-transform duration-150 group-hover:translate-x-0.5 motion-reduce:transition-none">
-                        <path d="M5 12h14M12 5l7 7-7 7" />
-                      </svg>
-                    </span>
-                  </div>
-                </a>
-              </article>
-            </li>
-          ))
-        }
-      </ul>
+  <section class="section-tight border-t border-line bg-surface">
+    <div class="container-page">
+      <SectionHead eyebrow="COLLABORATION" title="与我们一起推进研究" description="开放课题、联合实验室与产业共建是研究院的常态合作方式。" href={u("/contact")} linkLabel="联系合作" />
     </div>
   </section>
 </BaseLayout>

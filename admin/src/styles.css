@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand: #1f5eff;
+  --color-brand-soft: #e8eeff;
+  --color-ink: #0a1424;
+  --color-ink-secondary: #45556d;
+  --color-ink-tertiary: #6b7a90;
+  --color-canvas: #f4f6fa;
+  --color-line: #dde5f0;
+  --color-night: #050b16;
+  --color-night-2: #0a1526;
+
+  --color-background: var(--color-canvas);
+  --color-foreground: var(--color-ink);
+  --color-card: #ffffff;
+  --color-card-foreground: var(--color-ink);
+  --color-popover: #ffffff;
+  --color-popover-foreground: var(--color-ink);
+  --color-primary: var(--color-brand);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #eef2f8;
+  --color-secondary-foreground: var(--color-ink);
+  --color-muted: #f1f5fa;
+  --color-muted-foreground: var(--color-ink-tertiary);
+  --color-accent: #e8eefc;
+  --color-accent-foreground: #0b2a75;
+  --color-destructive: #c33241;
+  --color-destructive-foreground: #ffffff;
+  --color-border: var(--color-line);
+  --color-input: var(--color-line);
+  --color-ring: var(--color-brand);
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+.md-preview h1 { font-size: 1.5rem; font-weight: 700; margin: 1.2em 0 .6em; }
+.md-preview h2 { font-size: 1.2rem; font-weight: 700; margin: 1.2em 0 .5em; }
+.md-preview h3 { font-size: 1rem; font-weight: 600; margin: 1em 0 .4em; }
+.md-preview p { margin: .7em 0; line-height: 1.8; color: var(--color-ink-secondary); }
+.md-preview ul, .md-preview ol { padding-left: 1.4em; margin: .7em 0; }
+.md-preview ul { list-style: disc; }
+.md-preview ol { list-style: decimal; }
+.md-preview li { margin: .3em 0; line-height: 1.7; color: var(--color-ink-secondary); }
+.md-preview strong { color: var(--color-ink); }
+.md-preview a { color: var(--color-brand); text-decoration: underline; }
+.md-preview table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: .875rem; }
+.md-preview th, .md-preview td { border: 1px solid var(--color-line); padding: .5em .7em; text-align: left; }
+.md-preview th { background: var(--color-muted); }

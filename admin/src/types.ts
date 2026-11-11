@@ -1,167 +1,68 @@
 export type FieldType =
   | 'string'
   | 'text'
-  | 'date'
   | 'number'
   | 'boolean'
+  | 'date'
   | 'array'
   | 'enum'
-  | 'image';
+  | 'image'
+  | 'keyvalue';
 
-export interface FieldOption {
-  value: string;
-  label: string;
-}
-
-export interface FieldDef {
+export interface Field {
   name: string;
   label: string;
   type: FieldType;
   required?: boolean;
-  help?: string;
-  options?: FieldOption[];
   default?: unknown;
-  min?: number;
-  max?: number;
+  help?: string;
+  options?: string[];
 }
 
 export interface CollectionSchema {
   label: string;
   icon: string;
+  description: string;
   hasBody: boolean;
-  fields: FieldDef[];
+  fields: Field[];
 }
 
-export type CollectionMap = Record<string, CollectionSchema>;
+export type CollectionName = 'research' | 'products' | 'labs' | 'news' | 'events' | 'notices';
 
 export interface Entry {
   id: string;
-  file: string;
+  draft?: boolean;
+  _bodyLength?: number;
+  _updatedAt?: string;
+  [key: string]: unknown;
+}
+
+export interface EntryDetail {
+  id: string;
   data: Record<string, unknown>;
   body: string;
-  updatedAt: string;
-  bytes: number;
-  broken?: boolean;
-  error?: string;
-}
-
-export interface ValidationError {
-  field: string;
-  message: string;
-}
-
-export interface Stats {
-  total: number;
-  drafts: number;
-  broken: number;
 }
 
 export interface Asset {
   name: string;
   url: string;
   size: number;
-  mtime: string;
+  updatedAt: string;
 }
 
-/* ------------------------------------------------------------------
-   前端粒度管理
-   ------------------------------------------------------------------ */
-
-export interface ConfigWarning {
-  path: string;
-  message: string;
+export interface Stats {
+  counts: Record<string, number>;
+  drafts: number;
+  assets: number;
+  total: number;
+  build: { status: string; startedAt: string | null; finishedAt: string | null };
+  defaultPassword: boolean;
 }
 
-export interface RouteConfig {
-  state?: 'enabled' | 'hidden' | 'disabled';
-  access?: 'public' | 'restricted';
-  disabledMessage?: string;
-  title?: string;
-}
-
-export interface BlockItemConfig {
-  enabled?: boolean;
-  title?: string;
-  description?: string;
-}
-
-export interface BlockPageConfig {
-  order?: string[];
-  items?: Record<string, BlockItemConfig>;
-}
-
-export interface ElementConfig {
-  enabled?: boolean;
-  label?: string;
-  ariaLabel?: string;
-  href?: string;
-  icon?: string;
-}
-
-export interface ThemeConfig {
-  tokens?: Record<string, string>;
-  logoText?: string;
-  logoSubtext?: string;
-  logoImage?: string;
-  footerNote?: string;
-}
-
-export interface FrontendConfig {
-  version: number;
-  updatedAt?: string | null;
-  routes: Record<string, RouteConfig>;
-  blocks: Record<string, BlockPageConfig>;
-  elements: Record<string, Record<string, ElementConfig>>;
-  i18n: Record<string, Record<string, string>>;
-  theme: ThemeConfig;
-  features: Record<string, boolean>;
-}
-
-export interface SurfaceRoute {
-  path: string;
-  label: string;
-}
-
-export interface SurfaceBlock {
-  id: string;
-  label: string;
-}
-
-export interface SurfaceElement {
-  id: string;
-  label: string;
-}
-
-export interface Surface {
-  routes: SurfaceRoute[];
-  blocks: Record<string, SurfaceBlock[]>;
-  elements: Record<string, SurfaceElement[]>;
-}
-
-export interface SurfaceResponse {
-  surface: Surface;
-  languages: string[];
-  themeTokens: string[];
-  featureKeys: string[];
-  routeStates: string[];
-  routeAccess: string[];
-  version: number;
-}
-
-export interface ConfigSourceResponse {
-  config: FrontendConfig;
-  persisted: boolean;
-  empty: boolean;
-  warnings: ConfigWarning[];
-}
-
-export interface ConfigSaveResponse {
-  config: FrontendConfig;
-  warnings: ConfigWarning[];
-  empty: boolean;
-  message: string;
-}
-
-export interface Capabilities {
-  frontendConfig: { canManage: boolean; role: string };
+export interface BuildState {
+  status: 'idle' | 'running' | 'success' | 'failed';
+  startedAt: string | null;
+  finishedAt: string | null;
+  exitCode: number | null;
+  lines: string[];
 }

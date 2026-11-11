@@ -1,34 +1,25 @@
 ---
 import { ClientRouter } from 'astro:transitions';
-import Header from '../components/layout/Header.astro';
-import Footer from '../components/layout/Footer.astro';
+import Header from '../components/site/Header.astro';
+import Footer from '../components/site/Footer.astro';
 import SeoHead from '../components/seo/SeoHead.astro';
 import { site } from '../data/site';
-import type { CitationSource } from '../lib/citation';
-import '../styles/global.css';
-// ?raw 在构建期把令牌文件内联成字符串。
-// 不能用 import.meta.url + readFileSync：组件被打包进 dist/.prerender/chunks/ 后，
-// 相对路径会指向产物目录而不是源码目录，构建期直接 ENOENT。
-import tokensCss from '../styles/tokens.css?raw';
 import { u } from '../lib/paths';
+import '../styles/global.css';
 
 interface Props {
   title: string;
   description?: string;
   type?: 'website' | 'article';
   publishedAt?: Date;
-  /** 学术成果页的 Highwire Press 检索元数据；其余页面不传 */
-  citation?: CitationSource;
+  /** 页面主图，用于 og:image */
+  image?: string;
+  /** 首屏是否压暗页头（深色 Hero 页面传 true） */
+  transparentHeader?: boolean;
 }
 
-const { title, description, type, publishedAt, citation } = Astro.props;
-
-/**
- * theme-color 是 <meta>，不认 CSS 变量，只能写字面量。
- * 从 tokens.css 取 --color-canvas，避免手抄一份、改配色时漏掉这里。
- */
-const canvasColor =
-  tokensCss.match(/--color-canvas:\s*(#[0-9a-fA-F]{3,8})/)?.[1] ?? '#f2f2f2';
+const { title, description, type, publishedAt, image, transparentHeader = false } = Astro.props;
+const pageTitle = title.includes(site.shortName) ? title : `${title} · ${site.shortName}`;
 ---
 
 <!doctype html>
@@ -37,19 +28,24 @@ const canvasColor =
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
-    <meta name="theme-color" content={canvasColor} />
-    <link rel="icon" href={u('/favicon.svg')} type="image/svg+xml" />
+    <meta name="theme-color" content="#050b16" />
+    <link rel="icon" href={u("/favicon.svg")} type="image/svg+xml" />
 
-    <SeoHead title={title} description={description} type={type} publishedAt={publishedAt} citation={citation} />
+    <SeoHead
+      title={pageTitle}
+      description={description ?? site.description}
+      type={type}
+      publishedAt={publishedAt}
+      image={image}
+    />
 
-    {/* 原生 View Transitions：多页站点获得类 SPA 的连续感，不引入客户端路由框架 */}
     <ClientRouter fallback="swap" />
   </head>
 
-  <body class="flex min-h-screen flex-col">
+  <body class="flex min-h-screen flex-col bg-canvas">
     <a href="#main" class="skip-link">跳到主要内容</a>
 
-    <Header />
+    <Header transparent={transparentHeader} />
 
     <main id="main" class="flex-1">
       <slot />
@@ -57,27 +53,18 @@ const canvasColor =
 
     <Footer />
 
-    {/*
-      前端粒度管理 · 运行时配置应用
-      前后端分离：本脚本只负责「拉取 + 应用」，配置由后台接口动态构建下发。
-      构建产物里不含任何具体配置值；拉取失败即保持默认渲染。
-    */}
-    <script>
-      import '../scripts/frontend-config-runtime';
-    </script>
-
     <script is:inline type="application/ld+json" set:html={JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'ResearchOrganization',
       name: site.name,
       alternateName: site.nameEn,
       url: site.url,
-      ...(site.email && { email: site.email }),
-      ...(site.phone && { telephone: site.phone }),
+      email: site.email,
+      telephone: site.phone,
       address: {
         '@type': 'PostalAddress',
-        streetAddress: site.address,
-        ...(site.postcode && { postalCode: site.postcode }),
+        addressLocality: '杭州市',
+        addressRegion: '浙江省',
         addressCountry: 'CN',
       },
       description: site.description,

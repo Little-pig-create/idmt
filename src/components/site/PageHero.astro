@@ -1,0 +1,53 @@
+---
+interface Props {
+  eyebrow: string;
+  title: string;
+  description?: string;
+  /** 面包屑：[{label, href}]，最后一项为当前页 */
+  crumbs?: { label: string; href?: string }[];
+  image?: string;
+  size?: 'default' | 'compact';
+}
+
+const { eyebrow, title, description, crumbs = [], image, size = 'default' } = Astro.props;
+const compact = size === 'compact';
+import { u } from '../../lib/paths';
+---
+
+<section class="night relative isolate overflow-hidden pt-[calc(var(--nav-h)+2rem)]">
+  {image && (
+    <>
+      <img src={image} alt="" class="absolute inset-0 -z-20 h-full w-full object-cover opacity-70" loading="eager" />
+      <div class="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(5,11,22,.72),rgba(5,11,22,.92))]"></div>
+    </>
+  )}
+  <div class="grid-lines absolute inset-0 -z-10 opacity-40"></div>
+  <div class="absolute inset-0 -z-10 bg-[radial-gradient(60%_80%_at_15%_20%,rgba(31,94,255,.18),transparent_70%)]"></div>
+  <div class="absolute inset-x-0 bottom-0 -z-10 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+
+  <div class:list={['container-page', compact ? 'pb-12 pt-10' : 'pb-16 pt-14 lg:pb-20 lg:pt-16']}>
+    {crumbs.length > 0 && (
+      <nav aria-label="面包屑" class="mb-8 flex flex-wrap items-center gap-2 text-[11.5px] text-white/40">
+        <a href={u("/")} class="hover:text-white/80">首页</a>
+        {crumbs.map((c) => (
+          <>
+            <span class="text-white/20">/</span>
+            {c.href ? <a href={u(c.href)} class="hover:text-white/80">{c.label}</a> : <span class="text-white/70">{c.label}</span>}
+          </>
+        ))}
+      </nav>
+    )}
+
+    <p class="flex items-center gap-3 font-mono text-[10px] tracking-[0.24em] text-[var(--color-brand-2)]">
+      <span class="inline-block h-px w-7 bg-current"></span>
+      {eyebrow}
+    </p>
+    <h1 class:list={['mt-4 max-w-4xl font-display font-bold tracking-[-0.03em] text-white', compact ? 'text-[2rem] lg:text-[2.4rem]' : 'text-h1']}>
+      {title.split('\n').map((line, i) => (i === 0 ? line : <><br />{line}</>))}
+    </h1>
+    {description && (
+      <p class="mt-5 max-w-2xl text-[14.5px] leading-relaxed text-white/60 lg:text-[15.5px]">{description}</p>
+    )}
+    <slot />
+  </div>
+</section>

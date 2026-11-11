@@ -1,103 +1,101 @@
 ---
-import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import PageHero from '../components/ui/PageHero.astro';
-import { researchAreas, site } from '../data/site';
+import PageHero from '../components/site/PageHero.astro';
+import SectionHead from '../components/site/SectionHead.astro';
+import { site } from '../data/site';
 import { u } from '../lib/paths';
 
-const people = (await getCollection('people', ({ data }) => !data.draft)).sort(
-  (a, b) => a.data.order - b.data.order
-);
+const tracks = [
+  {
+    title: '联合培养研究生',
+    en: 'GRADUATE',
+    desc: '与高校联合招收硕士、博士研究生，课题来自在研项目，双导师制。',
+    items: ['智能算力与数字基础设施', '人工智能与无人系统', '机器人与具身智能', '增材制造与工业软件'],
+  },
+  {
+    title: '博士后与专职研究员',
+    en: 'RESEARCH FELLOW',
+    desc: '面向已获得博士学位的青年学者，提供独立课题与工程团队支持。',
+    items: ['固态储氢材料与系统', '低空飞行器与运行监管', '行业大模型与知识工程', '工业软件与数字孪生'],
+  },
+  {
+    title: '工程师与产品岗位',
+    en: 'ENGINEER',
+    desc: '硬件、嵌入式、算法、结构与工业设计岗位长期开放。',
+    items: ['高速数字硬件与 SI/PI', '运动控制与嵌入式软件', '感知算法与 SLAM', '结构与热设计'],
+  },
+  {
+    title: '产业合作与联合实验室',
+    en: 'PARTNERSHIP',
+    desc: '与企业共建联合实验室、共担课题、共享设备与数据。',
+    items: ['场景共研与课题共建', '设备与实验室共享', '课程共建与订单培养', '成果转化与孵化'],
+  },
+];
+
+const steps = [
+  { n: '01', t: '提交意向', d: '通过联系表单或邮箱提交简历、研究陈述或合作设想。' },
+  { n: '02', t: '方向匹配', d: '五个工作日内，由对应研究中心负责人评估方向契合度。' },
+  { n: '03', t: '交流与评审', d: '研究岗安排学术报告，工程岗安排技术面谈。' },
+  { n: '04', t: '发放邀请', d: '通过后发放录用或合作邀请，明确课题、导师与资源。' },
+];
 ---
 
-<BaseLayout
-  title="加入我们"
-  description={`${site.name}的人才培养方向与学生科研实践机会。`}
->
+<BaseLayout title="加入我们" description="IDMT 联合培养研究生、博士后、工程师与产业合作岗位长期开放。" transparentHeader image="/images/vr-education.jpg">
   <PageHero
-    eyebrow="Join us"
-    title="加入我们"
-    description="研究院依托浙江树人学院开展科研与人才培养，为在校学生参与科研实践创造条件。"
+    eyebrow="CAREERS / 加入我们"
+    title="和一群把问题做完的人共事"
+    description="我们看重的是：能不能把一个问题从提出做到跑通。学历与头衔是参考，作品与判断力是依据。"
     crumbs={[{ label: '加入我们' }]}
+    image={u('/images/vr-education.webp')}
   />
 
-  <section class="section">
+  <section class="section bg-canvas">
     <div class="container-page">
-      <div class="grid gap-14 lg:grid-cols-[1.3fr_1fr] lg:gap-16">
-        <div class="container-prose prose-academic lg:mx-0">
-          <h2 id="practice">学生科研实践</h2>
-          <p>
-            研究院坚持科教结合，把科研育人作为日常工作的一部分：学生在在读期间可以参与方向内的
-            数据整理、文献梳理、平台搭建与实验组织等具体工作，接触从问题提出到成果成型的完整过程。
-          </p>
-          <p>
-            有参与意向的在校生请联系所在学院的学业导师，或经由依托学院的教务办公室转达。
-            研究院不单设报名通道，也不通过邮件收取申请材料。
-          </p>
-
-          <h2 id="admission">研究生招生</h2>
-          <p>
-            硕士与博士研究生的招生资格、专业目录、报名条件与时间安排，
-            以<strong>浙江树人学院研究生院及各招生学院发布的当年招生简章</strong>为准。
-            研究院本身不独立发布招生章程，本页也不代替官方通知。
-          </p>
-          <p>
-            本站尚未收录经核实的招生条目。相关公告一旦确定，会先发布于
-            <a href={u('/notices')}>通知公告</a>，再同步到本页。
-          </p>
-
-          <h2 id="positions">岗位招聘</h2>
-          <p>
-            研究院目前<strong>没有公开发布的招聘公告</strong>（含研究岗、博士后与行政岗）。
-            本页此前列出的岗位与申请要求属于建站示例内容，已随示例数据一并撤下。
-          </p>
-          <p>
-            如有合作、访学或应聘意向，请通过
-            <a href={u('/contact')}>联系我们</a>页面所列的官方渠道与依托学院接洽。
-          </p>
-        </div>
-
-        <aside class="space-y-8 lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start">
-          <div class="border-t border-line pt-5">
-            <p class="eyebrow mb-3">可参与的研究方向</p>
-            <ul class="space-y-3">
-              {
-                researchAreas.map((area) => (
-                  <li class="text-ui text-ink-secondary">{area}</li>
-                ))
-              }
+      <SectionHead eyebrow="TRACKS / 加入方式" title="四条通道，同一套标准" description="不论来自学界还是产业，我们只用同一套标准评估：问题是否真实、方法是否可靠、结果是否可复现。" />
+      <div class="mt-10 grid gap-5 md:grid-cols-2">
+        {tracks.map((track) => (
+          <div class="rounded-2xl border border-line bg-surface p-7">
+            <p class="font-mono text-[9.5px] tracking-[0.2em] text-brand">{track.en}</p>
+            <h3 class="mt-3 font-display text-[1.35rem] font-bold text-ink">{track.title}</h3>
+            <p class="mt-2 text-[13.5px] leading-relaxed text-ink-secondary">{track.desc}</p>
+            <ul class="mt-5 grid gap-2 sm:grid-cols-2">
+              {track.items.map((item) => (
+                <li class="flex items-center gap-2 text-[12.5px] text-ink-secondary"><span class="size-1 rounded-full bg-brand-2"></span>{item}</li>
+              ))}
             </ul>
           </div>
-
-          <div class="border-t border-line pt-5">
-            <p class="eyebrow mb-3">管理团队</p>
-            <ul class="space-y-3">
-              {
-                people.map((person) => (
-                  <li>
-                    <a href={u(`/people/${person.id}`)} class="link-title block text-ui">
-                      {person.data.name}
-                    </a>
-                    <p class="mt-0.5 text-meta text-ink-tertiary">{person.data.title}</p>
-                  </li>
-                ))
-              }
-            </ul>
-            <p class="mt-3 text-meta text-ink-tertiary">
-              以上为研究院公开报道的管理职务，不构成导师资格或招生方向的承诺。
-            </p>
-          </div>
-
-          <div class="border-t border-line pt-5">
-            <p class="eyebrow mb-3">相关入口</p>
-            <ul class="space-y-2 text-ui">
-              <li><a href={u('/notices')} class="link">通知公告</a></li>
-              <li><a href={u('/people')} class="link">研究团队</a></li>
-              <li><a href={u('/contact')} class="link">联系我们</a></li>
-            </ul>
-          </div>
-        </aside>
+        ))}
       </div>
+    </div>
+  </section>
+
+  <section class="section border-t border-line bg-surface">
+    <div class="container-page grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
+      <div>
+        <p class="eyebrow">PROCESS / 流程</p>
+        <h2 class="mt-4 font-display text-h2 font-bold tracking-[-0.02em] text-ink">四步，通常两周内走完</h2>
+        <p class="mt-4 max-w-sm text-[14px] leading-relaxed text-ink-secondary">我们尽量让流程短一些。拖长流程对双方都是成本。</p>
+        <a href={u("/contact")} class="mt-7 inline-flex h-11 items-center rounded-lg bg-ink px-5 text-[13.5px] font-semibold text-white">提交意向</a>
+      </div>
+
+      <ol class="relative space-y-0 border-l border-line pl-8">
+        {steps.map((s) => (
+          <li class="relative pb-9 last:pb-0">
+            <span class="absolute -left-[41px] grid size-5 place-items-center rounded-full border border-line bg-surface font-mono text-[9px] text-brand">{s.n}</span>
+            <p class="font-display text-[1.05rem] font-semibold text-ink">{s.t}</p>
+            <p class="mt-1.5 text-[13px] leading-relaxed text-ink-secondary">{s.d}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section class="night">
+    <div class="container-page section-tight text-center">
+      <p class="font-mono text-[10px] tracking-[0.22em] text-white/40">QUESTIONS</p>
+      <p class="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-white/70">
+        不确定自己适合哪条通道？把简历和一段研究兴趣发到 <a href={`mailto:${site.email}`} class="text-[var(--color-brand-2)] underline underline-offset-4">{site.email}</a>，我们会转给对应方向。
+      </p>
     </div>
   </section>
 </BaseLayout>

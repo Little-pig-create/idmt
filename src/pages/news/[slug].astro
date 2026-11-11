@@ -1,102 +1,77 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { getCollection, render, type CollectionEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import PageHero from '../../components/ui/PageHero.astro';
-import JsonLd from '../../components/seo/JsonLd.astro';
-import DetailFigure from '../../components/ui/DetailFigure.astro';
-import { site, sectionEyebrow } from '../../data/site';
 import { u } from '../../lib/paths';
 
 export async function getStaticPaths() {
   const news = await getCollection('news', ({ data }) => !data.draft);
-  const sorted = news.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
-  return sorted.map((item, i) => ({
-    params: { slug: item.id },
-    props: { item, prev: sorted[i + 1], next: sorted[i - 1] },
-  }));
+  return news.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
 }
 
-const { item, prev, next } = Astro.props;
-const { Content } = await render(item);
+interface Props {
+  entry: CollectionEntry<'news'>;
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const news = (await getCollection('news', ({ data }) => !data.draft)).sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+const index = news.findIndex((n) => n.id === entry.id);
+const next = news[index + 1];
+const fmt = (d: Date) => `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日`;
 ---
 
-<BaseLayout
-  title={item.data.title}
-  description={item.data.summary}
-  type="article"
-  publishedAt={item.data.date}
->
-  <JsonLd
-    data={{
-      '@type': 'NewsArticle',
-      headline: item.data.title,
-      description: item.data.summary,
-      datePublished: item.data.date.toISOString(),
-      keywords: item.data.tags.join(', '),
-      url: new URL(u(`/news/${item.id}`), site.url).toString(),
-      publisher: { '@type': 'Organization', name: site.name, url: site.url },
-      author: { '@type': 'Person', name: item.data.author ?? site.name },
-      inLanguage: 'zh-CN',
-    }}
-  />
-  <PageHero
-    eyebrow={sectionEyebrow.news}
-    title={item.data.title}
-    description={item.data.summary}
-    crumbs={[
-      { label: '成果与动态', href: '/publications' },
-      { label: '新闻动态', href: '/news' },
-      { label: item.data.title },
-    ]}
-  />
+<BaseLayout title={entry.data.title} description={entry.data.summary} type="article" publishedAt={entry.data.date} image={entry.data.cover ?? '/images/lab-line.jpg'}>
+  <article>
+    <header class="night relative overflow-hidden pt-[calc(var(--nav-h)+3rem)]">
+      <div class="grid-lines absolute inset-0 opacity-30"></div>
+      <div class="container-page relative pb-14">
+        <nav aria-label="面包屑" class="mb-8 flex items-center gap-2 text-[11.5px] text-white/40">
+          <a href={u("/")} class="hover:text-white/80">首页</a><span class="text-white/20">/</span>
+          <a href={u("/news")} class="hover:text-white/80">新闻动态</a><span class="text-white/20">/</span>
+          <span class="text-white/70">正文</span>
+        </nav>
+        <div class="flex flex-wrap items-center gap-2">
+          {entry.data.tags.map((tag) => (
+            <span class="rounded-full border border-white/15 px-2.5 py-1 font-mono text-[10px] tracking-[0.1em] text-white/55">{tag}</span>
+          ))}
+        </div>
+        <h1 class="mt-5 max-w-4xl font-display text-[2rem] font-bold leading-[1.2] tracking-[-0.025em] text-white lg:text-[2.9rem]">
+          {entry.data.title}
+        </h1>
+        <p class="mt-5 max-w-2xl text-[15px] leading-relaxed text-white/60">{entry.data.summary}</p>
+        <div class="mt-7 flex items-center gap-3 font-mono text-[11px] text-white/40">
+          <time datetime={entry.data.date.toISOString()}>{fmt(entry.data.date)}</time>
+          {entry.data.author && <><span>·</span><span>{entry.data.author}</span></>}
+        </div>
+      </div>
+    </header>
 
-  <section class="section">
-    <div class="container-page">
-      <div class="container-prose prose-academic">
-        <p class="not-prose flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line pb-5 text-meta text-ink-tertiary">
-          <time datetime={item.data.date.toISOString().slice(0, 10)} class="numeric">
-            {item.data.date.getFullYear()}.
-            {String(item.data.date.getMonth() + 1).padStart(2, '0')}.
-            {String(item.data.date.getDate()).padStart(2, '0')}
-          </time>
-          {item.data.author && <span>{item.data.author}</span>}
-          {item.data.featured && <span class="tag">精选</span>}
-          {item.data.tags.map((tag) => <span class="tag">{tag}</span>)}
-        </p>
+    {entry.data.cover && (
+      <div class="container-page -mt-0">
+        <div class="relative -mt-0 overflow-hidden rounded-b-2xl lg:mx-0">
+          <img src={u(entry.data.cover)} alt={entry.data.coverAlt ?? entry.data.title} class="max-h-[480px] w-full object-cover" />
+        </div>
+      </div>
+    )}
 
-        <DetailFigure
-          cover={item.data.cover}
-          coverAlt={item.data.coverAlt}
-          caption={item.data.coverAlt}
-          loading="eager"
-          class="mb-8"
-        />
-
+    <div class="container-page section-tight">
+      <div class="prose-idmt mx-auto">
         <Content />
       </div>
-
-      <nav aria-label="上下篇" class="container-prose mt-16 grid gap-4 border-t border-line pt-8 sm:grid-cols-2">
-        <div>
-          {
-            prev && (
-              <a href={u(`/news/${prev.id}`)} class="group block">
-                <span class="eyebrow">上一篇</span>
-                <span class="link-title mt-2 block text-ui">{prev.data.title}</span>
-              </a>
-            )
-          }
-        </div>
-        <div class="sm:text-right">
-          {
-            next && (
-              <a href={u(`/news/${next.id}`)} class="group block">
-                <span class="eyebrow">下一篇</span>
-                <span class="link-title mt-2 block text-ui">{next.data.title}</span>
-              </a>
-            )
-          }
-        </div>
-      </nav>
     </div>
-  </section>
+
+    {next && (
+      <div class="border-t border-line bg-canvas py-10">
+        <div class="container-page flex flex-wrap items-center justify-between gap-4">
+          <p class="font-mono text-[10px] tracking-[0.2em] text-ink-tertiary">NEXT ARTICLE</p>
+          <a href={u(`/news/${next.id}`)} class="group flex items-center gap-3 font-display text-[1.15rem] font-semibold text-ink hover:text-brand">
+            {next.data.title}
+            <span class="grid size-8 place-items-center rounded-full border border-line-strong transition-transform group-hover:translate-x-1">
+              <svg viewBox="0 0 16 16" class="size-3.5" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </span>
+          </a>
+        </div>
+      </div>
+    )}
+  </article>
 </BaseLayout>

@@ -22,16 +22,7 @@
 		Referrer-Policy "strict-origin-when-cross-origin"
 	}
 
-	# ---- 前台运行时配置：公开、只读 ----
-	# src/lib/frontend-config.ts:114 请求的就是这一条，页面加载后异步取，失败即回落默认
-	@frontendConfig {
-		method GET
-		path /api/frontend-config
-	}
-	handle @frontendConfig {
-		reverse_proxy admin:4322
-	}
-
+	# 站点是纯静态产物，不暴露任何写接口；/api/** 一律 404
 	# 其余 /api/** 一律拒掉：写接口、素材上传、POST /api/build 都不属于公网面
 	handle /api/* {
 		respond "Not Found" 404
@@ -65,8 +56,8 @@
 }
 
 {$ADMIN_ADDR:admin.dmi.example.edu.cn} {
-	# 后台自身零鉴权（admin/server.mjs:360 无账号/登录/会话，:364 自称边界是回环监听），
-	# 所以这道 basic_auth 就是唯一的门。口令哈希用 caddy hash-password 生成。
+	# 后台自身有登录（ADMIN_PASSWORD + HttpOnly 会话）；basic_auth 是第二道门，
+	# 建议保留以防应用层配置疏漏。口令哈希用 caddy hash-password 生成。
 	basic_auth {
 		# 账号文件用 import 而不是 {$ENV} 占位符：
 		# docker compose 会连带解析 env_file 里的值，bcrypt 的 `$2y$12$GZMk…`
