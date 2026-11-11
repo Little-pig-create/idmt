@@ -6,8 +6,6 @@ export const GET: APIRoute = async () => {
   const research = await getCollection('research', ({ data }) => !data.draft);
   const products = await getCollection('products', ({ data }) => !data.draft);
   const news = await getCollection('news', ({ data }) => !data.draft);
-  const events = await getCollection('events', ({ data }) => !data.draft);
-  const notices = await getCollection('notices', ({ data }) => !data.draft);
   const labs = await getCollection('labs', ({ data }) => !data.draft);
 
   const entries = [
@@ -31,20 +29,6 @@ export const GET: APIRoute = async () => {
       description: e.data.summary,
       href: `/news/${e.id}`,
       text: [e.body ?? '', ...e.data.tags].join(' '),
-    })),
-    ...events.map((e) => ({
-      type: '活动',
-      title: e.data.title,
-      description: e.data.summary,
-      href: `/events/${e.id}`,
-      text: [e.data.location, ...e.data.speakers].join(' '),
-    })),
-    ...notices.map((e) => ({
-      type: '公告',
-      title: e.data.title,
-      description: e.data.summary ?? '',
-      href: '/notices',
-      text: e.data.category,
     })),
     ...labs.map((e) => ({
       type: '技术平台',

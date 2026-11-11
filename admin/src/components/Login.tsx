@@ -37,17 +37,13 @@ export default function Login({ onSuccess }: { onSuccess: () => void }) {
           }}
         />
         <div className="relative">
-          <div className="flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-lg bg-[linear-gradient(120deg,#1f5eff,#20c9b4)]">
-              <svg viewBox="0 0 24 24" className="size-5" fill="none">
-                <path d="M4 18V9.5L9 6l5 3.5V18" stroke="white" strokeWidth="1.6" strokeLinejoin="round" />
-                <path d="M14 11.5 20 8v10" stroke="white" strokeWidth="1.6" strokeLinejoin="round" opacity=".75" />
-              </svg>
-            </span>
-            <div>
-              <p className="text-[15px] font-semibold">数字管理技术研究院</p>
-              <p className="mt-0.5 font-mono text-[9px] tracking-[0.22em] text-white/40">IDMT · CONTENT CONSOLE</p>
-            </div>
+          <div>
+            <img
+              src="/brand/logo-idmt-reversed.webp"
+              alt="数字管理技术研究院"
+              className="h-12 w-auto"
+            />
+            <p className="mt-3 font-mono text-[9px] tracking-[0.22em] text-white/40">IDMT · CONTENT CONSOLE</p>
           </div>
         </div>
 

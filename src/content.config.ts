@@ -78,33 +78,4 @@ const news = defineCollection({
   }),
 });
 
-const notices = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/notices' }),
-  schema: z.object({
-    title: z.string(),
-    date: z.coerce.date(),
-    summary: z.string().optional(),
-    category: z.enum(['招生', '招聘', '会议', '科研', '其他']).default('其他'),
-    pinned: z.boolean().default(false),
-    attachment: z.string().optional(),
-    draft: z.boolean().default(false),
-  }),
-});
-
-const events = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/events' }),
-  schema: z.object({
-    title: z.string(),
-    startDate: z.coerce.date(),
-    endDate: z.coerce.date().optional(),
-    location: z.string(),
-    type: z.enum(['seminar', 'conference', 'lecture', 'workshop']),
-    speakers: z.array(z.string()).default([]),
-    summary: z.string(),
-    draft: z.boolean().default(false),
-    cover: z.string().optional(),
-    coverAlt: z.string().optional(),
-  }),
-});
-
-export const collections = { research, products, labs, news, notices, events };
+export const collections = { research, products, labs, news };

@@ -4,7 +4,7 @@
 
 | 路由 | 页面 | 数据 |
 |---|---|---|
-| `/` | 首页 | research / products / labs / news / events / notices |
+| `/` | 首页 | research / products / labs / news |
 | `/research` | 研究方向索引 | research |
 | `/research/[slug]` | 方向详情 | research + 关联 products |
 | `/products` | 产品与方案（分类筛选） | products |
@@ -12,10 +12,7 @@
 | `/labs` | 技术平台 | labs（实验室 / 分中心 / 平台） |
 | `/about` | 关于研究院 | 静态 + org 数据 |
 | `/news` | 新闻列表 | news |
-| `/news/[slug]` | 新闻正文 | news |
-| `/events` | 学术活动 | events |
-| `/events/[slug]` | 活动详情 | events |
-| `/notices` | 通知公告 | notices |
+| `/news/[slug]` | 新闻正文 | news（仅 BP 有明确出处的条目） |
 | `/join` | 加入我们 | 静态 |
 | `/contact` | 联系我们 | 静态 + 邮件表单 |
 | `/search` | 全站搜索 | `search-index.json` |
@@ -32,7 +29,7 @@
 5. **产品与方案**（暗面）：Embla 轮播，卡片含分类、概述、首个指标。
 6. **技术平台**：左侧粘性说明 + 右侧 10 间实验室网格。
 7. **治理与发展**：三阶段卡片（规划目标，注明非业绩）。
-8. **动态**：头条新闻 + 最新列表 + 通知公告 + 活动。
+8. **研究进展**：头条实测记录 + 研究记录（4282 km / 8→4 道工序 / 102×102mm BGA）+ 重点方向。
 9. **合作**：合作方 Marquee。
 10. **CTA**：加入我们。
 

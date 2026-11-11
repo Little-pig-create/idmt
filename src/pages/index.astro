@@ -15,18 +15,13 @@ const research = (await getCollection('research', ({ data }) => !data.draft)).so
 const products = (await getCollection('products', ({ data }) => !data.draft)).sort((a, b) => a.data.order - b.data.order);
 const labs = (await getCollection('labs', ({ data }) => !data.draft && data.group === '专业实验室')).sort((a, b) => a.data.order - b.data.order);
 const news = (await getCollection('news', ({ data }) => !data.draft)).sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
-const events = (await getCollection('events', ({ data }) => !data.draft)).sort((a, b) => a.data.startDate.getTime() - b.data.startDate.getTime());
-const notices = (await getCollection('notices', ({ data }) => !data.draft))
-  .sort((a, b) => Number(b.data.pinned) - Number(a.data.pinned) || b.data.date.getTime() - a.data.date.getTime())
-  .slice(0, 4);
 
 const featured = news.find((n) => n.data.featured) ?? news[0];
-const restNews = news.filter((n) => n.id !== featured?.id).slice(0, 4);
 
 const fmt = (d: Date) => `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 
 const stats = [
-  { value: 6, suffix: '个', label: '研究中心', note: 'RESEARCH CENTERS' },
+  { value: 6, suffix: '个', label: '研究机构', note: 'RESEARCH ENTITIES' },
   { value: research.length, suffix: '个', label: '研究方向', note: 'RESEARCH AREAS' },
   { value: labs.length, suffix: '间', label: '专业实验室', note: 'LABORATORIES' },
   { value: products.length, suffix: '项', label: '产品与方案', note: 'PRODUCT LINES' },
@@ -371,7 +366,7 @@ const principles = [
 
   <section class="section border-t border-line bg-surface" data-cfg-block="news">
     <div class="container-page">
-      <SectionHead eyebrow="INSIGHTS / 动态" title="研究进展与学术活动" href={u("/news")} linkLabel="全部新闻" />
+      <SectionHead eyebrow="INSIGHTS / 动态" title="研究进展" description="来自在研项目与公开实测的研究记录。" href={u("/news")} linkLabel="全部动态" />
 
       <div class="mt-12 grid gap-10 lg:grid-cols-[1.25fr_1fr] lg:gap-14">
         {featured && (
@@ -398,14 +393,18 @@ const principles = [
 
         <div class="space-y-8">
           <div>
-            <p class="font-mono text-[10px] tracking-[0.2em] text-ink-tertiary">最新</p>
+            <div class="flex items-center justify-between">
+              <p class="font-mono text-[10px] tracking-[0.2em] text-ink-tertiary">RESEARCH NOTES / 研究记录</p>
+            </div>
             <ul class="mt-4 divide-y divide-line">
-              {restNews.map((item) => (
-                <li>
-                  <a href={u(`/news/${item.id}`)} class="group flex gap-4 py-3.5">
-                    <span class="w-16 shrink-0 font-mono text-[10.5px] text-ink-tertiary">{fmt(item.data.date).slice(5)}</span>
-                    <span class="text-[14px] leading-snug text-ink group-hover:text-brand">{item.data.title}</span>
-                  </a>
+              {[
+                { t: '固态储氢完成苏州—拉萨 4282 公里高原实测', m: '4282 km · 26 天 · 293 小时 47 分' },
+                { t: '金属增材鞋模工序由 8 道缩减至 4 道', m: '单双打印时间 < 24 小时' },
+                { t: '102×102mm 超大 BGA 焊接与高速 PCB 叠层', m: '十大专业实验室闭环验证' },
+              ].map((note) => (
+                <li class="py-4">
+                  <p class="text-[14px] leading-snug text-ink">{note.t}</p>
+                  <p class="mt-1.5 font-mono text-[10px] tracking-[0.06em] text-ink-tertiary">{note.m}</p>
                 </li>
               ))}
             </ul>
@@ -413,34 +412,16 @@ const principles = [
 
           <div class="rounded-2xl border border-line bg-canvas p-6">
             <div class="flex items-center justify-between">
-              <p class="font-mono text-[10px] tracking-[0.2em] text-ink-tertiary">NOTICES / 通知公告</p>
-              <a href={u("/notices")} class="text-[12px] text-ink-tertiary hover:text-brand">更多</a>
+              <p class="font-mono text-[10px] tracking-[0.2em] text-ink-tertiary">FOCUS / 重点方向</p>
+              <a href={u("/research")} class="text-[12px] text-ink-tertiary hover:text-brand">全部方向</a>
             </div>
             <ul class="mt-4 space-y-3">
-              {notices.map((n) => (
+              {research.slice(0, 3).map((item) => (
                 <li>
-                  <a href={u("/notices")} class="flex items-start gap-3 text-[13px] leading-snug text-ink-secondary hover:text-brand">
+                  <a href={u(`/research/${item.id}`)} class="flex items-start gap-3 text-[13px] leading-snug text-ink-secondary hover:text-brand">
                     <span class="mt-1.5 size-1 shrink-0 rounded-full bg-brand"></span>
-                    {n.data.title}
+                    {item.data.title}
                   </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <div class="flex items-center justify-between">
-              <p class="font-mono text-[10px] tracking-[0.2em] text-ink-tertiary">EVENTS / 学术活动</p>
-              <a href={u("/events")} class="text-[12px] text-ink-tertiary hover:text-brand">更多</a>
-            </div>
-            <ul class="mt-4 space-y-3">
-              {events.slice(0, 2).map((e) => (
-                <li class="flex gap-3">
-                  <div class="grid size-11 shrink-0 place-items-center rounded-lg border border-line bg-surface text-center">
-                    <span class="font-display text-[15px] font-bold leading-none text-ink">{e.data.startDate.getDate()}</span>
-                    <span class="mt-0.5 font-mono text-[8.5px] text-ink-tertiary">{e.data.startDate.getMonth() + 1}月</span>
-                  </div>
-                  <a href={u(`/events/${e.id}`)} class="text-[13px] leading-snug text-ink hover:text-brand">{e.data.title}</a>
                 </li>
               ))}
             </ul>

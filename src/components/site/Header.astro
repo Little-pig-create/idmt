@@ -22,18 +22,15 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
 >
   <div class="container-wide flex h-[var(--nav-h)] items-center justify-between gap-6">
     {/* 品牌 */}
-    <a href={u("/")} class="group flex shrink-0 items-center gap-3" aria-label={`${site.name} 首页`}>
-      <span class="relative grid size-9 place-items-center overflow-hidden rounded-md bg-[var(--gradient-brand)] shadow-[0_6px_18px_rgba(31,94,255,.35)]">
-        <svg viewBox="0 0 24 24" class="size-5" fill="none" aria-hidden="true">
-          <path d="M4 18V9.5L9 6l5 3.5V18" stroke="white" stroke-width="1.6" stroke-linejoin="round" />
-          <path d="M14 11.5 20 8v10" stroke="white" stroke-width="1.6" stroke-linejoin="round" opacity=".75" />
-          <circle cx="9" cy="18" r="1.5" fill="white" />
-        </svg>
-      </span>
-      <span class="flex flex-col leading-none">
-        <span class="font-display text-[15px] font-semibold tracking-tight text-white">{site.name}</span>
-        <span class="mt-1 font-mono text-[9px] tracking-[0.24em] text-white/55">IDMT</span>
-      </span>
+    <a href={u("/")} class="group flex shrink-0 items-center" aria-label={`${site.name} 首页`}>
+      <img
+        src={u('/images/brand/logo-idmt-reversed.webp')}
+        alt={site.name}
+        width="975"
+        height="160"
+        class="h-9 w-auto lg:h-10"
+        fetchpriority="high"
+      />
     </a>
 
     {/* 桌面导航 */}

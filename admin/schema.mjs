@@ -85,50 +85,6 @@ export const COLLECTIONS = {
       { name: 'draft', label: '草稿', type: 'boolean', default: false },
     ],
   },
-  events: {
-    label: '学术活动',
-    icon: 'calendar',
-    description: '论坛、研讨会与工作坊',
-    hasBody: true,
-    fields: [
-      { name: 'title', label: '活动名称', type: 'string', required: true },
-      { name: 'startDate', label: '开始日期', type: 'date', required: true },
-      { name: 'endDate', label: '结束日期', type: 'date' },
-      { name: 'location', label: '地点', type: 'string', required: true },
-      {
-        name: 'type',
-        label: '类型',
-        type: 'enum',
-        required: true,
-        options: ['conference', 'seminar', 'lecture', 'workshop'],
-      },
-      { name: 'speakers', label: '嘉宾', type: 'array' },
-      { name: 'summary', label: '简介', type: 'text', required: true },
-      { name: 'cover', label: '封面图', type: 'image' },
-      { name: 'draft', label: '草稿', type: 'boolean', default: false },
-    ],
-  },
-  notices: {
-    label: '通知公告',
-    icon: 'megaphone',
-    description: '招生、招聘、科研与会议通知',
-    hasBody: true,
-    fields: [
-      { name: 'title', label: '标题', type: 'string', required: true },
-      { name: 'date', label: '发布日期', type: 'date', required: true },
-      { name: 'summary', label: '摘要', type: 'text' },
-      {
-        name: 'category',
-        label: '分类',
-        type: 'enum',
-        required: true,
-        options: ['招生', '招聘', '会议', '科研', '其他'],
-      },
-      { name: 'pinned', label: '置顶', type: 'boolean', default: false },
-      { name: 'attachment', label: '附件链接', type: 'string' },
-      { name: 'draft', label: '草稿', type: 'boolean', default: false },
-    ],
-  },
 };
 
 export const COLLECTION_KEYS = Object.keys(COLLECTIONS);

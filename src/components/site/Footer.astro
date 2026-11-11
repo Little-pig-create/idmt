@@ -10,18 +10,16 @@ const year = new Date().getFullYear();
   <div class="container-wide py-16">
     <div class="grid gap-12 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
       <div>
-        <div class="flex items-center gap-3">
-          <span class="grid size-9 place-items-center rounded-md bg-[var(--gradient-brand)]">
-            <svg viewBox="0 0 24 24" class="size-5" fill="none" aria-hidden="true">
-              <path d="M4 18V9.5L9 6l5 3.5V18" stroke="white" stroke-width="1.6" stroke-linejoin="round" />
-              <path d="M14 11.5 20 8v10" stroke="white" stroke-width="1.6" stroke-linejoin="round" opacity=".75" />
-            </svg>
-          </span>
-          <div>
-            <p class="font-display text-[15px] font-semibold text-white">{site.name}</p>
-            <p class="mt-1 font-mono text-[9px] tracking-[0.22em] text-white/40">{site.shortName} · {site.slogan}</p>
-          </div>
-        </div>
+        <a href={u("/")} class="inline-flex" aria-label={`${site.name} 首页`}>
+          <img
+            src={u('/images/brand/logo-idmt-reversed.webp')}
+            alt={site.name}
+            width="975"
+            height="160"
+            class="h-10 w-auto"
+            loading="lazy"
+          />
+        </a>
         <p class="mt-6 max-w-sm text-[13.5px] leading-relaxed text-white/55">
           {site.tagline}。坚持面向未来、交叉融合、科教结合、开放创新，打通从基础研究到产业化的最后一公里。
         </p>
@@ -43,16 +41,14 @@ const year = new Date().getFullYear();
           <li><a href={u("/labs")} class="text-[13.5px] text-white/65 hover:text-white">十大专业实验室</a></li>
           <li><a href={u("/products")} class="text-[13.5px] text-white/65 hover:text-white">产品与方案</a></li>
           <li><a href={u("/join")} class="text-[13.5px] text-white/65 hover:text-white">招生与招聘</a></li>
-          <li><a href={u("/notices")} class="text-[13.5px] text-white/65 hover:text-white">通知公告</a></li>
+          <li><a href={u("/news")} class="text-[13.5px] text-white/65 hover:text-white">新闻动态</a></li>
         </ul>
       </div>
 
       <div>
         <p class="font-mono text-[10px] tracking-[0.22em] text-white/35">CONTACT</p>
         <ul class="mt-4 space-y-3 text-[13.5px] text-white/65">
-          <li>{site.address}</li>
-          <li><a href={`mailto:${site.email}`} class="hover:text-white">{site.email}</a></li>
-          <li>{site.phone}</li>
+          <li class="leading-relaxed">{site.contactNote}</li>
         </ul>
         <a href={u("/contact")} class="mt-5 inline-flex h-9 items-center rounded-md border border-white/15 px-3.5 text-[12.5px] text-white/80 hover:border-white/35 hover:text-white">
           联系我们

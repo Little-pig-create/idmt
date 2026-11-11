@@ -29,14 +29,14 @@ import { u } from '../lib/paths';
           既服务产业，也把真实问题带回课堂。
         </p>
         <p class="mt-4 text-[15px] leading-[1.9] text-ink-secondary">
-          目标是在亚太地区成为最卓越的数字化研究院与实验室之一。
+          研究院的愿景，是成为亚太地区最卓越的数字化研究院与实验室之一。
         </p>
       </div>
 
       <div class="grid gap-5 sm:grid-cols-2">
         {[
-          { k: '成立', v: site.founded, u: 'YEAR' },
-          { k: '研究中心', v: '6', u: 'CENTERS' },
+          { k: '三年规划', v: '3 年', u: 'ROADMAP' },
+          { k: '研究机构', v: '6', u: 'ENTITIES' },
           { k: '专业实验室', v: '10', u: 'LABS' },
           { k: '研究方向', v: '9', u: 'AREAS' },
         ].map((item) => (
@@ -52,7 +52,7 @@ import { u } from '../lib/paths';
 
   <section class="section border-y border-line bg-canvas">
     <div class="container-page">
-      <SectionHead eyebrow="GOVERNANCE / 治理架构" title="决策、评议与执行三层分离" description="理事会定方向，学术委员会守质量，管理团队负责运营。三层各司其职，避免既当运动员又当裁判。" />
+      <SectionHead eyebrow="GOVERNANCE / 治理架构" title="决策、评议与执行三层分离" description="依据 BP 组织架构，研究院设理事会、专家学术委员会与管理团队。" />
       <div class="mt-10 grid gap-5 md:grid-cols-3">
         {governance.map((g, i) => (
           <Reveal client:visible delay={i * 0.07}>

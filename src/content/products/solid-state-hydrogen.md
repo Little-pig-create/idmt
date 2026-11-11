@@ -4,7 +4,7 @@ titleEn: "Solid-State Hydrogen"
 category: "新能源"
 order: 8
 summary: "常压固态储氢材料、集束式储氢产品与「换氢」配送服务，打通氢能最后一公里。"
-image: "/images/wind-field.webp"
+image: "/images/hydrogen-unit.webp"
 imageAlt: "新能源与氢能场景"
 specs:
   - label: "储氢方式"

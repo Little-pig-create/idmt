@@ -12,8 +12,6 @@ const LABELS: Record<string, string> = {
   products: '产品',
   labs: '技术平台',
   news: '新闻',
-  events: '活动',
-  notices: '公告',
 };
 
 export default function Dashboard({

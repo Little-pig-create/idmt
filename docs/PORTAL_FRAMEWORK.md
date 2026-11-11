@@ -2,7 +2,7 @@
 
 ## 1. 为什么是 Astro + 岛屿
 
-站点以内容为主，绝大多数页面是静态的：方向、产品、实验室、新闻、活动、公告。
+站点以内容为主，绝大多数页面是静态的：方向、产品、实验室与新闻。
 Astro 在构建期完成数据读取与渲染，输出纯 HTML；只有轮播、Tab、筛选、数字滚动等
 少数交互挂载为 React 岛屿（`client:visible` / `client:load`）。
 
@@ -65,7 +65,7 @@ GitHub Pages 项目站挂在 `/idmt/` 下。Astro 的 `base` 只重写它自己�
 | `npm run audit` | a11y、SEO、JSON-LD、内部链接、体积预算、产物洁净度 |
 | `npm run taste` | 内联样式、硬编码颜色、圆角尺度、空链接、图片 alt |
 | `npm run contrast` | 21 组文字配色 ≥ 4.5:1 |
-| `npm run smoke` | 74 项产物断言 |
+| `npm run smoke` | 59 项产物断言 |
 
 ## 8. 已知限制
 

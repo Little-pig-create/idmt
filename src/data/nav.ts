@@ -40,15 +40,5 @@ export const nav: NavItem[] = [
   },
   { id: 'labs', label: '技术平台', href: '/labs', description: '十大专业实验室与分中心' },
   { id: 'about', label: '关于我们', href: '/about', description: '定位、治理架构与发展目标' },
-  {
-    id: 'news',
-    label: '新闻与活动',
-    href: '/news',
-    description: '研究进展、合作与学术活动',
-    children: [
-      { label: '新闻动态', href: '/news' },
-      { label: '学术活动', href: '/events' },
-      { label: '通知公告', href: '/notices' },
-    ],
-  },
+  { id: 'news', label: '新闻动态', href: '/news', description: '研究院公开发布的研究进展' },
 ];

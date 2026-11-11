@@ -25,8 +25,6 @@ const fixedRoutes = [
   '/products',
   '/labs',
   '/news',
-  '/events',
-  '/notices',
   '/join',
   '/contact',
   '/search',
@@ -50,7 +48,7 @@ for (const route of [...fixedRoutes, ...assetRoutes]) {
   }
 }
 
-for (const collection of ['research', 'products', 'news', 'events']) {
+for (const collection of ['research', 'products', 'news']) {
   const dir = path.join(ROOT, 'src', 'content', collection);
   const ids = fs.readdirSync(dir).filter((f) => f.endsWith('.md')).map((f) => f.replace(/\.md$/, ''));
   for (const id of ids) {

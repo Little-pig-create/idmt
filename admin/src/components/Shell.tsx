@@ -5,8 +5,6 @@ import {
   Box,
   FlaskConical,
   Newspaper,
-  CalendarDays,
-  Megaphone,
   Image as ImageIcon,
   Settings,
   Rocket,
@@ -23,8 +21,6 @@ const COLLECTION_META: { key: CollectionName; label: string; icon: typeof Compas
   { key: 'products', label: '产品与方案', icon: Box },
   { key: 'labs', label: '技术平台', icon: FlaskConical },
   { key: 'news', label: '新闻动态', icon: Newspaper },
-  { key: 'events', label: '学术活动', icon: CalendarDays },
-  { key: 'notices', label: '通知公告', icon: Megaphone },
 ];
 
 interface Props {
@@ -56,17 +52,13 @@ function SidebarContent({ route, onNavigate, onLogout }: Omit<Props, 'children'>
 
   return (
     <div className="flex h-full flex-col bg-[#050b16]">
-      <div className="flex items-center gap-2.5 px-5 py-5">
-        <span className="grid size-8 place-items-center rounded-md bg-[linear-gradient(120deg,#1f5eff,#20c9b4)]">
-          <svg viewBox="0 0 24 24" className="size-4" fill="none">
-            <path d="M4 18V9.5L9 6l5 3.5V18" stroke="white" strokeWidth="1.7" strokeLinejoin="round" />
-            <path d="M14 11.5 20 8v10" stroke="white" strokeWidth="1.7" strokeLinejoin="round" opacity=".75" />
-          </svg>
-        </span>
-        <div>
-          <p className="text-[12.5px] font-semibold text-white">内容后台</p>
-          <p className="mt-0.5 font-mono text-[8px] tracking-[0.2em] text-white/35">IDMT · CMS</p>
-        </div>
+      <div className="px-4 py-5">
+        <img
+          src="/brand/logo-idmt-reversed.webp"
+          alt="数字管理技术研究院"
+          className="h-7 w-auto"
+        />
+        <p className="mt-2.5 font-mono text-[8px] tracking-[0.24em] text-white/35">CONTENT CONSOLE</p>
       </div>
 
       <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-4">

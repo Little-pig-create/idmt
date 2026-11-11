@@ -29,7 +29,8 @@ const pageTitle = title.includes(site.shortName) ? title : `${title} · ${site.s
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
     <meta name="theme-color" content="#050b16" />
-    <link rel="icon" href={u("/favicon.svg")} type="image/svg+xml" />
+    <link rel="icon" href={u("/favicon.png")} type="image/png" />
+    <link rel="apple-touch-icon" href={u("/apple-touch-icon.png")} />
 
     <SeoHead
       title={pageTitle}
@@ -59,14 +60,6 @@ const pageTitle = title.includes(site.shortName) ? title : `${title} · ${site.s
       name: site.name,
       alternateName: site.nameEn,
       url: site.url,
-      email: site.email,
-      telephone: site.phone,
-      address: {
-        '@type': 'PostalAddress',
-        addressLocality: '杭州市',
-        addressRegion: '浙江省',
-        addressCountry: 'CN',
-      },
       description: site.description,
     })} />
   </body>

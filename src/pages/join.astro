@@ -2,7 +2,6 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/site/PageHero.astro';
 import SectionHead from '../components/site/SectionHead.astro';
-import { site } from '../data/site';
 import { u } from '../lib/paths';
 
 const tracks = [
@@ -33,8 +32,8 @@ const tracks = [
 ];
 
 const steps = [
-  { n: '01', t: '提交意向', d: '通过联系表单或邮箱提交简历、研究陈述或合作设想。' },
-  { n: '02', t: '方向匹配', d: '五个工作日内，由对应研究中心负责人评估方向契合度。' },
+  { n: '01', t: '提交意向', d: '通过研究院公布的联系渠道提交简历、研究陈述或合作设想。' },
+  { n: '02', t: '方向匹配', d: '由对应研究中心评估方向契合度。' },
   { n: '03', t: '交流与评审', d: '研究岗安排学术报告，工程岗安排技术面谈。' },
   { n: '04', t: '发放邀请', d: '通过后发放录用或合作邀请，明确课题、导师与资源。' },
 ];
@@ -73,8 +72,8 @@ const steps = [
     <div class="container-page grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
       <div>
         <p class="eyebrow">PROCESS / 流程</p>
-        <h2 class="mt-4 font-display text-h2 font-bold tracking-[-0.02em] text-ink">四步，通常两周内走完</h2>
-        <p class="mt-4 max-w-sm text-[14px] leading-relaxed text-ink-secondary">我们尽量让流程短一些。拖长流程对双方都是成本。</p>
+        <h2 class="mt-4 font-display text-h2 font-bold tracking-[-0.02em] text-ink">加入流程</h2>
+        <p class="mt-4 max-w-sm text-[14px] leading-relaxed text-ink-secondary">流程与评审标准由研究院统一确定。</p>
         <a href={u("/contact")} class="mt-7 inline-flex h-11 items-center rounded-lg bg-ink px-5 text-[13.5px] font-semibold text-white">提交意向</a>
       </div>
 
@@ -94,7 +93,7 @@ const steps = [
     <div class="container-page section-tight text-center">
       <p class="font-mono text-[10px] tracking-[0.22em] text-white/40">QUESTIONS</p>
       <p class="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-white/70">
-        不确定自己适合哪条通道？把简历和一段研究兴趣发到 <a href={`mailto:${site.email}`} class="text-[var(--color-brand-2)] underline underline-offset-4">{site.email}</a>，我们会转给对应方向。
+        不确定自己适合哪条通道？请通过研究院公布的联系渠道提交简历与一段研究兴趣，我们会转给对应方向。
       </p>
     </div>
   </section>
