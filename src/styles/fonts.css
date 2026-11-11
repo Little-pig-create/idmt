@@ -7,7 +7,7 @@
   font-style: normal;
   font-weight: 100 700;
   font-display: swap;
-  src: url("/idmt/fonts/IBMPlexSans.woff2") format("woff2");
+  src: url("../fonts/IBMPlexSans.woff2") format("woff2");
 }
 
 @font-face {
@@ -15,7 +15,7 @@
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
-  src: url("/idmt/fonts/NotoSansSC.woff2") format("woff2");
+  src: url("../fonts/NotoSansSC.woff2") format("woff2");
 }
 
 @font-face {
@@ -23,7 +23,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/idmt/fonts/LXGWZhiSong.woff2") format("woff2");
+  src: url("../fonts/LXGWZhiSong.woff2") format("woff2");
 }
 
 @font-face {
@@ -31,5 +31,5 @@
   font-style: normal;
   font-weight: 100 800;
   font-display: swap;
-  src: url("/idmt/fonts/JetBrainsMono.woff2") format("woff2");
+  src: url("../fonts/JetBrainsMono.woff2") format("woff2");
 }

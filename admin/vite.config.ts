@@ -4,6 +4,8 @@ import tailwindcss from '@tailwindcss/vite';
 import path from 'node:path';
 
 export default defineConfig({
+  // 默认根路径；挂到站点 /admin 子路径时用 ADMIN_BASE=/admin/ 构建
+  base: process.env.ADMIN_BASE ?? '/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: { '@': path.resolve(import.meta.dirname, 'src') },
