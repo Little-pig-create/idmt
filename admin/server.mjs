@@ -16,7 +16,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import yaml from 'js-yaml';
+import { dump as yamlDump, load as yamlLoad } from 'js-yaml';
 
 import { COLLECTIONS, COLLECTION_KEYS } from './schema.mjs';
 
@@ -156,7 +156,7 @@ function safeId(id) {
 function splitFrontmatter(raw) {
   const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
   if (!match) return { data: {}, body: raw };
-  return { data: yaml.load(match[1]) ?? {}, body: match[2] ?? '' };
+  return { data: yamlLoad(match[1]) ?? {}, body: match[2] ?? '' };
 }
 
 function toDateString(value) {
@@ -216,7 +216,7 @@ function validate(collection, data) {
 }
 
 function serialize(data, body) {
-  const frontmatter = yaml.dump(data, { lineWidth: 0, noRefs: true, quotingType: '"' }).trimEnd();
+  const frontmatter = yamlDump(data, { lineWidth: 0, noRefs: true, quotingType: '"' }).trimEnd();
   return `---\n${frontmatter}\n---\n\n${(body ?? '').trim()}\n`;
 }
 
